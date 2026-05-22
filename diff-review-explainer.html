@@ -1,0 +1,905 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1.0" />
+<title>feat/ui-tweaks — Diff Review Explainer</title>
+<style>
+  :root {
+    --bg: #0f1117;
+    --surface: #1a1d27;
+    --surface2: #22263a;
+    --border: #2e3352;
+    --accent: #6c8ef7;
+    --accent2: #a78bfa;
+    --green: #34d399;
+    --yellow: #fbbf24;
+    --red: #f87171;
+    --orange: #fb923c;
+    --blue: #38bdf8;
+    --text: #e2e8f0;
+    --muted: #94a3b8;
+    --add: #1e3a2f;
+    --add-text: #34d399;
+    --del: #3a1e1e;
+    --del-text: #f87171;
+  }
+  * { box-sizing: border-box; margin: 0; padding: 0; }
+  body { background: var(--bg); color: var(--text); font-family: 'Segoe UI', system-ui, sans-serif; font-size: 14px; line-height: 1.6; }
+  a { color: var(--accent); }
+
+  /* Layout */
+  .page { max-width: 1280px; margin: 0 auto; padding: 24px 20px 60px; }
+  header { padding: 32px 0 24px; border-bottom: 1px solid var(--border); margin-bottom: 32px; }
+  header h1 { font-size: 28px; font-weight: 700; color: var(--accent); }
+  header .meta { color: var(--muted); margin-top: 6px; font-size: 13px; }
+  header .branch { display: inline-block; background: var(--surface2); border: 1px solid var(--border); border-radius: 4px; padding: 2px 8px; font-family: monospace; font-size: 12px; color: var(--accent2); margin-right: 8px; }
+
+  h2 { font-size: 20px; font-weight: 700; color: var(--text); margin: 36px 0 16px; display: flex; align-items: center; gap: 8px; }
+  h2::before { content: ''; width: 4px; height: 22px; background: var(--accent); border-radius: 2px; display: block; }
+  h3 { font-size: 15px; font-weight: 600; color: var(--accent2); margin: 20px 0 10px; }
+  h4 { font-size: 13px; font-weight: 600; color: var(--muted); margin: 12px 0 6px; text-transform: uppercase; letter-spacing: 0.05em; }
+
+  p { margin: 8px 0; color: var(--muted); }
+  strong { color: var(--text); }
+  code { font-family: 'Cascadia Code', 'Fira Code', monospace; font-size: 12px; background: var(--surface2); padding: 1px 5px; border-radius: 3px; color: var(--accent2); }
+
+  /* Cards */
+  .card { background: var(--surface); border: 1px solid var(--border); border-radius: 10px; padding: 20px; margin-bottom: 16px; }
+  .card-grid { display: grid; grid-template-columns: repeat(auto-fill, minmax(260px, 1fr)); gap: 14px; margin-bottom: 24px; }
+  .stat-card { background: var(--surface2); border: 1px solid var(--border); border-radius: 8px; padding: 16px; text-align: center; }
+  .stat-card .num { font-size: 32px; font-weight: 800; }
+  .stat-card .label { font-size: 12px; color: var(--muted); margin-top: 4px; }
+  .stat-card.green .num { color: var(--green); }
+  .stat-card.red .num { color: var(--red); }
+  .stat-card.yellow .num { color: var(--yellow); }
+  .stat-card.blue .num { color: var(--blue); }
+  .stat-card.purple .num { color: var(--accent2); }
+
+  /* Callouts */
+  .callout { border-radius: 8px; padding: 14px 16px; margin: 12px 0; border-left: 4px solid; }
+  .callout.info { background: #1e2a3a; border-color: var(--blue); }
+  .callout.warn { background: #2a2214; border-color: var(--yellow); }
+  .callout.risk { background: #2a1414; border-color: var(--red); }
+  .callout.good { background: #14261e; border-color: var(--green); }
+  .callout .title { font-weight: 700; margin-bottom: 4px; }
+  .callout.info .title { color: var(--blue); }
+  .callout.warn .title { color: var(--yellow); }
+  .callout.risk .title { color: var(--red); }
+  .callout.good .title { color: var(--green); }
+
+  /* Tables */
+  table { width: 100%; border-collapse: collapse; margin: 12px 0; font-size: 13px; }
+  th { background: var(--surface2); color: var(--muted); text-align: left; padding: 8px 12px; font-weight: 600; font-size: 11px; text-transform: uppercase; letter-spacing: 0.05em; border-bottom: 1px solid var(--border); }
+  td { padding: 8px 12px; border-bottom: 1px solid var(--border); vertical-align: top; }
+  tr:last-child td { border-bottom: none; }
+  tr:hover td { background: var(--surface2); }
+  .badge { display: inline-block; padding: 1px 7px; border-radius: 10px; font-size: 11px; font-weight: 600; }
+  .badge.new { background: #1a3a2a; color: var(--green); }
+  .badge.mod { background: #1a2a3a; color: var(--blue); }
+  .badge.del { background: #3a1a1a; color: var(--red); }
+  .badge.fix { background: #2a2014; color: var(--yellow); }
+  .badge.test { background: #2a1a3a; color: var(--accent2); }
+  .badge.risk-high { background: #3a1a1a; color: var(--red); }
+  .badge.risk-med { background: #2a2014; color: var(--yellow); }
+  .badge.risk-low { background: #1a3a2a; color: var(--green); }
+
+  /* Diff blocks */
+  .diff { background: var(--surface2); border: 1px solid var(--border); border-radius: 6px; overflow: hidden; margin: 10px 0; }
+  .diff-header { background: var(--surface); padding: 6px 12px; font-family: monospace; font-size: 11px; color: var(--muted); border-bottom: 1px solid var(--border); }
+  .diff pre { padding: 12px; overflow-x: auto; font-family: 'Cascadia Code', monospace; font-size: 12px; line-height: 1.5; }
+  .diff .add { color: var(--add-text); background: var(--add); }
+  .diff .del { color: var(--del-text); background: var(--del); }
+  .diff .ctx { color: var(--muted); }
+
+  /* Diagrams */
+  .diagram { background: var(--surface); border: 1px solid var(--border); border-radius: 10px; padding: 20px; margin: 16px 0; overflow-x: auto; }
+  .diagram svg { max-width: 100%; height: auto; }
+
+  /* Flow boxes */
+  .flow { display: flex; align-items: center; gap: 8px; flex-wrap: wrap; margin: 8px 0; }
+  .flow-box { background: var(--surface2); border: 1px solid var(--border); border-radius: 6px; padding: 6px 12px; font-size: 12px; white-space: nowrap; }
+  .flow-box.removed { border-color: var(--red); color: var(--red); text-decoration: line-through; }
+  .flow-box.added { border-color: var(--green); color: var(--green); }
+  .flow-box.changed { border-color: var(--yellow); color: var(--yellow); }
+  .flow-box.same { color: var(--muted); }
+  .flow-arrow { color: var(--muted); font-size: 18px; }
+
+  /* Bar charts */
+  .bar-chart { margin: 12px 0; }
+  .bar-row { display: flex; align-items: center; margin: 5px 0; gap: 10px; }
+  .bar-label { width: 200px; font-size: 12px; color: var(--muted); text-align: right; flex-shrink: 0; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+  .bar-track { flex: 1; background: var(--surface2); border-radius: 3px; height: 16px; overflow: hidden; }
+  .bar-fill { height: 100%; border-radius: 3px; }
+  .bar-fill.add { background: var(--green); }
+  .bar-fill.del { background: var(--red); }
+  .bar-fill.mixed { background: linear-gradient(to right, var(--green) 50%, var(--red) 50%); }
+  .bar-val { font-size: 11px; color: var(--muted); width: 60px; flex-shrink: 0; }
+
+  /* Heatmap */
+  .heatmap { display: grid; grid-template-columns: repeat(auto-fill, minmax(160px, 1fr)); gap: 8px; margin: 12px 0; }
+  .heatmap-cell { border-radius: 6px; padding: 10px; text-align: center; }
+  .heatmap-cell .cell-label { font-size: 11px; font-weight: 600; margin-bottom: 4px; }
+  .heatmap-cell .cell-score { font-size: 20px; font-weight: 800; }
+  .heat-1 { background: #1a2e1a; color: var(--green); }
+  .heat-2 { background: #2a2a14; color: #c9b85c; }
+  .heat-3 { background: #2a2014; color: var(--yellow); }
+  .heat-4 { background: #2a1a14; color: var(--orange); }
+  .heat-5 { background: #2a1414; color: var(--red); }
+
+  /* Checklist */
+  .checklist { list-style: none; }
+  .checklist li { padding: 8px 12px; border-bottom: 1px solid var(--border); font-size: 13px; display: flex; gap: 10px; align-items: flex-start; }
+  .checklist li:last-child { border-bottom: none; }
+  .checklist li::before { content: '☐'; color: var(--accent); flex-shrink: 0; font-size: 15px; }
+  .checklist li.critical::before { content: '⚠'; color: var(--red); }
+  .checklist li.important::before { content: '◆'; color: var(--yellow); }
+
+  /* Section nav */
+  .toc { background: var(--surface); border: 1px solid var(--border); border-radius: 10px; padding: 20px; margin-bottom: 32px; }
+  .toc ul { list-style: none; columns: 2; gap: 20px; margin-top: 12px; }
+  .toc li { padding: 4px 0; }
+  .toc a { color: var(--muted); text-decoration: none; font-size: 13px; }
+  .toc a:hover { color: var(--accent); }
+  .toc-num { color: var(--accent2); font-weight: 700; margin-right: 6px; }
+
+  .section-anchor { scroll-margin-top: 20px; }
+  hr { border: none; border-top: 1px solid var(--border); margin: 32px 0; }
+
+  /* Before/After */
+  .before-after { display: grid; grid-template-columns: 1fr 1fr; gap: 12px; margin: 12px 0; }
+  .ba-panel { background: var(--surface2); border-radius: 8px; padding: 14px; }
+  .ba-panel.before { border-top: 3px solid var(--red); }
+  .ba-panel.after { border-top: 3px solid var(--green); }
+  .ba-title { font-size: 11px; font-weight: 700; text-transform: uppercase; letter-spacing: 0.08em; margin-bottom: 8px; }
+  .ba-panel.before .ba-title { color: var(--red); }
+  .ba-panel.after .ba-title { color: var(--green); }
+</style>
+</head>
+<body>
+<div class="page">
+
+<header>
+  <h1>feat/ui-tweaks &mdash; Diff Review Explainer</h1>
+  <div class="meta">
+    <span class="branch">feat/ui-tweaks</span>
+    <span class="branch">← main</span>
+    &nbsp;53 files changed &nbsp;·&nbsp; +4,141 / −2,386 lines &nbsp;·&nbsp; 30+ commits &nbsp;·&nbsp; Generated 2026-05-22
+  </div>
+</header>
+
+<!-- TOC -->
+<div class="toc">
+  <strong style="color:var(--accent2)">Contents</strong>
+  <ul>
+    <li><a href="#summary"><span class="toc-num">1</span> Executive Summary</a></li>
+    <li><a href="#stats"><span class="toc-num">2</span> Change Statistics</a></li>
+    <li><a href="#sidebar"><span class="toc-num">3</span> Sidebar Redesign</a></li>
+    <li><a href="#options-tab"><span class="toc-num">4</span> Options Tab Removal</a></li>
+    <li><a href="#add-bar"><span class="toc-num">5</span> Study Tree Add Bar</a></li>
+    <li><a href="#modals"><span class="toc-num">6</span> Imperative Modal Handles</a></li>
+    <li><a href="#schema"><span class="toc-num">7</span> Data Model / Schema Changes</a></li>
+    <li><a href="#alert"><span class="toc-num">8</span> Alert / Banner Consolidation</a></li>
+    <li><a href="#new-components"><span class="toc-num">9</span> New Components</a></li>
+    <li><a href="#tests"><span class="toc-num">10</span> Tests &amp; Type Safety</a></li>
+    <li><a href="#hotspots"><span class="toc-num">11</span> Risk Heatmap &amp; Hotspots</a></li>
+    <li><a href="#checklist"><span class="toc-num">12</span> Manual Review Checklist</a></li>
+  </ul>
+</div>
+
+<!-- ─── 1. Executive Summary ─── -->
+<h2 id="summary" class="section-anchor">1. Executive Summary</h2>
+<div class="card">
+  <p>This branch is a <strong>major UI overhaul</strong> across the study dashboard. The work bundles several feature sub-branches into one: it removes a redundant "Options" tab, replaces the two-tab sidebar (Study/Settings) with a compact single-row toolbar, introduces a contextual add-bar below the study tree, refactors all study modals to support imperative triggers, consolidates four dedicated banner components into the shared Alert component, and &mdash; most importantly &mdash; <strong>migrates the <code>models</code> and <code>drawings</code> media fields from <code>information</code> to <code>geometry</code></strong> across the Firestore schema.</p>
+  <p style="margin-top:10px">The change is <strong>primarily cosmetic and structural</strong>, but the schema migration is a data-compatibility concern that deserves careful review. No server-side calculation logic changes. No authentication changes.</p>
+</div>
+
+<div class="card-grid">
+  <div class="stat-card green"><div class="num">6</div><div class="label">New files / components</div></div>
+  <div class="stat-card red"><div class="num">1</div><div class="label">File deleted (banners.tsx)</div></div>
+  <div class="stat-card blue"><div class="num">46</div><div class="label">Files modified</div></div>
+  <div class="stat-card yellow"><div class="num">5</div><div class="label">Feature areas touched</div></div>
+  <div class="stat-card purple"><div class="num">3</div><div class="label">New test files</div></div>
+</div>
+
+<!-- ─── 2. Stats ─── -->
+<h2 id="stats" class="section-anchor">2. Change Statistics by File Group</h2>
+
+<div class="diagram">
+  <h4>Lines changed by subsystem (top 15 files)</h4>
+  <div class="bar-chart">
+    <div class="bar-row"><div class="bar-label">load-study-modal.tsx</div><div class="bar-track"><div class="bar-fill mixed" style="width:100%"></div></div><div class="bar-val">903 ±</div></div>
+    <div class="bar-row"><div class="bar-label">new-study-modal.tsx</div><div class="bar-track"><div class="bar-fill mixed" style="width:63%"></div></div><div class="bar-val">583 ±</div></div>
+    <div class="bar-row"><div class="bar-label">close-study-modal.tsx</div><div class="bar-track"><div class="bar-fill mixed" style="width:51%"></div></div><div class="bar-val">468 ±</div></div>
+    <div class="bar-row"><div class="bar-label">study-modals-toolbar.test.tsx</div><div class="bar-track"><div class="bar-fill add" style="width:44%"></div></div><div class="bar-val">+402</div></div>
+    <div class="bar-row"><div class="bar-label">scenario-hac-form.integration.test</div><div class="bar-track"><div class="bar-fill add" style="width:38%"></div></div><div class="bar-val">+344</div></div>
+    <div class="bar-row"><div class="bar-label">equipment-item-forms.tsx</div><div class="bar-track"><div class="bar-fill mixed" style="width:32%"></div></div><div class="bar-val">289 ±</div></div>
+    <div class="bar-row"><div class="bar-label">area-forms.tsx</div><div class="bar-track"><div class="bar-fill mixed" style="width:32%"></div></div><div class="bar-val">287 ±</div></div>
+    <div class="bar-row"><div class="bar-label">save-study-modal.tsx</div><div class="bar-track"><div class="bar-fill mixed" style="width:38%"></div></div><div class="bar-val">340 ±</div></div>
+    <div class="bar-row"><div class="bar-label">side-bar.tsx</div><div class="bar-track"><div class="bar-fill mixed" style="width:38%"></div></div><div class="bar-val">342 ±</div></div>
+    <div class="bar-row"><div class="bar-label">studies/page.tsx</div><div class="bar-track"><div class="bar-fill mixed" style="width:30%"></div></div><div class="bar-val">277 ±</div></div>
+    <div class="bar-row"><div class="bar-label">edit-study-json-modal.tsx</div><div class="bar-track"><div class="bar-fill add" style="width:20%"></div></div><div class="bar-val">+184</div></div>
+    <div class="bar-row"><div class="bar-label">study-tree-add-bar.tsx</div><div class="bar-track"><div class="bar-fill add" style="width:15%"></div></div><div class="bar-val">+139</div></div>
+    <div class="bar-row"><div class="bar-label">analysis-tab-controls.tsx</div><div class="bar-track"><div class="bar-fill add" style="width:15%"></div></div><div class="bar-val">+138</div></div>
+    <div class="bar-row"><div class="bar-label">app/types/firestore.tsx</div><div class="bar-track"><div class="bar-fill mixed" style="width:10%"></div></div><div class="bar-val">40 ±</div></div>
+    <div class="bar-row"><div class="bar-label">banners.tsx</div><div class="bar-track"><div class="bar-fill del" style="width:3%"></div></div><div class="bar-val">−29</div></div>
+  </div>
+</div>
+
+<table>
+  <thead><tr><th>File Group</th><th>Kind</th><th>Risk</th><th>Files</th><th>Summary</th></tr></thead>
+  <tbody>
+    <tr><td><strong>Study Sidebar</strong></td><td><span class="badge mod">modified</span></td><td><span class="badge risk-med">Medium</span></td><td><code>side-bar.tsx</code></td><td>Full layout rework: tab layout → toolbar row</td></tr>
+    <tr><td><strong>Form Tabs / page.tsx</strong></td><td><span class="badge mod">modified</span></td><td><span class="badge risk-med">Medium</span></td><td><code>page.tsx</code></td><td>Options tab removed; analysis tabs always rendered but lockable</td></tr>
+    <tr><td><strong>Study Modals (×4)</strong></td><td><span class="badge mod">modified</span></td><td><span class="badge risk-med">Medium</span></td><td><code>new/load/save/close-study-modal.tsx</code></td><td>Refactored to forwardRef + imperative handle pattern</td></tr>
+    <tr><td><strong>Study Tree</strong></td><td><span class="badge mod">modified</span></td><td><span class="badge risk-low">Low</span></td><td><code>study-tree.tsx, study-tree-add-bar.tsx</code></td><td>New contextual add-bar; scroll-to-item after inject; JSON edit modal</td></tr>
+    <tr><td><strong>Firestore Schema</strong></td><td><span class="badge mod">modified</span></td><td><span class="badge risk-high">High</span></td><td><code>app/types/firestore.tsx</code></td><td>models/drawings migrated to geometry; facility gets geometry; ignition source default changed</td></tr>
+    <tr><td><strong>All Item Forms (×6)</strong></td><td><span class="badge mod">modified</span></td><td><span class="badge risk-med">Medium</span></td><td>area, equipmentItem, facility, ignitionSource, scenario, zone forms</td><td>Options forms deleted; models/drawings upload moved to geometry tab</td></tr>
+    <tr><td><strong>Alert / Banners</strong></td><td><span class="badge del">deleted</span> <span class="badge mod">modified</span></td><td><span class="badge risk-low">Low</span></td><td><code>alert.tsx</code>, <code>banners.tsx</code></td><td>banners.tsx deleted; Alert gains alertType prop</td></tr>
+    <tr><td><strong>Geometry Plot</strong></td><td><span class="badge mod">modified</span></td><td><span class="badge risk-med">Medium</span></td><td><code>geometry-plot.tsx</code></td><td>hasModel/hasDrawings reads from geometry instead of information</td></tr>
+    <tr><td><strong>New Files</strong></td><td><span class="badge new">new</span></td><td><span class="badge risk-low">Low</span></td><td>file-dropdown, study-tree-add-bar, edit-study-json-modal, analysis-tab-controls, study-tree-add-actions, alert.test</td><td>Pure additions; no breaking changes</td></tr>
+    <tr><td><strong>Tests</strong></td><td><span class="badge test">tests</span></td><td><span class="badge risk-low">Low</span></td><td>3 new test files; 4 updated</td><td>Scenario HAC integration, toolbar modal triggers, add-actions unit tests</td></tr>
+  </tbody>
+</table>
+
+<hr />
+
+<!-- ─── 3. Sidebar ─── -->
+<h2 id="sidebar" class="section-anchor">3. Sidebar Redesign</h2>
+
+<div class="callout info">
+  <div class="title">What changed</div>
+  The sidebar previously had a 2×2 grid of modal-trigger buttons (New / Load / Save / Close) plus a two-tab section (Study Tree | Settings). Both are replaced with a compact single-row toolbar that adapts to narrow widths by going icon-only.
+</div>
+
+<div class="before-after">
+  <div class="ba-panel before">
+    <div class="ba-title">Before</div>
+    <div style="font-size:12px; color:var(--muted)">
+      ■ 2×2 / 4-col grid of buttons (New, Load, Save, Close)<br/>
+      ■ Tabs: [Study Tree] [Settings]<br/>
+      ■ Settings: ghost buttons list in a tab panel<br/>
+      ■ No study name shown<br/>
+      ■ Export Report lived only in study tree context menu<br/>
+      ■ Run HAC button not in sidebar toolbar<br/>
+      ■ Modals rendered inline, each with their own trigger button
+    </div>
+  </div>
+  <div class="ba-panel after">
+    <div class="ba-title">After</div>
+    <div style="font-size:12px; color:var(--muted)">
+      ■ Study name <code>&lt;h1&gt;</code> shown when loaded<br/>
+      ■ Single row toolbar: [File ▾] [💾] [▶ Run HAC] [📥 Export] [⚙️]<br/>
+      ■ File = dropdown (New / Load / Save / Close)<br/>
+      ■ Settings = dropdown menu (4 configurators)<br/>
+      ■ Export button moved into toolbar (with out-of-sync warning toast)<br/>
+      ■ Responsive: icon-only at ≤320 px container width<br/>
+      ■ Modals hidden by default; triggered imperatively via refs
+    </div>
+  </div>
+</div>
+
+<div class="diagram">
+  <h4>New sidebar layout structure</h4>
+  <svg viewBox="0 0 700 300" xmlns="http://www.w3.org/2000/svg" style="width:100%;max-height:300px">
+    <defs>
+      <style>
+        .sb { fill:#22263a; stroke:#2e3352; stroke-width:1; rx:6 }
+        .sb-text { fill:#e2e8f0; font-family:sans-serif; font-size:12px }
+        .sb-muted { fill:#94a3b8; font-family:sans-serif; font-size:11px }
+        .sb-accent { fill:#6c8ef7; font-family:sans-serif; font-size:11px; font-weight:700 }
+        .sb-green { fill:#34d399; font-family:sans-serif; font-size:11px }
+        .sb-border { fill:#1a1d27; stroke:#2e3352; stroke-width:1; }
+      </style>
+    </defs>
+    <!-- outer container -->
+    <rect x="10" y="10" width="680" height="280" rx="8" class="sb-border" />
+    <text x="24" y="34" class="sb-accent">SideBar component</text>
+
+    <!-- study name -->
+    <rect x="24" y="44" width="652" height="30" rx="4" fill="#22263a" stroke="#2e3352" stroke-width="1"/>
+    <text x="36" y="64" class="sb-text" font-weight="700" font-size="14">Study Name  (h1 — shown when study loaded)</text>
+
+    <!-- toolbar row -->
+    <rect x="24" y="84" width="652" height="40" rx="4" fill="#22263a" stroke="#2e3352" stroke-width="1"/>
+    <text x="36" y="98" class="sb-muted">Toolbar row (ref=controlsRef → usePanelWidth → icon-only at ≤320px)</text>
+
+    <!-- toolbar items -->
+    <rect x="36" y="103" width="60" height="14" rx="3" fill="#2e3352"/>
+    <text x="66" y="114" class="sb-text" text-anchor="middle" font-size="10">File ▾</text>
+
+    <rect x="104" y="103" width="28" height="14" rx="3" fill="#2e3352"/>
+    <text x="118" y="114" class="sb-green" text-anchor="middle" font-size="10">💾</text>
+
+    <rect x="140" y="103" width="100" height="14" rx="3" fill="#2e3352"/>
+    <text x="190" y="114" class="sb-accent" text-anchor="middle" font-size="10">▶ Run HAC (flex-1)</text>
+
+    <rect x="248" y="103" width="28" height="14" rx="3" fill="#2e3352"/>
+    <text x="262" y="114" class="sb-text" text-anchor="middle" font-size="10">📥</text>
+
+    <rect x="284" y="103" width="28" height="14" rx="3" fill="#2e3352"/>
+    <text x="298" y="114" class="sb-text" text-anchor="middle" font-size="10">⚙</text>
+
+    <!-- study tree area -->
+    <rect x="24" y="134" width="652" height="110" rx="4" fill="#22263a" stroke="#2e3352" stroke-width="1"/>
+    <text x="36" y="152" class="sb-muted">StudyTree (flex-1, overflow-hidden)</text>
+    <text x="36" y="170" class="sb-muted" font-size="10">  or "No study loaded" placeholder</text>
+
+    <!-- modals (hidden) -->
+    <rect x="24" y="254" width="652" height="28" rx="4" fill="#1a1d27" stroke="#2e3352" stroke-dasharray="4 2" stroke-width="1"/>
+    <text x="36" y="272" class="sb-muted" font-size="10">Hidden modals (hideButton=true): NewStudyModal ref=newModalRef | LoadStudyModal ref=loadModalRef | SaveStudyModal ref=saveModalRef | CloseStudyModal ref=closeModalRef</text>
+  </svg>
+</div>
+
+<h3>Key implementation decisions</h3>
+<ul style="color:var(--muted);padding-left:20px;font-size:13px">
+  <li>Export out-of-sync check is now duplicated — both <code>side-bar.tsx</code> and <code>study-tree.tsx</code> compute <code>canExportSafely</code> independently. Not a bug but a coupling risk if the logic diverges.</li>
+  <li><code>usePanelWidth</code> drives responsive behaviour; the 320 px breakpoint matches the same constant in <code>StudyTreeAddBar</code>.</li>
+  <li>The inline export modal (<code>ExportReportModal</code>) is now also rendered in <code>side-bar.tsx</code> in addition to <code>study-tree.tsx</code>. Two instances are mounted; they are guarded by separate open-state booleans so only one shows at a time, but it's worth noting the duplication.</li>
+</ul>
+
+<hr />
+
+<!-- ─── 4. Options Tab Removal ─── -->
+<h2 id="options-tab" class="section-anchor">4. Options Tab Removal &amp; Analysis Tab Redesign</h2>
+
+<div class="callout info">
+  <div class="title">What changed</div>
+  The "Options" (sliders) tab, which contained toggles to enable Risk Assessment / HAC / Geometry, has been completely removed. Those toggles are now embedded as tiny <strong>+/× buttons on the tab labels themselves</strong>. Disabled analysis tabs are always shown but rendered with a lock icon and are non-clickable.
+</div>
+
+<div class="before-after">
+  <div class="ba-panel before">
+    <div class="ba-title">Before: Tab Flow</div>
+    <div class="flow">
+      <div class="flow-box removed">⚙ Options</div>
+      <div class="flow-arrow">→</div>
+      <div class="flow-box same">📄 Information</div>
+      <div class="flow-arrow">→</div>
+      <div class="flow-box same">📊 Risk Assessment (if enabled)</div>
+      <div class="flow-arrow">→</div>
+      <div class="flow-box same">🔢 HAC (if enabled)</div>
+      <div class="flow-arrow">→</div>
+      <div class="flow-box same">📐 Geometry (if enabled)</div>
+    </div>
+    <div style="margin-top:8px;font-size:12px;color:var(--muted)">Options tab selected first; tabs added/removed dynamically when toggles flip. FormTab type included "options".</div>
+  </div>
+  <div class="ba-panel after">
+    <div class="ba-title">After: Tab Flow</div>
+    <div class="flow">
+      <div class="flow-box same">📄 Information</div>
+      <div class="flow-arrow">→</div>
+      <div class="flow-box changed">📊 Risk Assessment [+/×]</div>
+      <div class="flow-arrow">→</div>
+      <div class="flow-box changed">🔢 HAC [+/×]</div>
+      <div class="flow-arrow">→</div>
+      <div class="flow-box changed">📐 Geometry [+/×]</div>
+    </div>
+    <div style="margin-top:8px;font-size:12px;color:var(--muted)">All applicable tabs always present. Disabled tabs show 🔒 + muted text, are pointer-events:none. The +/× button in each tab label enables/disables inline. FormTab type no longer has "options".</div>
+  </div>
+</div>
+
+<h3>Type change: FormTab</h3>
+<div class="diff">
+  <div class="diff-header">app/types/firestore.tsx</div>
+  <pre><span class="del">- export type FormTab = "options" | "information" | "riskAssessment" | "hac" | "geometry";</span>
+<span class="add">+ export type FormTab = "information" | "riskAssessment" | "hac" | "geometry";</span></pre>
+</div>
+
+<div class="callout warn">
+  <div class="title">Review focus: tab slot stability</div>
+  The old approach used a dynamic <code>availableFormTabs</code> state array that would grow/shrink, causing tab layout reflow. The new <code>getApplicableFormTabs()</code> is computed from the item type at render time (never changes for a given item) and the <code>isTabEnabled()</code> function reads from <code>options</code> at render time. This is cleaner, but verify that disabling a tab while it is the active tab correctly falls back to "information" (the <code>handleDisableTab()</code> callback does set this, but confirm it fires before the tab unmounts).
+</div>
+
+<div class="diagram">
+  <h4>AnalysisTabActionButton integration</h4>
+  <svg viewBox="0 0 640 200" xmlns="http://www.w3.org/2000/svg" style="width:100%;max-height:200px">
+    <defs><style>
+      .at { fill:#22263a; stroke:#2e3352; stroke-width:1; }
+      .at-t { fill:#e2e8f0; font-family:sans-serif; font-size:11px; }
+      .at-m { fill:#94a3b8; font-family:sans-serif; font-size:10px; }
+      .at-g { fill:#34d399; }
+      .at-r { fill:#f87171; }
+    </style></defs>
+
+    <!-- Tab bar -->
+    <rect x="10" y="20" width="120" height="34" rx="4" class="at" stroke="#6c8ef7" stroke-width="2"/>
+    <text x="70" y="38" class="at-t" text-anchor="middle" font-size="12">📄 Information</text>
+    <text x="70" y="50" class="at-m" text-anchor="middle">(always active)</text>
+
+    <rect x="140" y="20" width="140" height="34" rx="4" class="at"/>
+    <text x="205" y="38" class="at-t" text-anchor="middle" font-size="11">📊 Risk Assess.</text>
+    <text x="205" y="50" class="at-m" text-anchor="middle">enabled → × | disabled → +</text>
+    <!-- Plus/X badge -->
+    <circle cx="272" cy="27" r="7" fill="#e2e8f0"/>
+    <text x="272" y="31" text-anchor="middle" font-size="9" fill="#1a1d27">+</text>
+
+    <rect x="290" y="20" width="110" height="34" rx="4" class="at"/>
+    <text x="345" y="38" class="at-t" text-anchor="middle" font-size="11">🔢 HAC</text>
+    <text x="345" y="50" class="at-m" text-anchor="middle">disabled (lock icon)</text>
+    <text x="393" y="32" class="at-m" font-size="12">🔒</text>
+
+    <rect x="410" y="20" width="110" height="34" rx="4" class="at"/>
+    <text x="465" y="38" class="at-t" text-anchor="middle" font-size="11">📐 Geometry</text>
+    <text x="465" y="50" class="at-m" text-anchor="middle">pointer-events:none</text>
+    <text x="513" y="32" class="at-m" font-size="12">🔒</text>
+
+    <!-- Arrow down to AnalysisTabActionButton -->
+    <line x1="272" y1="54" x2="272" y2="100" stroke="#6c8ef7" stroke-dasharray="3 2"/>
+    <rect x="180" y="100" width="220" height="50" rx="6" fill="#1e2a3a" stroke="#6c8ef7" stroke-width="1"/>
+    <text x="290" y="118" class="at-t" text-anchor="middle">AnalysisTabActionButton</text>
+    <text x="290" y="133" class="at-m" text-anchor="middle">calls setTabEnabled → saveFormData("options", …)</text>
+    <text x="290" y="146" class="at-m" text-anchor="middle">onEnabled(tab) → setActiveFormTab | onDisabled() → "information"</text>
+  </svg>
+</div>
+
+<h3>Deleted: Options form components</h3>
+<p>Six <code>*OptionsForm</code> components removed from: <code>area-forms</code>, <code>equipment-item-forms</code>, <code>facility-forms</code>, <code>ignition-source-forms</code>, <code>scenario-forms</code>, <code>zone-forms</code>. The <code>formComponentsMap.options</code> map is also gone from <code>page.tsx</code>.</p>
+
+<hr />
+
+<!-- ─── 5. Add Bar ─── -->
+<h2 id="add-bar" class="section-anchor">5. Study Tree Add Bar</h2>
+
+<div class="callout info">
+  <div class="title">What changed</div>
+  A new contextual add bar appears below the study tree whenever an item is selected. It shows the primary child type (e.g. "Add Area" when a Facility is selected) and any secondary types, arranged in a fixed 3-column grid.
+</div>
+
+<div class="before-after">
+  <div class="ba-panel before">
+    <div class="ba-title">Before</div>
+    <div style="font-size:12px;color:var(--muted)">Uniform icon row — all child types shown regardless of selected item. No text labels.</div>
+  </div>
+  <div class="ba-panel after">
+    <div class="ba-title">After</div>
+    <div style="font-size:12px;color:var(--muted)">Contextual 3-col grid. Primary type (e.g. "Add Area") in first slot, secondary types fill remaining slots. Responsive: icon+badge only at ≤320 px, smaller text at ≤430 px. After item is injected, tree scrolls to and selects it automatically.</div>
+  </div>
+</div>
+
+<h3>study-tree-add-actions.ts — mapping utility</h3>
+<div class="diff">
+  <div class="diff-header">lib/study-tree-add-actions.ts (new file)</div>
+  <pre><span class="add">+ const primaryChildType = { study:"facility", section:"facility", facility:"area",</span>
+<span class="add">+   area:"equipmentItem", equipmentItem:"scenario", scenario:"zone" };</span>
+<span class="add">+</span>
+<span class="add">+ const secondaryChildTypes = { study:["section"], section:["section"],</span>
+<span class="add">+   area:["ignitionSource","zone"], equipmentItem:["zone"] };</span></pre>
+</div>
+
+<div class="callout warn">
+  <div class="title">Edge case to verify</div>
+  <code>StudyTreeAddBar</code> returns <code>null</code> when <code>parentItem.index === "root"</code>. The root node is not a user-visible tree item, so this is correct — but confirm it also handles the case where a <code>study</code> node is selected (study is the first real user item). From the mapping: study's primary child is "facility", so the bar correctly shows "Add Facility".
+</div>
+
+<hr />
+
+<!-- ─── 6. Modal Imperative Handles ─── -->
+<h2 id="modals" class="section-anchor">6. Imperative Modal Handles</h2>
+
+<div class="callout info">
+  <div class="title">What changed</div>
+  All four study modals (<code>NewStudyModal</code>, <code>LoadStudyModal</code>, <code>SaveStudyModal</code>, <code>CloseStudyModal</code>) were refactored from components that render their own trigger button to components that expose an imperative <code>trigger()</code> handle via <code>forwardRef</code> + <code>useImperativeHandle</code>. A <code>hideButton</code> prop suppresses the internal button when the modal is controlled externally.
+</div>
+
+<div class="diagram">
+  <h4>Old vs New modal trigger pattern</h4>
+  <svg viewBox="0 0 660 220" xmlns="http://www.w3.org/2000/svg" style="width:100%;max-height:220px">
+    <defs><style>
+      .mp { fill:#1a1d27; stroke:#2e3352; stroke-width:1; }
+      .mt { fill:#e2e8f0; font-family:sans-serif; font-size:11px; }
+      .mm { fill:#94a3b8; font-family:sans-serif; font-size:10px; }
+      .mg { fill:#34d399; font-family:sans-serif; font-size:10px; }
+      .mr { fill:#f87171; font-family:sans-serif; font-size:10px; }
+    </style></defs>
+
+    <!-- OLD -->
+    <text x="80" y="20" class="mt" font-weight="700" text-anchor="middle" fill="#f87171">BEFORE</text>
+    <rect x="10" y="28" width="145" height="150" rx="6" class="mp"/>
+    <text x="82" y="48" class="mt" text-anchor="middle">SideBar</text>
+    <rect x="22" y="56" width="60" height="22" rx="4" fill="#22263a" stroke="#2e3352"/>
+    <text x="52" y="70" class="mt" text-anchor="middle" font-size="10">NewStudyModal</text>
+    <text x="52" y="81" class="mm" text-anchor="middle">(renders button)</text>
+    <rect x="22" y="85" width="60" height="22" rx="4" fill="#22263a" stroke="#2e3352"/>
+    <text x="52" y="99" class="mt" text-anchor="middle" font-size="10">LoadStudyModal</text>
+    <rect x="22" y="114" width="60" height="22" rx="4" fill="#22263a" stroke="#2e3352"/>
+    <text x="52" y="128" class="mt" text-anchor="middle" font-size="10">SaveStudyModal</text>
+    <rect x="22" y="143" width="60" height="22" rx="4" fill="#22263a" stroke="#2e3352"/>
+    <text x="52" y="157" class="mt" text-anchor="middle" font-size="10">CloseStudyModal</text>
+    <text x="82" y="185" class="mr" text-anchor="middle">Each modal owns its button</text>
+
+    <!-- ARROW -->
+    <text x="190" y="110" fill="#6c8ef7" font-size="24" font-family="sans-serif">→</text>
+
+    <!-- NEW -->
+    <text x="430" y="20" class="mt" font-weight="700" text-anchor="middle" fill="#34d399">AFTER</text>
+    <rect x="225" y="28" width="420" height="180" rx="6" class="mp"/>
+    <text x="435" y="48" class="mt" text-anchor="middle">SideBar</text>
+
+    <rect x="237" y="56" width="200" height="60" rx="4" fill="#22263a" stroke="#2e3352"/>
+    <text x="337" y="74" class="mt" text-anchor="middle">Toolbar: FileDropdown + buttons</text>
+    <text x="337" y="87" class="mm" text-anchor="middle">calls: newModalRef.current?.trigger()</text>
+    <text x="337" y="99" class="mm" text-anchor="middle">saveModalRef.current?.trigger() etc.</text>
+
+    <rect x="237" y="126" width="80" height="20" rx="3" fill="#1a3a2a" stroke="#34d399" stroke-width="1"/>
+    <text x="277" y="139" class="mg" text-anchor="middle" font-size="10">ref=newModalRef</text>
+    <rect x="325" y="126" width="80" height="20" rx="3" fill="#1a3a2a" stroke="#34d399" stroke-width="1"/>
+    <text x="365" y="139" class="mg" text-anchor="middle" font-size="10">ref=loadModalRef</text>
+    <rect x="413" y="126" width="80" height="20" rx="3" fill="#1a3a2a" stroke="#34d399" stroke-width="1"/>
+    <text x="453" y="139" class="mg" text-anchor="middle" font-size="10">ref=saveModalRef</text>
+    <rect x="501" y="126" width="80" height="20" rx="3" fill="#1a3a2a" stroke="#34d399" stroke-width="1"/>
+    <text x="541" y="139" class="mg" text-anchor="middle" font-size="10">ref=closeModalRef</text>
+
+    <text x="277" y="155" class="mm" text-anchor="middle">hideButton</text>
+    <text x="365" y="155" class="mm" text-anchor="middle">hideButton</text>
+    <text x="453" y="155" class="mm" text-anchor="middle">hideButton</text>
+    <text x="541" y="155" class="mm" text-anchor="middle">hideButton</text>
+
+    <text x="435" y="196" class="mg" text-anchor="middle">Modals are layout-invisible; only portals show</text>
+  </svg>
+</div>
+
+<div class="callout warn">
+  <div class="title">Review focus</div>
+  The <code>hideButton</code> prop must be verified in all four modal components to confirm the internal trigger button is correctly suppressed when set. Also verify the modal's internal open-state management is preserved — the ref just calls <code>setIsOpen(true)</code>, so the modal still fully controls its own open/close lifecycle.
+</div>
+
+<hr />
+
+<!-- ─── 7. Schema Changes ─── -->
+<h2 id="schema" class="section-anchor">7. Data Model / Schema Changes</h2>
+
+<div class="callout risk">
+  <div class="title">⚠ Highest-risk change in this PR</div>
+  The <strong>models</strong> and <strong>drawings</strong> fields have been <strong>moved from <code>item.information</code> to <code>item.geometry</code></strong> across all item types. This is a breaking schema change for any existing Firestore documents that store these fields under <code>information</code>. There is no migration script visible in this diff.
+</div>
+
+<h3>Affected item types</h3>
+<table>
+  <thead><tr><th>Item Type</th><th>models/drawings location before</th><th>models/drawings location after</th><th>Geometry added?</th></tr></thead>
+  <tbody>
+    <tr><td>Facility</td><td><code>information.models</code>, <code>information.drawings</code></td><td><code>geometry.models</code>, <code>geometry.drawings</code></td><td><strong style="color:var(--green)">Yes (new field)</strong></td></tr>
+    <tr><td>Area</td><td><code>information.models</code>, <code>information.drawings</code></td><td><code>geometry.models</code>, <code>geometry.drawings</code></td><td>No change (already existed)</td></tr>
+    <tr><td>EquipmentItem</td><td><code>information.models</code>, <code>information.drawings</code></td><td><code>geometry.models</code>, <code>geometry.drawings</code></td><td>No change</td></tr>
+    <tr><td>IgnitionSource</td><td><code>information.models</code>, <code>information.drawings</code></td><td><code>geometry.models</code>, <code>geometry.drawings</code></td><td>No change</td></tr>
+    <tr><td>Scenario</td><td>Had no models/drawings</td><td><code>geometry.models</code>, <code>geometry.drawings</code></td><td>Inherited via GeometrySchema</td></tr>
+    <tr><td>Zone</td><td>Had no models/drawings</td><td><code>geometry.models</code>, <code>geometry.drawings</code></td><td>Inherited via GeometrySchema</td></tr>
+  </tbody>
+</table>
+
+<h3>GeometrySchema extension</h3>
+<div class="diff">
+  <div class="diff-header">app/types/firestore.tsx — GeometrySchema</div>
+  <pre><span class="add">+ const geometryMediaFields = {</span>
+<span class="add">+   models: multipleModelsSchema,</span>
+<span class="add">+   drawings: multipleDrawingsSchema,</span>
+<span class="add">+ };</span>
+<span class="add">+</span>
+<span class="ctx">  // All 6 geometry variants (Point, Sphere, Cuboid, Cylinder, Cone, None) now spread geometryMediaFields</span>
+  PointSchema.extend({ geometryType: z.literal("Point"), <span class="add">...geometryMediaFields,</span> notes: z.string().optional() }),</pre>
+</div>
+
+<h3>Other schema changes</h3>
+<table>
+  <thead><tr><th>Change</th><th>Details</th><th>Risk</th></tr></thead>
+  <tbody>
+    <tr><td>Facility gets <code>geometry</code></td><td>New field with <code>defaultGeometry</code>; <code>options.hasGeometry</code> defaults to <code>true</code>; added to <code>GEOMETRY_TYPES</code></td><td><span class="badge risk-med">Medium</span> — existing Facility documents lack this field; Zod default handles it at parse time</td></tr>
+    <tr><td>Ignition source <code>hasGeometry</code> default</td><td>Changed from <code>false</code> to <code>true</code></td><td><span class="badge risk-low">Low</span> — affects new items only; existing items keep their stored value</td></tr>
+    <tr><td><code>isValidGeometryItem</code> null-safe</td><td>Added <code>geometry?.geometryType !== "None"</code> guard</td><td><span class="badge risk-low">Low</span> — defensive improvement</td></tr>
+    <tr><td><code>form-hooks.tsx</code> routing</td><td><code>mediaContainerFieldMap</code> routes models/drawings writes to <code>geometry</code> container, images/attachments to <code>information</code></td><td><span class="badge risk-med">Medium</span> — central upload path; needs testing</td></tr>
+  </tbody>
+</table>
+
+<div class="callout warn">
+  <div class="title">Migration concern</div>
+  Existing Firestore documents will have <code>information.models</code> / <code>information.drawings</code>. When loaded, Zod will parse the document. Since the old fields are no longer in the schema, Zod's <code>.strip()</code> default will <strong>discard</strong> any existing models/drawings silently. Existing uploaded 3D models and drawings will disappear on next load until a migration script backfills the data to <code>geometry.*</code>.
+</div>
+
+<hr />
+
+<!-- ─── 8. Alert / Banner ─── -->
+<h2 id="alert" class="section-anchor">8. Alert / Banner Consolidation</h2>
+
+<div class="callout good">
+  <div class="title">Clean consolidation</div>
+  Four bespoke banner components (<code>InfoBanner</code>, <code>WarningBanner</code>, <code>ErrorBanner</code>, <code>SuccessBanner</code>) from <code>banners.tsx</code> have been absorbed into the shared <code>Alert</code> component via an <code>alertType</code> prop. Old API: <code>&lt;InfoBanner text="…" /&gt;</code>. New API: <code>&lt;Alert alertType="Info"&gt;…&lt;/Alert&gt;</code>. The component automatically renders the correct icon and Tailwind colour classes.
+</div>
+
+<div class="before-after">
+  <div class="ba-panel before">
+    <div class="ba-title">Before (banners.tsx, now deleted)</div>
+    <pre style="font-size:11px;color:var(--muted)">
+export const InfoBanner = ({ text }) => (
+  &lt;div className="bg-info text-info-text ..."&gt;
+    &lt;Info /&gt; {text}
+  &lt;/div&gt;
+);
+// × 4 variants
+    </pre>
+  </div>
+  <div class="ba-panel after">
+    <div class="ba-title">After (alert.tsx extended)</div>
+    <pre style="font-size:11px;color:var(--muted)">
+// alertType?: "Info"|"Warning"|"Error"|"Success"|null
+&lt;Alert alertType="Info"&gt;Message text&lt;/Alert&gt;
+// Icon auto-selected from alertTypeIcons map
+// Styles auto-applied from alertTypeStyles map
+    </pre>
+  </div>
+</div>
+
+<p>Unit tests added in <code>alert.test.tsx</code> covering: no icon on default variant, icon presence on each alertType, correct bg-class applied, title+description sub-components.</p>
+
+<hr />
+
+<!-- ─── 9. New Components ─── -->
+<h2 id="new-components" class="section-anchor">9. New Components (Inventory)</h2>
+
+<table>
+  <thead><tr><th>Component</th><th>Path</th><th>Purpose</th><th>Notes</th></tr></thead>
+  <tbody>
+    <tr>
+      <td><strong>FileDropdown</strong></td>
+      <td><code>components/database/file-dropdown.tsx</code></td>
+      <td>Dropdown menu grouping New/Load/Save/Close study actions</td>
+      <td>Stateless; callbacks passed as props. <code>iconOnly</code> prop hides label. Save/Close disabled when no study loaded.</td>
+    </tr>
+    <tr>
+      <td><strong>StudyTreeAddBar</strong></td>
+      <td><code>components/dashboard/study-tree/study-tree-add-bar.tsx</code></td>
+      <td>Contextual add buttons below study tree</td>
+      <td>Driven by <code>getPrimaryChildType</code>/<code>getSecondaryChildTypes</code>. 3-col fixed grid. Responsive width breakpoints 320px/430px. Returns null for root node.</td>
+    </tr>
+    <tr>
+      <td><strong>EditStudyJsonModal</strong></td>
+      <td><code>components/dashboard/study-tree/edit-study-json-modal.tsx</code></td>
+      <td>Developer escape hatch to directly edit study JSON</td>
+      <td>Full client-side validation (schema + parent/child consistency + root check). Accessible via context menu on study node only. Destructive if misused.</td>
+    </tr>
+    <tr>
+      <td><strong>AnalysisTabActionButton</strong></td>
+      <td><code>components/dashboard/forms/analysis-tab-controls.tsx</code></td>
+      <td>Small +/× button overlaid on each analysis tab trigger</td>
+      <td>Uses <code>event.stopPropagation()</code> to avoid activating the tab when toggling. Calls <code>saveFormData("options", …)</code> on the data provider.</td>
+    </tr>
+    <tr>
+      <td><strong>study-tree-add-actions.ts</strong></td>
+      <td><code>lib/study-tree-add-actions.ts</code></td>
+      <td>Pure utility: primary/secondary child type mappings</td>
+      <td>No side effects. Unit-tested. Used by StudyTreeAddBar.</td>
+    </tr>
+    <tr>
+      <td><strong>FacilityGeometryForm</strong></td>
+      <td><code>components/dashboard/forms/facility-forms.tsx</code></td>
+      <td>New geometry tab form for Facility items</td>
+      <td>Added to <code>formComponentsMap.geometry</code>. Facility previously had no geometry form.</td>
+    </tr>
+  </tbody>
+</table>
+
+<hr />
+
+<!-- ─── 10. Tests ─── -->
+<h2 id="tests" class="section-anchor">10. Tests &amp; Type Safety</h2>
+
+<div class="card-grid">
+  <div class="stat-card green"><div class="num">3</div><div class="label">New test files</div></div>
+  <div class="stat-card blue"><div class="num">4</div><div class="label">Updated test files</div></div>
+  <div class="stat-card yellow"><div class="num">0</div><div class="label">Deleted test files</div></div>
+</div>
+
+<table>
+  <thead><tr><th>Test File</th><th>Type</th><th>Coverage</th></tr></thead>
+  <tbody>
+    <tr>
+      <td><code>scenario-hac-form.integration.test.tsx</code></td>
+      <td><span class="badge test">Integration</span></td>
+      <td>ScenarioHacForm rendered in full context; validates form interactions, field updates, validation messages</td>
+    </tr>
+    <tr>
+      <td><code>study-modals-toolbar.test.tsx</code></td>
+      <td><span class="badge test">Unit/UI</span></td>
+      <td>Toolbar renders File dropdown; imperative ref triggers open modals; Save/Close disabled when no study; FileDropdown icon-only mode</td>
+    </tr>
+    <tr>
+      <td><code>study-tree-add-actions.test.ts</code></td>
+      <td><span class="badge test">Unit</span></td>
+      <td>getPrimaryChildType, getSecondaryChildTypes — all item types, null returns, array contents</td>
+    </tr>
+    <tr>
+      <td><code>alert.test.tsx</code></td>
+      <td><span class="badge test">Unit</span></td>
+      <td>Alert default/typed variants; icon presence; bg class; AlertTitle/AlertDescription subcomponents</td>
+    </tr>
+    <tr>
+      <td><code>hazard-distance-suppression.test.ts</code></td>
+      <td><span class="badge fix">Updated</span></td>
+      <td>Fixture updated for hasHac and material schema changes</td>
+    </tr>
+    <tr>
+      <td><code>phast-calculations.test.ts</code></td>
+      <td><span class="badge fix">Updated</span></td>
+      <td>Fixture updated for schema changes</td>
+    </tr>
+    <tr>
+      <td><code>geometry-buffer-utils.test.ts</code></td>
+      <td><span class="badge fix">Updated</span></td>
+      <td>Adjusted for new geometry shape</td>
+    </tr>
+    <tr>
+      <td><code>calculation-versioning.test.ts</code></td>
+      <td><span class="badge fix">Updated</span></td>
+      <td>Minor fixture alignment</td>
+    </tr>
+  </tbody>
+</table>
+
+<h3>Type safety observations</h3>
+<ul style="color:var(--muted);padding-left:20px;font-size:13px">
+  <li>The <code>getMediaRecord</code> helper in <code>form-hooks.tsx</code> casts to <code>Record&lt;string, unknown&gt;</code> — acceptable but loses type safety on the return path. Worth a second look.</li>
+  <li><code>geometry-plot.tsx</code> introduces <code>asRecord()</code> helper for null-safe geometry access — this is safer than the previous <code>"models" in studyItem.information</code> duck-typing.</li>
+  <li><code>isValidGeometryItem</code> now casts: <code>const geometry = item.geometry as { geometryType?: unknown } | undefined</code> — the <code>as</code> cast bypasses the discriminated union; works correctly but a narrowing approach would be cleaner.</li>
+  <li>The <code>EditStudyJsonModal</code> uses <code>JSON.parse(jsonDraft) as unknown</code> then validates with Zod — this is the correct pattern for arbitrary user input.</li>
+</ul>
+
+<hr />
+
+<!-- ─── 11. Heatmap ─── -->
+<h2 id="hotspots" class="section-anchor">11. Risk Heatmap &amp; Review Hotspots</h2>
+
+<div class="heatmap">
+  <div class="heatmap-cell heat-5">
+    <div class="cell-label">Schema Migration</div>
+    <div class="cell-score">🔴 5</div>
+    <div style="font-size:10px;margin-top:4px;color:inherit">models/drawings location change — existing data at risk without migration</div>
+  </div>
+  <div class="heatmap-cell heat-4">
+    <div class="cell-label">form-hooks.tsx</div>
+    <div class="cell-score">🟠 4</div>
+    <div style="font-size:10px;margin-top:4px;color:inherit">Central upload/delete path now routes by mediaContainerFieldMap — all media writes flow through this</div>
+  </div>
+  <div class="heatmap-cell heat-4">
+    <div class="cell-label">EditStudyJsonModal</div>
+    <div class="cell-score">🟠 4</div>
+    <div style="font-size:10px;margin-top:4px;color:inherit">Writes raw JSON to Firestore. Power-user tool with potential for corruption if validation gaps exist</div>
+  </div>
+  <div class="heatmap-cell heat-3">
+    <div class="cell-label">side-bar.tsx</div>
+    <div class="cell-score">🟡 3</div>
+    <div style="font-size:10px;margin-top:4px;color:inherit">Export+canExport logic duplicated from study-tree.tsx; potential divergence risk</div>
+  </div>
+  <div class="heatmap-cell heat-3">
+    <div class="cell-label">Modal refactors</div>
+    <div class="cell-score">🟡 3</div>
+    <div style="font-size:10px;margin-top:4px;color:inherit">4 large modal files rewritten; functional behaviour must be verified unchanged</div>
+  </div>
+  <div class="heatmap-cell heat-3">
+    <div class="cell-label">geometry-plot.tsx</div>
+    <div class="cell-score">🟡 3</div>
+    <div style="font-size:10px;margin-top:4px;color:inherit">hasModel/hasDrawings now reads from geometry not information — 3D view could break for old data</div>
+  </div>
+  <div class="heatmap-cell heat-2">
+    <div class="cell-label">AnalysisTabActionButton</div>
+    <div class="cell-score">🟨 2</div>
+    <div style="font-size:10px;margin-top:4px;color:inherit">Tab toggle while on that tab; active tab fallback logic</div>
+  </div>
+  <div class="heatmap-cell heat-2">
+    <div class="cell-label">Facility geometry</div>
+    <div class="cell-score">🟨 2</div>
+    <div style="font-size:10px;margin-top:4px;color:inherit">New capability; existing Facility docs need default geometry on load</div>
+  </div>
+  <div class="heatmap-cell heat-1">
+    <div class="cell-label">Alert / Banners</div>
+    <div class="cell-score">🟢 1</div>
+    <div style="font-size:10px;margin-top:4px;color:inherit">Clean consolidation with tests; low risk</div>
+  </div>
+  <div class="heatmap-cell heat-1">
+    <div class="cell-label">StudyTreeAddBar</div>
+    <div class="cell-score">🟢 1</div>
+    <div style="font-size:10px;margin-top:4px;color:inherit">New UI; well-tested; doesn't touch calculation logic</div>
+  </div>
+</div>
+
+<hr />
+
+<!-- ─── 12. Checklist ─── -->
+<h2 id="checklist" class="section-anchor">12. Manual Review Checklist</h2>
+
+<div class="card">
+  <h3 style="margin-top:0">Schema / Data Integrity</h3>
+  <ul class="checklist">
+    <li class="critical">Confirm a Firestore migration script exists (or is planned) to move <code>information.models</code> / <code>information.drawings</code> to <code>geometry.models</code> / <code>geometry.drawings</code> for existing documents. Without this, uploaded 3D models and drawings will silently disappear when old studies are loaded.</li>
+    <li class="critical">Load an existing study that has 3D models or drawings already uploaded. Verify they still appear in the geometry tab and render correctly in GeometryPlot.</li>
+    <li class="important">Verify that Facility items newly created under this branch get a <code>geometry</code> field saved to Firestore. Check that the Zod default (<code>GeometrySchema.default(defaultGeometry)</code>) propagates correctly through the save path.</li>
+    <li>Verify existing Facility documents (which lack a geometry field) load without error; Zod's default should supply it.</li>
+    <li>Check that ignition sources created before this change (with <code>hasGeometry: false</code>) retain their stored value and do not force-enable geometry.</li>
+  </ul>
+</div>
+
+<div class="card">
+  <h3 style="margin-top:0">Sidebar &amp; Toolbar</h3>
+  <ul class="checklist">
+    <li class="important">Test FileDropdown at very narrow sidebar widths (&lt;320 px) — verify icon-only mode removes the "Study" label and tooltip appears correctly.</li>
+    <li>Verify the out-of-sync export toast fires when HAC has not been run, and the export modal opens normally when results are current.</li>
+    <li>Confirm the study name <code>&lt;h1&gt;</code> updates when a new study is loaded or renamed.</li>
+    <li>Verify Settings dropdown items all open their correct configurator dialogs.</li>
+    <li>Check "No study loaded" placeholder shows when study index is "root".</li>
+    <li class="important">Verify there are no two export modals open simultaneously (both sidebar and study-tree render ExportReportModal independently).</li>
+  </ul>
+</div>
+
+<div class="card">
+  <h3 style="margin-top:0">Modal Imperative Handles</h3>
+  <ul class="checklist">
+    <li class="important">Test all four modals open correctly via the File dropdown and the quick-save button in the toolbar.</li>
+    <li>Confirm <code>hideButton=true</code> correctly suppresses the internal trigger button in all four modal components.</li>
+    <li>Verify modal close/cancel flows are unchanged (ESC key, clicking backdrop, Cancel button).</li>
+    <li>Test rapid open/close — ensure refs don't hold stale state after study changes.</li>
+  </ul>
+</div>
+
+<div class="card">
+  <h3 style="margin-top:0">Analysis Tabs</h3>
+  <ul class="checklist">
+    <li class="important">While on the Geometry tab, click the × button to disable it. Confirm: (1) active tab falls back to Information, (2) Geometry tab shows lock icon, (3) clicking the locked tab has no effect.</li>
+    <li>While on the Information tab, click + on Geometry tab. Confirm: Geometry tab becomes active and the form renders.</li>
+    <li>Switch between items in the study tree. Confirm the correct tabs appear (some items have no HAC or Geometry tabs) and no stale tab is "active" after switching.</li>
+    <li>Verify that for <code>study</code> and <code>section</code> items, only the Information tab is shown (no analysis tabs).</li>
+    <li>Check no Options tab appears anywhere (removed globally).</li>
+  </ul>
+</div>
+
+<div class="card">
+  <h3 style="margin-top:0">Study Tree Add Bar</h3>
+  <ul class="checklist">
+    <li>Select each item type and verify the correct add buttons appear (Facility → shows "Add Area"; Area → shows "Add Equipment Item", "Add Ignition Source", "Add Zone"; etc.).</li>
+    <li>Add an item and verify the tree scrolls to it and it is selected.</li>
+    <li>Select the root node — verify no add bar is shown.</li>
+    <li>Narrow the sidebar panel below 320 px — verify icon-only mode with tooltips on hover.</li>
+  </ul>
+</div>
+
+<div class="card">
+  <h3 style="margin-top:0">Edit Study JSON Modal</h3>
+  <ul class="checklist">
+    <li class="important">Verify it is accessible <em>only</em> via the context menu on a study-type item (not on other item types, not from a button).</li>
+    <li>Test saving invalid JSON — should show a toast error with a specific message.</li>
+    <li>Test saving JSON with a broken parent reference — should show a descriptive error.</li>
+    <li>Test a valid round-trip: open, make a name change, save, verify the change persists in the UI and Firestore.</li>
+    <li class="critical">Consider access control: this modal directly writes raw JSON to Firestore. Is it appropriate for all logged-in users, or should it be gated (e.g. dev/admin only)?</li>
+  </ul>
+</div>
+
+<div class="card">
+  <h3 style="margin-top:0">3D Geometry Plot</h3>
+  <ul class="checklist">
+    <li class="important">Load a study with 3D models uploaded. Verify models render in the geometry view. Check <code>hasModel()</code> now correctly reads <code>geometry.models</code>.</li>
+    <li>Load a study with drawings. Verify drawings render and calibration works.</li>
+    <li>Verify that Facility items now appear in the geometry scene (previously excluded from GEOMETRY_TYPES).</li>
+  </ul>
+</div>
+
+<div class="card">
+  <h3 style="margin-top:0">Tests &amp; CI</h3>
+  <ul class="checklist">
+    <li><code>npm test</code> — all tests pass (check fixture updates are correct)</li>
+    <li><code>npm run typecheck</code> — no type errors</li>
+    <li><code>npm run lint</code> — no lint warnings (CI enforces zero)</li>
+    <li class="important">Verify <code>eslint.config.mjs</code> change (ignore agent worktrees) doesn't inadvertently exclude source files from linting.</li>
+  </ul>
+</div>
+
+<div class="card">
+  <h3 style="margin-top:0">Reports</h3>
+  <ul class="checklist">
+    <li>Verify report generation still works end-to-end (models/drawings now come from geometry not information — report export uses <code>modelUrls</code>/<code>drawingUrls</code> from <code>outputs</code>, which is still populated by the upload hook).</li>
+    <li>Check report components that reference <code>information.models</code> or <code>information.drawings</code> directly (several report files were touched in this diff).</li>
+  </ul>
+</div>
+
+<footer style="margin-top:48px;padding-top:24px;border-top:1px solid var(--border);color:var(--muted);font-size:12px;text-align:center">
+  Generated by Claude Code from <code>git diff main...HEAD</code> &nbsp;·&nbsp; Branch: <code>feat/ui-tweaks</code> &nbsp;·&nbsp; 2026-05-22
+</footer>
+</div>
+</body>
+</html>
