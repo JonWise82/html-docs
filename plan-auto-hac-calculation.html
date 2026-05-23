@@ -1,0 +1,570 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Plan: Auto HAC Calculation — nEXus</title>
+  <style>
+    *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+    body {
+      font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif;
+      font-size: 15px; line-height: 1.65; color: #1a1a2e;
+      background: #f8f9fc; padding: 0 0 60px;
+    }
+    header {
+      background: linear-gradient(135deg, #1e3a5f 0%, #2d6a9f 100%);
+      color: white; padding: 36px 48px 32px;
+    }
+    header h1 { font-size: 1.8rem; font-weight: 700; margin-bottom: 6px; }
+    header p { opacity: 0.8; font-size: 0.95rem; }
+    .badge {
+      display: inline-block; background: rgba(255,255,255,0.2);
+      border-radius: 4px; padding: 2px 10px; font-size: 0.8rem;
+      margin-top: 10px; font-weight: 600; letter-spacing: 0.04em;
+    }
+    main { max-width: 960px; margin: 0 auto; padding: 40px 24px; }
+    h2 {
+      font-size: 1.25rem; font-weight: 700; color: #1e3a5f;
+      border-bottom: 2px solid #2d6a9f; padding-bottom: 8px;
+      margin: 40px 0 16px;
+    }
+    h3 { font-size: 1rem; font-weight: 700; color: #2d6a9f; margin: 28px 0 10px; }
+    h4 { font-size: 0.92rem; font-weight: 700; color: #444; margin: 20px 0 8px; }
+    p { margin-bottom: 12px; }
+    a { color: #2d6a9f; }
+    .context-box {
+      background: #e8f0f9; border-left: 4px solid #2d6a9f;
+      padding: 16px 20px; border-radius: 0 6px 6px 0; margin-bottom: 24px;
+    }
+    table {
+      width: 100%; border-collapse: collapse; margin: 12px 0 20px;
+      font-size: 0.9rem;
+    }
+    th {
+      background: #1e3a5f; color: white; text-align: left;
+      padding: 9px 14px; font-weight: 600;
+    }
+    td { padding: 8px 14px; border-bottom: 1px solid #e0e4ed; vertical-align: top; }
+    tr:nth-child(even) td { background: #f2f5fb; }
+    tr:last-child td { border-bottom: none; }
+    code {
+      font-family: "Fira Code", "Cascadia Code", "Consolas", monospace;
+      font-size: 0.82rem; background: #eef1f8; padding: 1px 5px;
+      border-radius: 3px; color: #c0392b;
+    }
+    pre {
+      background: #1a1a2e; color: #e8eaf6; padding: 18px 20px;
+      border-radius: 8px; overflow-x: auto; margin: 12px 0 18px;
+      font-family: "Fira Code", "Cascadia Code", "Consolas", monospace;
+      font-size: 0.82rem; line-height: 1.6;
+    }
+    pre code { background: none; color: inherit; padding: 0; }
+    .task-card {
+      background: white; border: 1px solid #d0d7e8;
+      border-radius: 10px; padding: 22px 26px; margin-bottom: 20px;
+      box-shadow: 0 1px 4px rgba(0,0,0,0.06);
+    }
+    .task-card h3 { margin-top: 0; }
+    .dep-tag {
+      display: inline-block; background: #fff3cd; border: 1px solid #ffc107;
+      border-radius: 4px; padding: 1px 8px; font-size: 0.78rem;
+      color: #856404; font-weight: 600; margin-left: 8px; vertical-align: middle;
+    }
+    .new-tag {
+      background: #d1f2eb; border-color: #27ae60; color: #145a32;
+    }
+    .modify-tag {
+      background: #d6eaf8; border-color: #2980b9; color: #1a5276;
+    }
+    .keep-tag {
+      background: #f2f3f4; border-color: #95a5a6; color: #566573;
+    }
+    .parallel-grid {
+      display: grid; grid-template-columns: 1fr 1fr; gap: 16px; margin: 16px 0;
+    }
+    .track-box {
+      background: white; border: 1px solid #d0d7e8;
+      border-radius: 8px; padding: 16px 18px;
+    }
+    .track-box h4 { margin-top: 0; color: #1e3a5f; }
+    .track-a { border-top: 3px solid #2d6a9f; }
+    .track-b { border-top: 3px solid #27ae60; }
+    .track-c { border-top: 3px solid #e67e22; }
+    .checklist { list-style: none; padding: 0; }
+    .checklist li {
+      padding: 5px 0 5px 26px; position: relative; font-size: 0.9rem;
+    }
+    .checklist li::before {
+      content: "☐"; position: absolute; left: 0;
+      color: #2d6a9f; font-size: 1rem;
+    }
+    .commit-list { list-style: none; padding: 0; }
+    .commit-list li {
+      background: #1a1a2e; color: #a8dadc;
+      font-family: monospace; font-size: 0.85rem;
+      padding: 8px 14px; border-radius: 5px; margin-bottom: 6px;
+    }
+    .commit-list li span { color: #e8eaf6; margin-left: 8px; }
+    .edge-table td:first-child { font-style: italic; color: #444; }
+    .warning-box {
+      background: #fff8e1; border-left: 4px solid #f39c12;
+      padding: 12px 16px; border-radius: 0 6px 6px 0; margin: 12px 0;
+      font-size: 0.9rem;
+    }
+    .section-intro { color: #555; margin-bottom: 20px; }
+    .icon-table td:nth-child(3) { font-family: monospace; font-size: 0.82rem; }
+    @media (max-width: 640px) {
+      header { padding: 24px 20px; }
+      .parallel-grid { grid-template-columns: 1fr; }
+      pre { font-size: 0.75rem; }
+    }
+  </style>
+</head>
+<body>
+
+<header>
+  <h1>Auto HAC Calculation</h1>
+  <p>nEXus — Implementation Plan</p>
+  <div class="badge">BS EN 60079-10 · Auto-Calculation Feature</div>
+</header>
+
+<main>
+
+  <!-- Context -->
+  <h2>Context</h2>
+  <div class="context-box">
+    <p>nEXus currently requires users to manually press a <strong>"Run HAC" button</strong> to trigger calculations after editing any input field. The calculation engine is fast (&lt; 2 seconds for most studies). The <code>calculation-versioning</code> module already detects every HAC-relevant field change and marks items out-of-sync — all the detection infrastructure needed for auto-calculation is already in place.</p>
+    <p style="margin-bottom:0">The goal is to <strong>remove the manual button</strong> and replace it with an auto-calculation system that fires automatically after a debounce whenever inputs change, plus a persistent toolbar status indicator showing the study's current sync health.</p>
+  </div>
+
+  <!-- Decisions -->
+  <h2>Decisions</h2>
+  <table>
+    <tr><th>Decision</th><th>Choice</th></tr>
+    <tr><td>Plan anchor (edits)</td><td>Selected item (= changed item via <code>saveFormData</code>)</td></tr>
+    <tr><td>Plan anchor (load)</td><td>Study root (<code>studyIndex</code>) — full plan</td></tr>
+    <tr><td>Load trigger condition</td><td>Any item not in sync incl. never-calculated (<code>canExportSafely</code> gate)</td></tr>
+    <tr><td>Run HAC button</td><td>Removed from sidebar; component file kept for future use</td></tr>
+    <tr><td>Debounce duration</td><td>1000 ms after <code>saveFormData</code> fires</td></tr>
+    <tr><td>Toolbar indicator</td><td>Always visible; same <code>flex-1</code> slot; icons only; all states shown</td></tr>
+    <tr><td>Pending state</td><td>Amber pulsing <code>Loader2</code> spinner</td></tr>
+    <tr><td>Indicator click</td><td>Only clickable in "failed" state → opens failure modal</td></tr>
+    <tr><td>Failure modal</td><td>Informational only; study-wide; item name + type + error message</td></tr>
+    <tr><td>Firestore write</td><td>Immediate after calc (successes and failures)</td></tr>
+    <tr><td>Provider callback</td><td><code>onHacRelevantChange</code> (no args) inside <code>StudyTreeDataProvider</code></td></tr>
+    <tr><td>Race condition</td><td>Let in-flight complete; new calc fires after debounce</td></tr>
+    <tr><td>Export during auto-calc</td><td>Disabled via <code>isExportDisabled</code></td></tr>
+    <tr><td>Export tooltip text</td><td>Distinct per state (calculating / out-of-sync / failed)</td></tr>
+    <tr><td>Non-HAC changes</td><td>No trigger</td></tr>
+    <tr><td>Tests</td><td><code>run-hac.test.tsx</code> unchanged; new <code>use-auto-calculation.test.tsx</code></td></tr>
+  </table>
+
+  <!-- Files -->
+  <h2>File Inventory</h2>
+
+  <h3>Create <span class="dep-tag new-tag">NEW</span></h3>
+  <table>
+    <tr><th>File</th><th>Purpose</th></tr>
+    <tr><td><code>components/dashboard/use-auto-calculation.ts</code></td><td>Custom hook — debounce, API call, merge, Firestore write</td></tr>
+    <tr><td><code>components/dashboard/hac-status-indicator.tsx</code></td><td>Toolbar status component replacing Run HAC button</td></tr>
+    <tr><td><code>components/dashboard/calculation-failure-modal.tsx</code></td><td>Modal listing study-wide failed items</td></tr>
+    <tr><td><code>components/dashboard/__tests__/use-auto-calculation.test.tsx</code></td><td>Hook unit tests</td></tr>
+  </table>
+
+  <h3>Modify <span class="dep-tag modify-tag">MODIFY</span></h3>
+  <table>
+    <tr><th>File</th><th>Change</th></tr>
+    <tr><td><code>components/dashboard/study-tree/study-tree-context-provider.tsx</code></td><td>Add <code>hacRelevantChangeCallback</code> field + <code>setHacRelevantChangeCallback()</code> method; fire via <code>queueMicrotask</code> from <code>saveFormData</code></td></tr>
+    <tr><td><code>app/(main)/(protected)/studies/side-bar.tsx</code></td><td>Remove <code>RunHACButton</code>; wire up hook; add indicator; update export tooltip + toast text</td></tr>
+  </table>
+
+  <h3>Keep Unchanged <span class="dep-tag keep-tag">KEEP</span></h3>
+  <table>
+    <tr><th>File</th><th>Reason</th></tr>
+    <tr><td><code>components/dashboard/run-hac.tsx</code></td><td>Preserved for potential future re-use</td></tr>
+    <tr><td><code>components/dashboard/run-hac-helpers.ts</code></td><td>Reused by new hook</td></tr>
+    <tr><td><code>components/dashboard/__tests__/run-hac.test.tsx</code></td><td>Kept as-is</td></tr>
+    <tr><td><code>lib/calculation-versioning.ts</code></td><td>Reused as-is</td></tr>
+    <tr><td><code>lib/bscalculations/build-calculation-plan.ts</code></td><td>Reused as-is</td></tr>
+    <tr><td><code>app/api/bs-calculation/batch/route.ts</code></td><td>No server changes needed</td></tr>
+  </table>
+
+  <!-- Tasks -->
+  <h2>Implementation Tasks</h2>
+
+  <!-- Task 1 -->
+  <div class="task-card">
+    <h3>Task 1 — Extend <code>StudyTreeDataProvider</code> <span class="dep-tag">No dependencies</span></h3>
+    <p><strong>File:</strong> <code>components/dashboard/study-tree/study-tree-context-provider.tsx</code></p>
+
+    <h4>1. Add private field (~line 196, after <code>stateChangeCallback</code>)</h4>
+    <pre><code>private hacRelevantChangeCallback?: () => void;</code></pre>
+
+    <h4>2. Add public method (~line 239, after <code>setStateChangeCallback</code>)</h4>
+    <pre><code>public setHacRelevantChangeCallback(
+  callback: (() => void) | undefined
+): void {
+  this.hacRelevantChangeCallback = callback;
+}</code></pre>
+
+    <h4>3. Fire callback from <code>saveFormData</code> (~line 1249, before <code>return</code> inside <code>if (hasChanges)</code>)</h4>
+    <pre><code>if (this.hacRelevantChangeCallback) {
+  const cb = this.hacRelevantChangeCallback;
+  queueMicrotask(() => cb());
+}</code></pre>
+    <div class="warning-box">
+      <strong>Why <code>queueMicrotask</code>?</strong> <code>saveFormData</code> is called inside a <code>setDataProvider</code> state updater. The provider already uses <code>queueMicrotask</code> in <code>emitSelectionChanged</code> (line 707) for the same reason — to defer React state updates out of the current render cycle.
+    </div>
+  </div>
+
+  <!-- Task 2 -->
+  <div class="task-card">
+    <h3>Task 2 — Create <code>useAutoCalculation</code> hook <span class="dep-tag">Depends on Task 1</span></h3>
+    <p><strong>File:</strong> <code>components/dashboard/use-auto-calculation.ts</code></p>
+
+    <h4>Exported types</h4>
+    <pre><code>export interface FailedItemInfo {
+  index: string;
+  name: string;
+  type: string;
+  errorMessage: string;
+}
+
+export interface AutoCalculationState {
+  isPending: boolean;            // debounce window active
+  isCalculating: boolean;        // API call in flight
+  failedItems: FailedItemInfo[]; // study-wide failed items
+}
+
+export function useAutoCalculation(
+  dataProvider: StudyTreeDataProvider,
+  db: Firestore,
+  debounceMs = 1000
+): AutoCalculationState</code></pre>
+
+    <h4>Key imports</h4>
+    <pre><code>import { setStudy } from "@/components/database/firestore-functions";
+import { buildCalculationPlan } from "@/lib/bscalculations/build-calculation-plan";
+import { canExportSafely, enforceRollupOutOfSyncForIndices } from "@/lib/calculation-versioning";
+import {
+  buildCalculationRequestMetadata, buildFailedItems, buildRunningItems,
+  detectInputChanges, markDescendantsFailedForFailedItems, restoreMissingCalculationStates,
+} from "@/components/dashboard/run-hac-helpers";</code></pre>
+
+    <h4>Internal state</h4>
+    <pre><code>const [isPending, setIsPending] = useState(false);
+const [isCalculating, setIsCalculating] = useState(false);
+const dataProviderRef = useRef(dataProvider);
+const debounceTimerRef = useRef&lt;ReturnType&lt;typeof setTimeout&gt; | null&gt;(null);
+const dbRef = useRef(db);</code></pre>
+
+    <h4>Load trigger effect</h4>
+    <pre><code>useEffect(() => {
+  const studyIndex = dataProvider.getStudyIndex();
+  if (studyIndex === "root") return;
+  const { canExport } = canExportSafely(studyIndex, dataProvider.studyItems);
+  if (canExport) return; // already in sync
+
+  const timer = setTimeout(() => runCalculation(true), 300);
+  return () => clearTimeout(timer);
+}, [dataProvider, runCalculation]);
+// dataProvider changes identity when a new study is loaded → effect re-fires correctly</code></pre>
+
+    <h4>HAC change callback registration</h4>
+    <pre><code>useEffect(() => {
+  dataProvider.setHacRelevantChangeCallback(() => {
+    setIsPending(true);
+    if (debounceTimerRef.current) clearTimeout(debounceTimerRef.current);
+    debounceTimerRef.current = setTimeout(() => {
+      debounceTimerRef.current = null;
+      runCalculation(false);
+    }, debounceMs);
+  });
+  return () => {
+    dataProvider.setHacRelevantChangeCallback(undefined);
+    if (debounceTimerRef.current) {
+      clearTimeout(debounceTimerRef.current);
+      debounceTimerRef.current = null;
+    }
+  };
+}, [dataProvider, debounceMs, runCalculation]);</code></pre>
+
+    <h4><code>runCalculation</code> — stable async callback (reads only from refs)</h4>
+    <pre><code>const runCalculation = useCallback(async (isLoadTrigger: boolean) => {
+  const provider = dataProviderRef.current;
+  const studyIndex = provider.getStudyIndex();
+  if (studyIndex === "root") return;
+
+  const planAnchor = isLoadTrigger ? studyIndex : provider.selectedItem.index;
+  const plan = buildCalculationPlan(planAnchor, provider.studyItems);
+  if (plan.length === 0) return;
+
+  setIsPending(false);
+  setIsCalculating(true);
+
+  const studyItemsAtRequest = provider.studyItems;
+  const requestedAt = new Date().toISOString();
+  const requestedRevision = studyItemsAtRequest[planAnchor]?.inputRevision ?? 0;
+  const { requestedRevisions, previousCalculationStates } =
+    buildCalculationRequestMetadata(plan, studyItemsAtRequest);
+
+  provider.setTreeItems(buildRunningItems(
+    plan, provider.studyItems, requestedRevisions, requestedRevision, requestedAt
+  ));
+
+  try {
+    const response = await fetch("/api/bs-calculation/batch", { ... });
+    const result = await response.json();
+
+    // ... merge logic mirrors run-hac.tsx lines 168–246 ...
+    // ... enforceRollupOutOfSyncForIndices, restoreMissingCalculationStates, etc. ...
+
+    provider.setTreeItems(updatedStudyItems);
+    // Persist immediately — including failures (B1a, D3a)
+    await setStudy(dbRef.current, dataProviderRef.current.studyItems);
+  } catch {
+    // Silent failure (5a-a): restore previous states, no toast
+    const p = dataProviderRef.current;
+    const restored = { ...p.studyItems };
+    for (const idx of plan) {
+      if (restored[idx]) restored[idx] = { ...restored[idx], calculationState: previousCalculationStates[idx] };
+    }
+    p.setTreeItems(restored);
+  } finally {
+    setIsCalculating(false);
+  }
+}, []); // stable — reads only from refs</code></pre>
+
+    <h4><code>failedItems</code> — derived study-wide</h4>
+    <pre><code>const failedItems = useMemo(() => {
+  const result: FailedItemInfo[] = [];
+  for (const item of Object.values(dataProvider.studyItems)) {
+    if (!item || item.calculationState?.status !== "failed") continue;
+    result.push({
+      index: item.index,
+      name: (item.information as { name?: string } | undefined)?.name ?? item.index,
+      type: item.type,
+      errorMessage: item.calculationState.error?.message ?? "Unknown error",
+    });
+  }
+  return result;
+}, [dataProvider.studyItems]);</code></pre>
+  </div>
+
+  <!-- Task 3 -->
+  <div class="task-card">
+    <h3>Task 3 — Create <code>CalculationFailureModal</code> <span class="dep-tag">Depends on Task 2 (types)</span></h3>
+    <p><strong>File:</strong> <code>components/dashboard/calculation-failure-modal.tsx</code></p>
+    <p>Uses the existing Radix UI <code>Dialog</code> pattern from <code>components/ui/dialog.tsx</code>.</p>
+    <pre><code>interface Props {
+  open: boolean;
+  onClose: () => void;
+  failedItems: FailedItemInfo[];
+}
+// DialogTitle: "Calculation Failures"
+// DialogDescription: "N item(s) failed. Correct inputs and calculations will re-run automatically."
+// Body: list of { name (bold), type (muted badge), errorMessage (destructive text) }</code></pre>
+  </div>
+
+  <!-- Task 4 -->
+  <div class="task-card">
+    <h3>Task 4 — Create <code>HacStatusIndicator</code> <span class="dep-tag">Depends on Tasks 2 + 3</span></h3>
+    <p><strong>File:</strong> <code>components/dashboard/hac-status-indicator.tsx</code></p>
+    <p>Mirrors <code>RunHACButton</code> wrapper structure (TooltipProvider → Tooltip → Button). Accepts <code>className</code> for <code>flex-1</code>.</p>
+
+    <h4>Visual states (icons only)</h4>
+    <table class="icon-table">
+      <tr><th>State</th><th>Condition</th><th>Icon</th><th>Style</th></tr>
+      <tr><td>disabled</td><td>No study loaded</td><td>CheckCircle</td><td><code>text-muted-foreground/30</code></td></tr>
+      <tr><td>pending</td><td><code>isPending</code></td><td>Loader2</td><td><code>animate-spin text-amber-500</code></td></tr>
+      <tr><td>calculating</td><td><code>isCalculating</code> or syncStatus="calculating"</td><td>Loader2</td><td><code>animate-spin text-blue-500</code></td></tr>
+      <tr><td>in-sync</td><td>syncStatus="in-sync"</td><td>CheckCircle</td><td><code>text-green-500</code></td></tr>
+      <tr><td>failed</td><td><code>failedItems.length &gt; 0</code> or syncStatus="failed"</td><td>XCircle + count badge</td><td><code>text-destructive</code></td></tr>
+      <tr><td>out-of-sync</td><td>fallthrough</td><td>Clock</td><td><code>text-amber-500</code></td></tr>
+    </table>
+
+    <p><strong>State priority (top-down):</strong> disabled → pending → calculating → failed → in-sync → out-of-sync</p>
+    <p><strong>syncStatus:</strong> Derived via <code>getSyncStatusLabel(studyItem, dataProvider.studyItems)</code> — memoized on <code>studyItems</code>.</p>
+    <p><strong>Failed badge:</strong> Absolute-positioned count span over <code>XCircle</code>, capped at "99+".</p>
+    <p><strong>Click:</strong> Only interactive in "failed" state → opens <code>CalculationFailureModal</code>. Other states render inert button (no <code>onClick</code>, <code>cursor: default</code>).</p>
+  </div>
+
+  <!-- Task 5 -->
+  <div class="task-card">
+    <h3>Task 5 — Modify <code>SideBar</code> <span class="dep-tag">Depends on Tasks 1–4</span></h3>
+    <p><strong>File:</strong> <code>app/(main)/(protected)/studies/side-bar.tsx</code></p>
+
+    <h4>5a. Update imports</h4>
+    <pre><code>// Remove:
+import { RunHACButton } from "@/components/dashboard/run-hac";
+
+// Add:
+import { useAutoCalculation } from "@/components/dashboard/use-auto-calculation";
+import { HacStatusIndicator } from "@/components/dashboard/hac-status-indicator";</code></pre>
+
+    <h4>5b. Wire up hook</h4>
+    <pre><code>const autoCalcState = useAutoCalculation(dataProvider, db);</code></pre>
+
+    <h4>5c. Replace button in toolbar</h4>
+    <pre><code>// Remove:
+&lt;RunHACButton className="flex-1" iconOnly={isIconOnly} /&gt;
+
+// Add:
+&lt;HacStatusIndicator
+  dataProvider={dataProvider}
+  autoCalcState={autoCalcState}
+  className="flex-1"
+/&gt;</code></pre>
+
+    <h4>5d. Block export during auto-calc</h4>
+    <pre><code>const isExportDisabled = studyIndex === "root" || isExporting || autoCalcState.isCalculating;</code></pre>
+
+    <h4>5e. Update export tooltip</h4>
+    <pre><code>{isExporting
+  ? "Export in progress"
+  : autoCalcState.isCalculating
+    ? "Calculations in progress — please wait"
+    : autoCalcState.failedItems.length > 0 &amp;&amp; isOutOfSync
+      ? "Some calculations failed — check the status indicator"
+      : isOutOfSync
+        ? "Results are out of date"
+        : "Export report"}</code></pre>
+
+    <h4>5f. Update export click toast</h4>
+    <pre><code>if (isOutOfSync) {
+  const hasFailed = autoCalcState.failedItems.length > 0;
+  toast({
+    title: hasFailed ? "Some calculations failed" : "Results are out of date",
+    description: hasFailed
+      ? "Check the status indicator for details."
+      : "Results will be calculated automatically.",
+  });
+  return;
+}</code></pre>
+  </div>
+
+  <!-- Task 6 -->
+  <div class="task-card">
+    <h3>Task 6 — Tests <span class="dep-tag">Depends on Tasks 1 + 2</span></h3>
+    <p><strong>File:</strong> <code>components/dashboard/__tests__/use-auto-calculation.test.tsx</code></p>
+    <p>Framework: Vitest + React Testing Library (follow <code>run-hac.test.tsx</code> patterns).</p>
+    <ol style="padding-left:20px; font-size:0.9rem; line-height:2">
+      <li><code>setHacRelevantChangeCallback</code> called on mount; <code>undefined</code> on unmount</li>
+      <li><code>isPending</code> → true on callback; <code>isCalculating</code> → true after debounce (<code>vi.useFakeTimers()</code>)</li>
+      <li>Auto-calc fires on load when study has out-of-sync items</li>
+      <li>Auto-calc does <em>not</em> fire on load when all items in sync</li>
+      <li>Auto-calc does <em>not</em> fire when <code>studyIndex === "root"</code></li>
+      <li>Race: second callback resets debounce; two calcs fire sequentially</li>
+      <li>Silent failure: fetch rejects → no toast; previous states restored</li>
+      <li><code>setStudy</code> called after successful calc (B1a)</li>
+      <li><code>setStudy</code> called even on failure (D3a)</li>
+      <li><code>failedItems</code> reflects study-wide <code>status === "failed"</code></li>
+      <li>Debounce reset: callback at t=0 and t=500ms; calc fires once at t=1500ms</li>
+    </ol>
+  </div>
+
+  <!-- Parallelization -->
+  <h2>Parallelization Guide</h2>
+  <div class="parallel-grid">
+    <div class="track-box track-a">
+      <h4>Track A — Sequential</h4>
+      <p style="font-size:0.88rem">Task 1 → Task 2</p>
+      <p style="font-size:0.82rem; color:#555">Provider callback, then hook implementation</p>
+    </div>
+    <div class="track-box track-b">
+      <h4>Track B — Parallel with A</h4>
+      <p style="font-size:0.88rem">Task 3 → Task 4</p>
+      <p style="font-size:0.82rem; color:#555">Starts once Task 2 interface is defined (types only). No file conflicts with Track A.</p>
+    </div>
+  </div>
+  <div class="track-box track-c" style="margin-top:0">
+    <h4>Track C — After A + B complete</h4>
+    <p style="font-size:0.88rem">Task 5 (side-bar.tsx) — then Task 6 (tests, can parallel with Task 5)</p>
+  </div>
+
+  <!-- Edge Cases -->
+  <h2>Edge Cases</h2>
+  <table class="edge-table">
+    <tr><th>Scenario</th><th>Handling</th></tr>
+    <tr><td>Study closes while debounce pending</td><td><code>runCalculation</code> guards <code>if (studyIndex === "root") return</code>; cleanup clears timer and deregisters callback</td></tr>
+    <tr><td>Study closes while calc in flight</td><td>API completes; merge logic guards against stale provider</td></tr>
+    <tr><td>Multiple studies in quick succession</td><td><code>useEffect([dataProvider])</code> cleanup re-runs on each instance change</td></tr>
+    <tr><td>User navigates items during debounce</td><td>Plan anchors to <code>provider.selectedItem.index</code> at debounce-fire time — consistent with existing button behaviour</td></tr>
+    <tr><td>Concurrent form autosave + auto-calc writes</td><td>Last-write-wins is benign; form writes at ~t=500ms, calc writes at ~t=1500ms</td></tr>
+    <tr><td>Never-calculated items on load</td><td><code>canExportSafely</code> returns false → auto-calc fires</td></tr>
+    <tr><td>Legacy <code>"parent-changed"</code> reason</td><td>Handled by <code>normalizeOutOfSyncReason</code> in <code>calculation-versioning.ts</code></td></tr>
+    <tr><td>Non-HAC field edits (e.g. item name)</td><td><code>hasHacRelevantChanges()</code> → false; callback not fired</td></tr>
+    <tr><td>All items in sync on load</td><td><code>canExportSafely</code> → <code>{ canExport: true }</code> → guard returns; no fetch</td></tr>
+  </table>
+
+  <!-- Backwards Compatibility -->
+  <h2>Backwards Compatibility</h2>
+  <ul style="font-size:0.9rem; padding-left:20px; line-height:2">
+    <li><code>RunHACButton</code> preserved in <code>run-hac.tsx</code> — not imported anywhere but file kept</li>
+    <li><code>run-hac.test.tsx</code> untouched</li>
+    <li><code>run-hac-helpers.ts</code> untouched; reused by the new hook</li>
+    <li><code>CalculationState</code> Firestore schema unchanged — no migration needed</li>
+    <li><code>isOutOfSync</code> logic in <code>side-bar.tsx</code> preserved; only tooltip/toast strings change</li>
+  </ul>
+
+  <!-- Verification -->
+  <h2>Testing &amp; Verification</h2>
+
+  <h3>Automated (before each commit)</h3>
+  <pre><code>npm run typecheck
+npm run lint
+npx vitest run components/dashboard/__tests__/use-auto-calculation.test.tsx
+npx vitest run components/dashboard/__tests__/run-hac.test.tsx   # must still pass</code></pre>
+
+  <h3>Full suite (before push)</h3>
+  <pre><code>npm test
+npm run lint
+npm run typecheck</code></pre>
+
+  <h3>Manual checklist</h3>
+  <ul class="checklist">
+    <li>Load study with stale items → amber spinner → blue spinner → green tick</li>
+    <li>Load study already in sync → green tick immediately; no API call</li>
+    <li>Edit HAC field (e.g. Scenario <code>holeDiameter</code>) → amber → blue → green</li>
+    <li>Edit non-HAC field (e.g. item name) → indicator unchanged; no API call</li>
+    <li>Edit rapidly → single API call (debounce resets correctly)</li>
+    <li>Force a failure → red badge + count; click → modal (name/type/error); no toast</li>
+    <li>Export tooltip during calc → "Calculations in progress — please wait"</li>
+    <li>Export tooltip when failed → "Some calculations failed — check the status indicator"</li>
+    <li>Export toast when out-of-sync → "Results will be calculated automatically."</li>
+    <li>Close study mid-calc → no crash; no stale state</li>
+    <li><code>run-hac.test.tsx</code> still passes</li>
+    <li>Reload page after calc → results persist (Firestore write confirmed)</li>
+  </ul>
+
+  <!-- Commit Strategy -->
+  <h2>Commit Strategy</h2>
+  <ul class="commit-list">
+    <li>feat(calc): <span>add onHacRelevantChange callback to StudyTreeDataProvider</span></li>
+    <li>feat(calc): <span>add useAutoCalculation hook with debounce and Firestore write</span></li>
+    <li>feat(calc): <span>add HacStatusIndicator and CalculationFailureModal components</span></li>
+    <li>feat(calc): <span>replace Run HAC button with auto-calculation indicator in sidebar</span></li>
+    <li>test(calc): <span>add tests for useAutoCalculation hook</span></li>
+  </ul>
+  <p style="font-size:0.88rem; color:#555; margin-top:8px">Push after Commit 5 with full quality gate pass. Each commit must individually pass <code>typecheck</code> and <code>lint</code>.</p>
+
+  <!-- Reuse reference -->
+  <h2>Key Functions to Reuse</h2>
+  <table>
+    <tr><th>Function</th><th>Location</th><th>Used for</th></tr>
+    <tr><td><code>buildCalculationPlan</code></td><td><code>lib/bscalculations/build-calculation-plan.ts</code></td><td>Ordered calculation plan</td></tr>
+    <tr><td><code>buildCalculationRequestMetadata</code></td><td><code>run-hac-helpers.ts</code></td><td>Revision capture for race detection</td></tr>
+    <tr><td><code>buildRunningItems</code></td><td><code>run-hac-helpers.ts</code></td><td>Set items to "running"</td></tr>
+    <tr><td><code>buildFailedItems</code></td><td><code>run-hac-helpers.ts</code></td><td>Total API failure path</td></tr>
+    <tr><td><code>detectInputChanges</code></td><td><code>run-hac-helpers.ts</code></td><td>Race condition detection</td></tr>
+    <tr><td><code>restoreMissingCalculationStates</code></td><td><code>run-hac-helpers.ts</code></td><td>Prevent "stuck running"</td></tr>
+    <tr><td><code>markDescendantsFailedForFailedItems</code></td><td><code>run-hac-helpers.ts</code></td><td>Ancestor failure cascade</td></tr>
+    <tr><td><code>enforceRollupOutOfSyncForIndices</code></td><td><code>lib/calculation-versioning.ts</code></td><td>Roll-up validity after partial runs</td></tr>
+    <tr><td><code>canExportSafely</code></td><td><code>lib/calculation-versioning.ts</code></td><td>Load trigger gate</td></tr>
+    <tr><td><code>getSyncStatusLabel</code></td><td><code>lib/calculation-versioning.ts</code></td><td>Indicator visual state</td></tr>
+    <tr><td><code>setStudy</code></td><td><code>components/database/firestore-functions.tsx</code></td><td>Immediate Firestore persistence</td></tr>
+  </table>
+
+</main>
+</body>
+</html>
