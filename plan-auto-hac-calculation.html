@@ -150,7 +150,7 @@
     <tr><td>Pending state</td><td>Amber pulsing <code>Loader2</code> spinner</td></tr>
     <tr><td>Indicator click</td><td>Only clickable in "failed" state → opens failure modal</td></tr>
     <tr><td>Failure modal</td><td>Informational only; study-wide; item name + type + error message</td></tr>
-    <tr><td>Firestore write</td><td>Immediate after calc (successes and failures)</td></tr>
+    <tr><td>Firestore write</td><td>Immediate after calc (successes and item-level failures). "Item-level failure" = API returned a result with <code>calculationState.status: "failed"</code> for an individual item. Network/server errors (thrown exceptions) are handled separately — previous states are restored silently with no Firestore write.</td></tr>
     <tr><td>Provider callback</td><td><code>onHacRelevantChange</code> (no args) inside <code>StudyTreeDataProvider</code></td></tr>
     <tr><td>Race condition</td><td>Let in-flight complete; new calc fires after debounce</td></tr>
     <tr><td>Export during auto-calc</td><td>Disabled via <code>isExportDisabled</code></td></tr>
@@ -213,7 +213,7 @@
   queueMicrotask(() => cb());
 }</code></pre>
     <div class="warning-box">
-      <strong>Why <code>queueMicrotask</code>?</strong> <code>saveFormData</code> is called inside a <code>setDataProvider</code> state updater. The provider already uses <code>queueMicrotask</code> in <code>emitSelectionChanged</code> (line 707) for the same reason — to defer React state updates out of the current render cycle.
+      <strong>Why <code>queueMicrotask</code>?</strong> <code>saveFormData</code> is a synchronous method that mutates <code>this._studyItems</code> directly, then calls <code>notifyStateChange()</code> which triggers a React re-render via <code>stateChangeCallback</code>. Firing the HAC callback synchronously inside <code>saveFormData</code> would call into hook state setters (<code>setIsPending</code>) in the middle of the provider's own mutation sequence. <code>queueMicrotask</code> defers the call until after the current synchronous execution completes — consistent with the existing <code>queueMicrotask</code> usage in <code>emitSelectionChanged</code> (line 707).
     </div>
   </div>
 
@@ -258,6 +258,15 @@ const dataProviderRef = useRef(dataProvider);
 const debounceTimerRef = useRef&lt;ReturnType&lt;typeof setTimeout&gt; | null&gt;(null);
 const dbRef = useRef(db);</code></pre>
 
+    <h4>Ref sync effects (MUST appear before other effects)</h4>
+    <pre><code>// Keep refs current so runCalculation (stable useCallback) always reads the
+// latest provider/db — critical when the user switches studies.
+useEffect(() => { dataProviderRef.current = dataProvider; }, [dataProvider]);
+useEffect(() => { dbRef.current = db; }, [db]);</code></pre>
+    <div class="warning-box">
+      <strong>Why refs for dataProvider/db?</strong> <code>runCalculation</code> has empty deps <code>[]</code> (stable callback) and reads all mutable values through refs. Without these sync effects, after the user switches to a different study <code>dataProviderRef.current</code> would point to the old provider — causing calculations to write results to the wrong study tree and persist stale data to Firestore.
+    </div>
+
     <h4>Load trigger effect</h4>
     <pre><code>useEffect(() => {
   const studyIndex = dataProvider.getStudyIndex();
@@ -268,7 +277,10 @@ const dbRef = useRef(db);</code></pre>
   const timer = setTimeout(() => runCalculation(true), 300);
   return () => clearTimeout(timer);
 }, [dataProvider, runCalculation]);
-// dataProvider changes identity when a new study is loaded → effect re-fires correctly</code></pre>
+// dataProvider changes identity when a new study is loaded → effect re-fires correctly
+// Note: the load trigger calls runCalculation(true) directly — it does NOT set isPending
+// first. The indicator goes straight from no-state to isCalculating (blue spinner). The
+// amber "pending" spinner is only shown during a user-initiated debounce window.</code></pre>
 
     <h4>HAC change callback registration</h4>
     <pre><code>useEffect(() => {
@@ -286,16 +298,26 @@ const dbRef = useRef(db);</code></pre>
       clearTimeout(debounceTimerRef.current);
       debounceTimerRef.current = null;
     }
+    // Reset transient UI state when the study switches. Without this, a pending
+    // debounce that was cancelled still shows the amber spinner on the new study.
+    setIsPending(false);
+    setIsCalculating(false);
   };
 }, [dataProvider, debounceMs, runCalculation]);</code></pre>
 
     <h4><code>runCalculation</code> — stable async callback (reads only from refs)</h4>
+    <div class="warning-box">
+      <strong>Stable callback constraint:</strong> <code>runCalculation</code> uses <code>useCallback([], [])</code> — empty deps. It must read all changing values exclusively through refs (<code>dataProviderRef.current</code>, <code>dbRef.current</code>). Never read React state or props directly inside this function. Future additions must also go through refs.
+    </div>
     <pre><code>const runCalculation = useCallback(async (isLoadTrigger: boolean) => {
   const provider = dataProviderRef.current;
   const studyIndex = provider.getStudyIndex();
   if (studyIndex === "root") return;
 
   const planAnchor = isLoadTrigger ? studyIndex : provider.selectedItem.index;
+  // Note: for edit-triggered calcs, planAnchor is resolved at debounce-fire time
+  // (not at callback time), so it reflects the item selected when the debounce expires.
+
   const plan = buildCalculationPlan(planAnchor, provider.studyItems);
   if (plan.length === 0) return;
 
@@ -308,22 +330,53 @@ const dbRef = useRef(db);</code></pre>
   const { requestedRevisions, previousCalculationStates } =
     buildCalculationRequestMetadata(plan, studyItemsAtRequest);
 
+  // Mark plan items as "running" in the tree BEFORE the fetch.
+  // This transitions their calculationState.status to "running", which:
+  //   (a) empties the failedItems memo during the calculation, and
+  //   (b) shows the "calculating" sync status in the indicator.
   provider.setTreeItems(buildRunningItems(
     plan, provider.studyItems, requestedRevisions, requestedRevision, requestedAt
   ));
 
   try {
-    const response = await fetch("/api/bs-calculation/batch", { ... });
+    // Fetch body mirrors the existing RunHACButton fetch in run-hac.tsx.
+    // The body must include the running study items (post-buildRunningItems) so
+    // the server sees the current inputRevisions. Mirror run-hac.tsx exactly:
+    const response = await fetch("/api/bs-calculation/batch", {
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({
+        items: provider.studyItems,   // current items (already marked running)
+        plan,                          // ordered index array from buildCalculationPlan
+        studyIndex,
+      }),
+    });
+
+    if (!response.ok) throw new Error(`HTTP ${response.status}`);
     const result = await response.json();
 
-    // ... merge logic mirrors run-hac.tsx lines 168–246 ...
-    // ... enforceRollupOutOfSyncForIndices, restoreMissingCalculationStates, etc. ...
+    // Merge logic — mirrors run-hac.tsx lines 168–246. Steps in order:
+    //  1. detectInputChanges(plan, studyItemsAtRequest, provider.studyItems) →
+    //     identify items where inputs changed while calc was in flight (stale results).
+    //  2. For non-stale items: merge result.items[idx] into provider.studyItems.
+    //  3. markDescendantsFailedForFailedItems({ plan, studyItems: merged, ... })
+    //  4. restoreMissingCalculationStates(plan, merged, previousCalculationStates)
+    //  5. enforceRollupOutOfSyncForIndices(affectedAncestorIndices, merged)
+    //  6. Call provider.setTreeItems(merged).
+    // Concurrent-call safety: detectInputChanges identifies items whose inputRevision
+    // changed since the request was built — those items' results are discarded and their
+    // previousCalculationStates restored. This handles the case where a second debounce
+    // fires before the first fetch completes.
 
     provider.setTreeItems(updatedStudyItems);
-    // Persist immediately — including failures (B1a, D3a)
+    // Persist to Firestore. This includes items whose calculationState.status is "failed"
+    // (calc returned a failure for an individual item). "Failure" here = API returned a
+    // result with status:"failed" for that item — NOT a thrown network error (see catch).
     await setStudy(dbRef.current, dataProviderRef.current.studyItems);
   } catch {
-    // Silent failure (5a-a): restore previous states, no toast
+    // Network/server error — silent failure: restore previous calculationStates, no toast.
+    // We do NOT call setStudy here: writing restored (pre-calc) states would overwrite
+    // any Firestore data written by a concurrent user or session.
     const p = dataProviderRef.current;
     const restored = { ...p.studyItems };
     for (const idx of plan) {
@@ -349,6 +402,9 @@ const dbRef = useRef(db);</code></pre>
   }
   return result;
 }, [dataProvider.studyItems]);</code></pre>
+    <div class="warning-box">
+      <strong>Stale failures during recalculation:</strong> When a new calc starts, <code>buildRunningItems</code> sets each plan item's <code>calculationState.status</code> to <code>"running"</code> via <code>provider.setTreeItems()</code>. This clears the <code>"failed"</code> status on those items before the fetch begins, so <code>failedItems</code> will be empty during the calculation and the failure modal will close. Failures only re-appear if the new run also produces failures.
+    </div>
   </div>
 
   <!-- Task 3 -->
@@ -384,7 +440,8 @@ const dbRef = useRef(db);</code></pre>
     </table>
 
     <p><strong>State priority (top-down):</strong> disabled → pending → calculating → failed → in-sync → out-of-sync</p>
-    <p><strong>syncStatus:</strong> Derived via <code>getSyncStatusLabel(studyItem, dataProvider.studyItems)</code> — memoized on <code>studyItems</code>.</p>
+    <p><strong>syncStatus:</strong> Derived via <code>getSyncStatusLabel(studyRootItem, dataProvider.studyItems)</code> — memoized on <code>studyItems</code>. <code>studyRootItem</code> is <code>dataProvider.studyItems[dataProvider.getStudyIndex()]</code>. Passing the study root with the full <code>studyItems</code> map activates the rollup path in <code>getSyncStatusLabel</code> (facility/study/section are rollup types), which aggregates the worst sync status across all calculable descendants.</p>
+    <p><strong>Disabled check:</strong> <code>dataProvider.getStudyIndex() === "root"</code> — no study is loaded.</p>
     <p><strong>Failed badge:</strong> Absolute-positioned count span over <code>XCircle</code>, capped at "99+".</p>
     <p><strong>Click:</strong> Only interactive in "failed" state → opens <code>CalculationFailureModal</code>. Other states render inert button (no <code>onClick</code>, <code>cursor: default</code>).</p>
   </div>
@@ -456,8 +513,8 @@ import { HacStatusIndicator } from "@/components/dashboard/hac-status-indicator"
       <li>Auto-calc does <em>not</em> fire when <code>studyIndex === "root"</code></li>
       <li>Race: second callback resets debounce; two calcs fire sequentially</li>
       <li>Silent failure: fetch rejects → no toast; previous states restored</li>
-      <li><code>setStudy</code> called after successful calc (B1a)</li>
-      <li><code>setStudy</code> called even on failure (D3a)</li>
+      <li><code>setStudy</code> called after successful calc (all items in-sync)</li>
+      <li><code>setStudy</code> called when calc returns item-level failures (API responded; some items have <code>status:"failed"</code>). <code>setStudy</code> is NOT called on network errors (fetch throws).</li>
       <li><code>failedItems</code> reflects study-wide <code>status === "failed"</code></li>
       <li>Debounce reset: callback at t=0 and t=500ms; calc fires once at t=1500ms</li>
     </ol>
@@ -494,6 +551,7 @@ import { HacStatusIndicator } from "@/components/dashboard/hac-status-indicator"
     <tr><td>Never-calculated items on load</td><td><code>canExportSafely</code> returns false → auto-calc fires</td></tr>
     <tr><td>Legacy <code>"parent-changed"</code> reason</td><td>Handled by <code>normalizeOutOfSyncReason</code> in <code>calculation-versioning.ts</code></td></tr>
     <tr><td>Non-HAC field edits (e.g. item name)</td><td><code>hasHacRelevantChanges()</code> → false; callback not fired</td></tr>
+    <tr><td>Structural changes: add / delete / move item</td><td>These go through provider methods other than <code>saveFormData</code> and do <strong>not</strong> fire <code>hacRelevantChangeCallback</code>. This is intentional: a newly added item has no data yet (first <code>saveFormData</code> will trigger auto-calc); a deleted item no longer exists; a moved item's sync state is re-evaluated on next save. The load trigger will catch any out-of-sync items on study re-load.</td></tr>
     <tr><td>All items in sync on load</td><td><code>canExportSafely</code> → <code>{ canExport: true }</code> → guard returns; no fetch</td></tr>
   </table>
 
