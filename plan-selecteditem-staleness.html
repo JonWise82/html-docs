@@ -1,0 +1,851 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1.0" />
+<title>Plan: Fix _selectedItem Staleness — nEXus</title>
+<style>
+  :root {
+    --bg: #0f1117;
+    --surface: #1a1d27;
+    --surface2: #1e2235;
+    --border: #2e3352;
+    --accent: #6c8ef7;
+    --accent2: #a78bfa;
+    --green: #34d399;
+    --yellow: #fbbf24;
+    --red: #f87171;
+    --orange: #fb923c;
+    --teal: #2dd4bf;
+    --text: #e2e8f0;
+    --muted: #94a3b8;
+    --code-bg: #12151f;
+  }
+  * { box-sizing: border-box; margin: 0; padding: 0; }
+  body { background: var(--bg); color: var(--text); font-family: 'Segoe UI', system-ui, sans-serif; font-size: 14px; line-height: 1.6; }
+  a { color: var(--accent); text-decoration: none; }
+  a:hover { text-decoration: underline; }
+
+  /* Layout */
+  .page { max-width: 960px; margin: 0 auto; padding: 48px 24px 80px; }
+  nav { background: var(--surface); border-bottom: 1px solid var(--border); padding: 12px 24px; position: sticky; top: 0; z-index: 100; display: flex; gap: 20px; align-items: center; flex-wrap: wrap; }
+  nav a { color: var(--muted); font-size: 12px; }
+  nav a:hover { color: var(--text); }
+  nav .brand { color: var(--accent); font-weight: 700; font-size: 13px; margin-right: 8px; }
+
+  /* Hero */
+  .hero { margin-bottom: 48px; padding-bottom: 32px; border-bottom: 1px solid var(--border); }
+  .hero h1 { font-size: 28px; font-weight: 800; color: var(--text); margin-bottom: 8px; }
+  .hero .sub { color: var(--muted); font-size: 14px; margin-bottom: 20px; }
+  .meta-row { display: flex; gap: 12px; flex-wrap: wrap; }
+  .meta-chip { background: var(--surface); border: 1px solid var(--border); border-radius: 20px; padding: 4px 12px; font-size: 12px; color: var(--muted); }
+  .meta-chip span { color: var(--text); font-weight: 600; }
+
+  /* Sections */
+  section { margin-bottom: 48px; }
+  section > h2 { font-size: 18px; font-weight: 700; margin-bottom: 20px; padding-bottom: 8px; border-bottom: 1px solid var(--border); display: flex; align-items: center; gap: 10px; }
+  section > h2 .num { background: var(--accent); color: #fff; border-radius: 50%; width: 24px; height: 24px; display: inline-flex; align-items: center; justify-content: center; font-size: 12px; font-weight: 700; flex-shrink: 0; }
+
+  /* Cards */
+  .card { background: var(--surface); border: 1px solid var(--border); border-radius: 10px; padding: 20px; margin-bottom: 16px; }
+  .card h3 { font-size: 14px; font-weight: 700; margin-bottom: 10px; }
+  .card p { color: var(--muted); font-size: 13px; }
+
+  /* Callout */
+  .callout { border-radius: 8px; padding: 14px 18px; margin-bottom: 16px; font-size: 13px; display: flex; gap: 12px; align-items: flex-start; }
+  .callout.info { background: #1a2540; border-left: 3px solid var(--accent); }
+  .callout.warn { background: #2a1f00; border-left: 3px solid var(--yellow); }
+  .callout.success { background: #0d2a1e; border-left: 3px solid var(--green); }
+  .callout.danger { background: #2a1010; border-left: 3px solid var(--red); }
+  .callout-icon { font-size: 16px; flex-shrink: 0; margin-top: 1px; }
+  .callout-body strong { display: block; margin-bottom: 4px; }
+  .callout-body { color: var(--muted); }
+  .callout-body code { background: #1a2540; border-radius: 4px; padding: 1px 5px; color: var(--teal); font-family: 'Cascadia Code', 'Fira Code', monospace; font-size: 12px; }
+
+  /* Code */
+  .code-block { background: var(--code-bg); border: 1px solid var(--border); border-radius: 8px; overflow: hidden; margin-bottom: 16px; }
+  .code-header { background: var(--surface); border-bottom: 1px solid var(--border); padding: 8px 16px; font-size: 11px; color: var(--muted); display: flex; justify-content: space-between; align-items: center; }
+  .code-header .lang { color: var(--accent2); font-weight: 600; }
+  .code-block pre { padding: 16px; overflow-x: auto; font-family: 'Cascadia Code', 'Fira Code', 'Consolas', monospace; font-size: 12.5px; line-height: 1.7; }
+  .del { color: var(--red); background: rgba(248,113,113,0.08); display: block; padding: 0 8px; margin: 0 -8px; }
+  .add { color: var(--green); background: rgba(52,211,153,0.08); display: block; padding: 0 8px; margin: 0 -8px; }
+  .neu { color: var(--muted); }
+
+  /* Before/After */
+  .diff-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 16px; margin-bottom: 16px; }
+  @media (max-width: 680px) { .diff-grid { grid-template-columns: 1fr; } }
+  .diff-box { border-radius: 8px; overflow: hidden; border: 1px solid var(--border); }
+  .diff-box-header { padding: 8px 14px; font-size: 11px; font-weight: 700; letter-spacing: 0.05em; }
+  .diff-box.before .diff-box-header { background: rgba(248,113,113,0.15); color: var(--red); }
+  .diff-box.after .diff-box-header { background: rgba(52,211,153,0.15); color: var(--green); }
+  .diff-box pre { background: var(--code-bg); padding: 14px; font-family: 'Cascadia Code', 'Fira Code', monospace; font-size: 12px; overflow-x: auto; }
+
+  /* Table */
+  table { width: 100%; border-collapse: collapse; font-size: 13px; margin-bottom: 16px; }
+  th { background: var(--surface2); color: var(--muted); padding: 10px 14px; text-align: left; font-weight: 600; font-size: 11px; letter-spacing: 0.04em; border-bottom: 1px solid var(--border); }
+  td { padding: 10px 14px; border-bottom: 1px solid var(--border); color: var(--text); vertical-align: top; }
+  tr:last-child td { border-bottom: none; }
+  tr:hover td { background: var(--surface2); }
+  code { background: var(--code-bg); border-radius: 4px; padding: 2px 6px; color: var(--teal); font-family: 'Cascadia Code', 'Fira Code', monospace; font-size: 12px; }
+
+  /* Risk badge */
+  .risk { display: inline-block; border-radius: 10px; padding: 2px 10px; font-size: 11px; font-weight: 700; }
+  .risk.low { background: rgba(52,211,153,0.15); color: var(--green); }
+  .risk.med { background: rgba(251,191,36,0.15); color: var(--yellow); }
+  .risk.high { background: rgba(248,113,113,0.15); color: var(--red); }
+  .risk.none { background: rgba(148,163,184,0.1); color: var(--muted); }
+
+  /* Checklist */
+  .checklist { list-style: none; display: flex; flex-direction: column; gap: 8px; }
+  .checklist li { display: flex; align-items: flex-start; gap: 10px; font-size: 13px; color: var(--muted); }
+  .checklist li .check { color: var(--green); flex-shrink: 0; margin-top: 1px; }
+  .checklist li .pending-icon { color: var(--muted); flex-shrink: 0; margin-top: 1px; }
+
+  /* Phase timeline */
+  .phases { display: flex; flex-direction: column; gap: 0; position: relative; }
+  .phases::before { content: ''; position: absolute; left: 19px; top: 0; bottom: 0; width: 2px; background: var(--border); }
+  .phase { display: flex; gap: 20px; position: relative; padding-bottom: 28px; }
+  .phase:last-child { padding-bottom: 0; }
+  .phase-dot { width: 40px; height: 40px; border-radius: 50%; display: flex; align-items: center; justify-content: center; font-size: 14px; font-weight: 700; flex-shrink: 0; position: relative; z-index: 1; }
+  .phase-dot.html { background: rgba(167,139,250,0.2); color: var(--accent2); border: 2px solid var(--accent2); }
+  .phase-dot.fix { background: rgba(108,142,247,0.2); color: var(--accent); border: 2px solid var(--accent); }
+  .phase-dot.test { background: rgba(52,211,153,0.2); color: var(--green); border: 2px solid var(--green); }
+  .phase-dot.verify { background: rgba(251,191,36,0.2); color: var(--yellow); border: 2px solid var(--yellow); }
+  .phase-dot.commit { background: rgba(45,212,191,0.2); color: var(--teal); border: 2px solid var(--teal); }
+  .phase-body { padding-top: 8px; flex: 1; }
+  .phase-body h3 { font-size: 14px; font-weight: 700; margin-bottom: 6px; }
+  .phase-body .phase-desc { color: var(--muted); font-size: 13px; }
+  .phase-tag { display: inline-block; font-size: 10px; border-radius: 4px; padding: 2px 8px; margin-left: 8px; font-weight: 700; vertical-align: middle; }
+  .phase-tag.parallel { background: rgba(167,139,250,0.15); color: var(--accent2); }
+  .phase-tag.sequential { background: rgba(148,163,184,0.1); color: var(--muted); }
+
+  /* Diagram */
+  .diagram { background: var(--code-bg); border: 1px solid var(--border); border-radius: 10px; padding: 24px; margin-bottom: 16px; font-family: 'Cascadia Code', 'Fira Code', monospace; font-size: 12px; overflow-x: auto; white-space: pre; color: var(--muted); line-height: 1.8; }
+  .d-green { color: var(--green); }
+  .d-red { color: var(--red); }
+  .d-blue { color: var(--accent); }
+  .d-yellow { color: var(--yellow); }
+  .d-teal { color: var(--teal); }
+  .d-purple { color: var(--accent2); }
+
+  /* Summary grid */
+  .summary-grid { display: grid; grid-template-columns: repeat(auto-fit, minmax(180px, 1fr)); gap: 16px; margin-bottom: 16px; }
+  .summary-card { background: var(--surface); border: 1px solid var(--border); border-radius: 10px; padding: 16px; }
+  .summary-card .sc-label { color: var(--muted); font-size: 11px; letter-spacing: 0.04em; margin-bottom: 6px; }
+  .summary-card .sc-value { font-size: 22px; font-weight: 800; }
+  .summary-card .sc-sub { color: var(--muted); font-size: 11px; margin-top: 4px; }
+  .summary-card.green .sc-value { color: var(--green); }
+  .summary-card.blue .sc-value { color: var(--accent); }
+  .summary-card.purple .sc-value { color: var(--accent2); }
+  .summary-card.yellow .sc-value { color: var(--yellow); }
+
+  /* Parallel box */
+  .parallel-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 16px; margin-bottom: 16px; }
+  @media (max-width: 680px) { .parallel-grid { grid-template-columns: 1fr; } }
+  .agent-card { border: 1px solid var(--border); border-radius: 10px; overflow: hidden; }
+  .agent-card-header { padding: 10px 16px; font-size: 12px; font-weight: 700; display: flex; align-items: center; gap: 8px; }
+  .agent-card-header.a { background: rgba(167,139,250,0.12); color: var(--accent2); border-bottom: 1px solid var(--border); }
+  .agent-card-header.b { background: rgba(108,142,247,0.12); color: var(--accent); border-bottom: 1px solid var(--border); }
+  .agent-card-header.c { background: rgba(52,211,153,0.12); color: var(--green); border-bottom: 1px solid var(--border); }
+  .agent-card-body { padding: 14px 16px; background: var(--surface); font-size: 12px; color: var(--muted); }
+  .agent-card-body li { margin-bottom: 6px; margin-left: 14px; }
+</style>
+</head>
+<body>
+
+<nav>
+  <span class="brand">nEXus</span>
+  <a href="#summary">Summary</a>
+  <a href="#root-cause">Root Cause</a>
+  <a href="#affected">Affected Files</a>
+  <a href="#dataflow">Data Flow</a>
+  <a href="#plan">Implementation</a>
+  <a href="#before-after">Before / After</a>
+  <a href="#edge-cases">Edge Cases</a>
+  <a href="#tests">Tests</a>
+  <a href="#parallelism">Parallelism</a>
+  <a href="#commit">Commit</a>
+  <a href="index.html" style="margin-left:auto;">← Back to index</a>
+</nav>
+
+<div class="page">
+
+  <!-- HERO -->
+  <div class="hero" id="top">
+    <h1>Fix: <code>_selectedItem</code> Staleness After Mutations</h1>
+    <p class="sub">feat/auto-hac-calculation · <code>StudyTreeDataProvider</code> · nEXus hazardous area classification app</p>
+    <div class="meta-row">
+      <div class="meta-chip">Branch: <span>feat/auto-hac-calculation</span></div>
+      <div class="meta-chip">Files changed: <span>2</span></div>
+      <div class="meta-chip">Lines changed: <span>~10 logic + ~80 tests</span></div>
+      <div class="meta-chip">Risk: <span style="color:var(--green)">Low</span></div>
+      <div class="meta-chip">Blocking: <span>Auto-calc results never show without navigation</span></div>
+    </div>
+  </div>
+
+  <!-- EXECUTIVE SUMMARY -->
+  <section id="summary">
+    <h2><span class="num">0</span> Executive Summary</h2>
+
+    <div class="summary-grid">
+      <div class="summary-card green">
+        <div class="sc-label">METHODS FIXED</div>
+        <div class="sc-value">3</div>
+        <div class="sc-sub">setTreeItems · updateTreeItem · onRenameItem</div>
+      </div>
+      <div class="summary-card blue">
+        <div class="sc-label">LINES OF LOGIC</div>
+        <div class="sc-value">~10</div>
+        <div class="sc-sub">One sync assignment per method</div>
+      </div>
+      <div class="summary-card purple">
+        <div class="sc-label">NEW TESTS</div>
+        <div class="sc-value">8</div>
+        <div class="sc-sub">In existing provider test file</div>
+      </div>
+      <div class="summary-card yellow">
+        <div class="sc-label">EXISTING TESTS</div>
+        <div class="sc-value">0 broken</div>
+        <div class="sc-sub">All existing tests still pass</div>
+      </div>
+    </div>
+
+    <div class="callout info">
+      <span class="callout-icon">ℹ️</span>
+      <div class="callout-body">
+        <strong>The problem in one sentence</strong>
+        After the auto-calculation feature, <code>setTreeItems()</code> updates the internal
+        <code>_studyItems</code> map with fresh calculation results, but <code>_selectedItem</code>
+        remains a pointer to the pre-calculation object — so the Report tab, sync-status banner,
+        and geometry plot all display stale outputs until the user clicks away and back.
+      </div>
+    </div>
+
+    <div class="callout success">
+      <span class="callout-icon">✅</span>
+      <div class="callout-body">
+        <strong>The fix in one sentence</strong>
+        After each <code>_studyItems</code> mutation, re-point <code>_selectedItem</code> to
+        <code>_studyItems[_selectedItem.index]</code> — one assignment, before
+        <code>notifyStateChange()</code> fires, so every subscriber sees fresh data in the same
+        render cycle.
+      </div>
+    </div>
+  </section>
+
+  <!-- ROOT CAUSE -->
+  <section id="root-cause">
+    <h2><span class="num">1</span> Root Cause</h2>
+
+    <div class="callout warn">
+      <span class="callout-icon">⚠️</span>
+      <div class="callout-body">
+        <strong>State management invariant violation</strong>
+        <code>StudyTreeDataProvider</code> maintains two private fields that must always refer to
+        the same version of the selected item: <code>_studyItems[selectedIndex]</code> and
+        <code>_selectedItem</code>. Three mutation paths break this invariant.
+      </div>
+    </div>
+
+    <table>
+      <thead>
+        <tr>
+          <th>Method</th>
+          <th>Updates <code>_studyItems</code></th>
+          <th>Syncs <code>_selectedItem</code></th>
+          <th>Called by</th>
+          <th>User-visible bug</th>
+        </tr>
+      </thead>
+      <tbody>
+        <tr>
+          <td><code>setTreeItems()</code></td>
+          <td style="color:var(--green)">✓ Yes</td>
+          <td style="color:var(--red)">✗ No — <strong>bug</strong></td>
+          <td>Auto-calc (4×), RunHAC (4×), study load/close/new/save</td>
+          <td>Report tab shows stale outputs after calculation</td>
+        </tr>
+        <tr>
+          <td><code>updateTreeItem()</code></td>
+          <td style="color:var(--green)">✓ Yes</td>
+          <td style="color:var(--red)">✗ No — <strong>bug</strong></td>
+          <td>Public API — currently unused externally</td>
+          <td>Latent; no current caller exposes this</td>
+        </tr>
+        <tr>
+          <td><code>onRenameItem()</code></td>
+          <td style="color:var(--green)">✓ Yes</td>
+          <td style="color:var(--red)">✗ No — <strong>bug</strong></td>
+          <td>Tree right-click rename</td>
+          <td>Right-panel header shows old name after rename</td>
+        </tr>
+        <tr>
+          <td><code>saveFormData()</code></td>
+          <td style="color:var(--green)">✓ Yes</td>
+          <td style="color:var(--green)">✓ Yes (lines 1241 &amp; 1271)</td>
+          <td>Form autosave</td>
+          <td>None — already correct</td>
+        </tr>
+        <tr>
+          <td><code>setSelectedItem()</code></td>
+          <td>–</td>
+          <td style="color:var(--green)">✓ Yes (explicit assignment)</td>
+          <td>Tree item click / navigation</td>
+          <td>None — this is the workaround users hit today</td>
+        </tr>
+      </tbody>
+    </table>
+
+    <div class="callout info">
+      <span class="callout-icon">🔍</span>
+      <div class="callout-body">
+        <strong>Why navigation "fixes" it</strong>
+        Clicking a different tree item calls <code>onSelectItems()</code> →
+        <code>setSelectedItem(newItem)</code> → <code>_selectedItem = newItem</code> where
+        <code>newItem</code> is read from the (now-fresh) <code>_studyItems</code>. Clicking back
+        to the original item repeats this with the fully calculated item. Navigation is an
+        accidental fix for the sync bug, not intended behaviour.
+      </div>
+    </div>
+  </section>
+
+  <!-- AFFECTED FILES -->
+  <section id="affected">
+    <h2><span class="num">2</span> Affected Files</h2>
+
+    <table>
+      <thead>
+        <tr><th>File</th><th>Change type</th><th>Lines</th><th>Risk</th></tr>
+      </thead>
+      <tbody>
+        <tr>
+          <td><code>components/dashboard/study-tree/study-tree-context-provider.tsx</code></td>
+          <td>Bug fix — 3 method patches</td>
+          <td>+3 lines logic</td>
+          <td><span class="risk low">LOW</span></td>
+        </tr>
+        <tr>
+          <td><code>components/dashboard/study-tree/__tests__/study-tree-data-provider.test.ts</code></td>
+          <td>New test cases</td>
+          <td>+~80 lines</td>
+          <td><span class="risk none">NONE</span></td>
+        </tr>
+      </tbody>
+    </table>
+
+    <div class="callout info">
+      <span class="callout-icon">📁</span>
+      <div class="callout-body">
+        <strong>No component changes required</strong>
+        All report-tab components (<code>scenario-reports.tsx</code>, <code>zone-reports.tsx</code>,
+        <code>area-reports.tsx</code>, etc.) already read <code>dataProvider.selectedItem</code>
+        correctly. They will automatically reflect fresh data once <code>_selectedItem</code> is
+        kept in sync. No prop changes, no new hooks, no component rewrites.
+      </div>
+    </div>
+  </section>
+
+  <!-- DATA FLOW DIAGRAM -->
+  <section id="dataflow">
+    <h2><span class="num">3</span> Architecture &amp; Data Flow</h2>
+
+    <div class="card">
+      <h3>Current (broken) flow — after auto-calc writes results</h3>
+    </div>
+    <div class="diagram"><span class="d-blue">useAutoCalculation</span>
+    │
+    ├── fetch("/api/bs-calculation/batch") → results
+    │
+    └── <span class="d-red">provider.setTreeItems(updatedStudyItems)</span>
+              │
+              ├── <span class="d-green">_studyItems</span> ← merged with fresh outputs ✓
+              │
+              ├── <span class="d-red">_selectedItem</span>  ← UNCHANGED (stale pointer) ✗
+              │
+              └── notifyStateChange()
+                        │
+                        └── forceUpdate({}) in layout.tsx
+                                  │
+                                  └── context re-render
+                                            │
+                                            ├── ScenarioHacReport reads <span class="d-red">dataProvider.selectedItem</span>
+                                            │     → <span class="d-red">stale _selectedItem.outputs</span>  ✗
+                                            │
+                                            └── SyncStatusBanner reads <span class="d-red">item.calculationState</span>
+                                                  → <span class="d-red">stale "out-of-sync" status</span>  ✗</div>
+
+    <div class="card" style="margin-top:16px;">
+      <h3>Fixed flow — after this change</h3>
+    </div>
+    <div class="diagram"><span class="d-blue">useAutoCalculation</span>
+    │
+    ├── fetch("/api/bs-calculation/batch") → results
+    │
+    └── provider.setTreeItems(updatedStudyItems)
+              │
+              ├── <span class="d-green">_studyItems</span> ← merged with fresh outputs ✓
+              │
+              ├── <span class="d-green">_selectedItem</span> ← <span class="d-green">= _studyItems[_selectedItem.index] ?? _selectedItem</span> ✓
+              │
+              └── notifyStateChange()
+                        │
+                        └── forceUpdate({}) in layout.tsx
+                                  │
+                                  └── context re-render
+                                            │
+                                            ├── ScenarioHacReport reads <span class="d-green">dataProvider.selectedItem</span>
+                                            │     → <span class="d-green">fresh outputs displayed immediately</span>  ✓
+                                            │
+                                            └── SyncStatusBanner reads <span class="d-green">item.calculationState</span>
+                                                  → <span class="d-green">"calculating" / "in-sync" / "failed"</span>  ✓</div>
+
+    <div class="card" style="margin-top:16px;">
+      <h3>Key invariant restored</h3>
+      <p style="margin-top:8px; color:var(--muted); font-size:13px;">
+        At all times: <code>_selectedItem === _studyItems[_selectedItem.index]</code><br>
+        (except during the brief window between <code>_studyItems</code> assignment and the
+        sync line — now eliminated by placing the sync immediately after).
+      </p>
+    </div>
+  </section>
+
+  <!-- IMPLEMENTATION PLAN -->
+  <section id="plan">
+    <h2><span class="num">4</span> Implementation Plan</h2>
+
+    <div class="phases">
+
+      <div class="phase">
+        <div class="phase-dot fix">1</div>
+        <div class="phase-body">
+          <h3>Fix <code>setTreeItems()</code> <span class="phase-tag sequential">Primary fix</span></h3>
+          <p class="phase-desc">
+            File: <code>components/dashboard/study-tree/study-tree-context-provider.tsx</code> — lines 604–610.<br>
+            After <code>_studyItems</code> is updated via <code>updateStudyItems(items)</code>,
+            immediately re-point <code>_selectedItem</code> before the change emitters fire.
+          </p>
+        </div>
+      </div>
+
+      <div class="phase">
+        <div class="phase-dot fix">2</div>
+        <div class="phase-body">
+          <h3>Fix <code>updateTreeItem()</code> <span class="phase-tag sequential">Consistency</span></h3>
+          <p class="phase-desc">
+            File: same — lines 612–618.<br>
+            Only update <code>_selectedItem</code> when the incoming item's index matches the current
+            selection. Uses an explicit equality guard rather than the <code>??</code> pattern since
+            only one specific index is updated.
+          </p>
+        </div>
+      </div>
+
+      <div class="phase">
+        <div class="phase-dot fix">3</div>
+        <div class="phase-body">
+          <h3>Fix <code>onRenameItem()</code> <span class="phase-tag sequential">Pre-existing bug</span></h3>
+          <p class="phase-desc">
+            File: same — lines 1082–1087.<br>
+            <code>item.index</code> here is <code>TreeItemIndex</code> (string | number from the
+            react-complex-tree library). Use <code>String(item.index)</code> for safe comparison
+            with <code>_selectedItem.index</code> which is always a plain string.
+          </p>
+        </div>
+      </div>
+
+      <div class="phase">
+        <div class="phase-dot test">4</div>
+        <div class="phase-body">
+          <h3>Add unit tests <span class="phase-tag parallel">Can run in parallel with steps 1–3</span></h3>
+          <p class="phase-desc">
+            File: <code>components/dashboard/study-tree/__tests__/study-tree-data-provider.test.ts</code>.<br>
+            Add 8 new test cases in a new <code>describe("selectedItem sync after mutations")</code>
+            block inside the existing <code>describe("StudyTreeDataProvider")</code>. See
+            <a href="#tests">Tests section</a> for full spec.
+          </p>
+        </div>
+      </div>
+
+      <div class="phase">
+        <div class="phase-dot verify">5</div>
+        <div class="phase-body">
+          <h3>Run quality gates <span class="phase-tag sequential">Sequential — requires steps 1–4</span></h3>
+          <p class="phase-desc">
+            Run in order:
+            <code>npx vitest run …/study-tree-data-provider.test.ts</code> →
+            <code>npm test</code> →
+            <code>npm run typecheck</code> →
+            <code>npm run lint</code>.
+            Set timeout 20–30 min for <code>npm test</code>.
+          </p>
+        </div>
+      </div>
+
+      <div class="phase">
+        <div class="phase-dot commit">6</div>
+        <div class="phase-body">
+          <h3>Commit to <code>feat/auto-hac-calculation</code></h3>
+          <p class="phase-desc">
+            Single commit covering provider fix + tests.<br>
+            Message: <code>fix(provider): sync _selectedItem after setTreeItems / updateTreeItem / onRenameItem</code>
+          </p>
+        </div>
+      </div>
+
+    </div>
+  </section>
+
+  <!-- BEFORE / AFTER -->
+  <section id="before-after">
+    <h2><span class="num">5</span> Before / After Code</h2>
+
+    <h3 style="font-size:14px; margin-bottom:12px; color:var(--muted);">setTreeItems() — lines 604–610</h3>
+    <div class="diff-grid">
+      <div class="diff-box before">
+        <div class="diff-box-header">✗ BEFORE</div>
+        <pre>public setTreeItems(items: StudyItems): void {
+  this._studyItems = this.updateStudyItems(items);
+  this.onDidChangeTreeDataEmitter.emit(
+    Object.keys(this._studyItems) as TreeItemIndex[]
+  );
+  this.notifyStateChange();
+}</pre>
+      </div>
+      <div class="diff-box after">
+        <div class="diff-box-header">✓ AFTER</div>
+        <pre>public setTreeItems(items: StudyItems): void {
+  this._studyItems = this.updateStudyItems(items);
+  <span style="color:var(--green)">this._selectedItem =
+    this._studyItems[this._selectedItem.index]
+    ?? this._selectedItem;</span>
+  this.onDidChangeTreeDataEmitter.emit(
+    Object.keys(this._studyItems) as TreeItemIndex[]
+  );
+  this.notifyStateChange();
+}</pre>
+      </div>
+    </div>
+
+    <h3 style="font-size:14px; margin-bottom:12px; color:var(--muted);">updateTreeItem() — lines 612–618</h3>
+    <div class="diff-grid">
+      <div class="diff-box before">
+        <div class="diff-box-header">✗ BEFORE</div>
+        <pre>public updateTreeItem(item: StudyItem): void {
+  this._studyItems = this.updateStudyItems({
+    [item.index]: item,
+  });
+  this.onDidChangeTreeDataEmitter.emit([item.index]);
+  this.notifyStateChange();
+}</pre>
+      </div>
+      <div class="diff-box after">
+        <div class="diff-box-header">✓ AFTER</div>
+        <pre>public updateTreeItem(item: StudyItem): void {
+  this._studyItems = this.updateStudyItems({
+    [item.index]: item,
+  });
+  <span style="color:var(--green)">if (this._selectedItem.index === item.index) {
+    this._selectedItem = this._studyItems[item.index]!;
+  }</span>
+  this.onDidChangeTreeDataEmitter.emit([item.index]);
+  this.notifyStateChange();
+}</pre>
+      </div>
+    </div>
+
+    <h3 style="font-size:14px; margin-bottom:12px; color:var(--muted);">onRenameItem() — lines 1082–1087 (excerpt)</h3>
+    <div class="diff-grid">
+      <div class="diff-box before">
+        <div class="diff-box-header">✗ BEFORE</div>
+        <pre>this._studyItems = this.updateStudyItems({
+  [item.index]: updatedItem,
+});
+this.onDidChangeTreeDataEmitter.emit([item.index]);
+this.notifyStateChange();</pre>
+      </div>
+      <div class="diff-box after">
+        <div class="diff-box-header">✓ AFTER</div>
+        <pre>this._studyItems = this.updateStudyItems({
+  [item.index]: updatedItem,
+});
+<span style="color:var(--green)">if (String(item.index) === this._selectedItem.index) {
+  this._selectedItem =
+    this._studyItems[String(item.index)]!;
+}</span>
+this.onDidChangeTreeDataEmitter.emit([item.index]);
+this.notifyStateChange();</pre>
+      </div>
+    </div>
+  </section>
+
+  <!-- EDGE CASES -->
+  <section id="edge-cases">
+    <h2><span class="num">6</span> Edge Cases &amp; Preserved Behaviour</h2>
+
+    <table>
+      <thead>
+        <tr><th>Scenario</th><th>Analysis</th><th>Risk</th></tr>
+      </thead>
+      <tbody>
+        <tr>
+          <td><strong>Study load / close / new / save</strong><br>
+            <code>setTreeItems(loadedItems)</code> followed immediately by<br>
+            <code>setDataProvider(new StudyTreeDataProvider(...))</code>
+          </td>
+          <td>
+            The sync line runs but the old provider is discarded milliseconds later.
+            Harmless — the new provider is constructed fresh with correct state.
+          </td>
+          <td><span class="risk none">NONE</span></td>
+        </tr>
+        <tr>
+          <td><strong>Mid-edit safety</strong><br>
+            User typing in a form field when calculation result arrives
+          </td>
+          <td>
+            Calculations write only <code>outputs</code> and <code>calculationState</code>.
+            React Hook Form holds input values in its own state — a <code>_selectedItem</code>
+            refresh cannot trigger a form reset. The geometry form's
+            <code>reset(selectedScenario.geometry)</code> only fires on geometry changes;
+            calculations never touch <code>geometry</code>.
+          </td>
+          <td><span class="risk none">NONE</span></td>
+        </tr>
+        <tr>
+          <td><strong>Running state visible immediately</strong><br>
+            <code>buildRunningItems()</code> → <code>setTreeItems()</code>
+          </td>
+          <td>
+            <code>buildRunningItems</code> returns <code>{ ...studyItems }</code> — a full copy of
+            all items. After the sync, <code>_selectedItem</code> points to the "running" version,
+            so the SyncStatusBanner spinner shows immediately when auto-calc kicks off.
+          </td>
+          <td><span class="risk none">NONE — desired</span></td>
+        </tr>
+        <tr>
+          <td><strong>Selected item not in the plan</strong><br>
+            e.g. user viewing the study root while a scenario calculates
+          </td>
+          <td>
+            <code>_studyItems[_selectedItem.index]</code> still returns the study-root item
+            (unchanged). The <code>??</code> fallback is never reached; <code>_selectedItem</code>
+            is set to the same object. No visual change. Correct.
+          </td>
+          <td><span class="risk none">NONE</span></td>
+        </tr>
+        <tr>
+          <td><strong>onRenameItem — TreeItemIndex type</strong><br>
+            <code>item.index</code> is <code>string | number</code> from react-complex-tree
+          </td>
+          <td>
+            Use <code>String(item.index)</code> to normalise before comparing with
+            <code>_selectedItem.index</code> (always <code>string</code>). Prevents a
+            <code>"1" !== 1</code> false-negative for numeric indexes.
+          </td>
+          <td><span class="risk low">LOW — handled</span></td>
+        </tr>
+        <tr>
+          <td><strong>Concurrent calculations (race)</strong><br>
+            Debounce prevents overlap but two rapid edits could queue two runs
+          </td>
+          <td>
+            Each call to <code>setTreeItems</code> syncs <code>_selectedItem</code> atomically.
+            The latest write wins, which is always the freshest state. Existing race-safety
+            logic in <code>useAutoCalculation</code> (revision guards) is unchanged.
+          </td>
+          <td><span class="risk low">LOW — existing guards handle this</span></td>
+        </tr>
+        <tr>
+          <td><strong>Existing tests</strong></td>
+          <td>
+            No existing test asserts that <code>selectedItem</code> does NOT change after
+            <code>setTreeItems</code>. All existing tests pass with the new sync line present.
+            Verified by code inspection of the test file.
+          </td>
+          <td><span class="risk none">NONE</span></td>
+        </tr>
+      </tbody>
+    </table>
+  </section>
+
+  <!-- TESTS -->
+  <section id="tests">
+    <h2><span class="num">7</span> Test Plan</h2>
+
+    <div class="callout info">
+      <span class="callout-icon">📄</span>
+      <div class="callout-body">
+        <strong>Location</strong>
+        Add a new <code>describe("selectedItem sync after mutations")</code> block inside the
+        existing <code>describe("StudyTreeDataProvider")</code> in
+        <code>components/dashboard/study-tree/__tests__/study-tree-data-provider.test.ts</code>.
+        Use the existing <code>createMockStudyItems()</code> helper — no new fixtures needed.
+      </div>
+    </div>
+
+    <table>
+      <thead>
+        <tr><th>#</th><th>Method</th><th>Scenario</th><th>Assertion</th></tr>
+      </thead>
+      <tbody>
+        <tr>
+          <td>1</td>
+          <td><code>setTreeItems</code></td>
+          <td>Updated items include the selected item with new outputs</td>
+          <td><code>provider.selectedItem</code> reflects the new outputs immediately</td>
+        </tr>
+        <tr>
+          <td>2</td>
+          <td><code>setTreeItems</code></td>
+          <td>Updated items are identical to existing (no-op merge)</td>
+          <td><code>provider.selectedItem</code> object identity is preserved (same ref)</td>
+        </tr>
+        <tr>
+          <td>3</td>
+          <td><code>setTreeItems</code></td>
+          <td>Full studyItems passed — selected item included but unchanged</td>
+          <td><code>provider.selectedItem.index</code> is unchanged; no crash</td>
+        </tr>
+        <tr>
+          <td>4</td>
+          <td><code>setTreeItems</code></td>
+          <td>Running-state items — plan includes selected item</td>
+          <td><code>provider.selectedItem.calculationState.status</code> === <code>"running"</code></td>
+        </tr>
+        <tr>
+          <td>5</td>
+          <td><code>updateTreeItem</code></td>
+          <td>Updated item IS the currently selected item</td>
+          <td><code>provider.selectedItem</code> reflects the update</td>
+        </tr>
+        <tr>
+          <td>6</td>
+          <td><code>updateTreeItem</code></td>
+          <td>Updated item is a DIFFERENT item (not selected)</td>
+          <td><code>provider.selectedItem</code> is unchanged</td>
+        </tr>
+        <tr>
+          <td>7</td>
+          <td><code>onRenameItem</code></td>
+          <td>Renamed item IS the currently selected item</td>
+          <td><code>provider.selectedItem.information.name</code> === new name</td>
+        </tr>
+        <tr>
+          <td>8</td>
+          <td><code>onRenameItem</code></td>
+          <td>Renamed item is a DIFFERENT item</td>
+          <td><code>provider.selectedItem.information.name</code> is unchanged</td>
+        </tr>
+      </tbody>
+    </table>
+
+    <h3 style="font-size:14px; margin-top:24px; margin-bottom:12px; color:var(--muted);">Quality gate commands</h3>
+    <div class="code-block">
+      <div class="code-header"><span class="lang">shell</span><span>Run in order</span></div>
+      <pre># 1. Targeted test run first (fast feedback)
+npx vitest run components/dashboard/study-tree/__tests__/study-tree-data-provider.test.ts
+
+# 2. Full suite
+npm test
+
+# 3. TypeScript — strict mode, covers app + tests
+npm run typecheck
+
+# 4. ESLint — max-warnings: 0, blocks CI
+npm run lint</pre>
+    </div>
+  </section>
+
+  <!-- PARALLELISM -->
+  <section id="parallelism">
+    <h2><span class="num">8</span> Parallelism for Subagents</h2>
+
+    <div class="callout info">
+      <span class="callout-icon">⚡</span>
+      <div class="callout-body">
+        <strong>Steps 1–4 can be executed concurrently</strong>
+        The HTML plan doc (Agent A), the provider fixes (Agent B), and the new tests (Agent C)
+        touch entirely different files. After all three complete, run quality gates and commit
+        sequentially.
+      </div>
+    </div>
+
+    <div class="parallel-grid">
+      <div class="agent-card">
+        <div class="agent-card-header a">⚡ Agent A — HTML plan doc</div>
+        <div class="agent-card-body">
+          <ul>
+            <li>Create <code>plan-selecteditem-staleness.html</code></li>
+            <li>Update <code>index.html</code> with new link</li>
+            <li>Commit &amp; push to html-docs-repo</li>
+          </ul>
+        </div>
+      </div>
+      <div class="agent-card">
+        <div class="agent-card-header b">⚡ Agent B — Provider fixes</div>
+        <div class="agent-card-body">
+          <ul>
+            <li>Patch <code>setTreeItems()</code> line 604</li>
+            <li>Patch <code>updateTreeItem()</code> line 612</li>
+            <li>Patch <code>onRenameItem()</code> line 1082</li>
+          </ul>
+        </div>
+      </div>
+    </div>
+
+    <div class="agent-card" style="max-width:480px;">
+      <div class="agent-card-header c">⚡ Agent C — Unit tests (parallel with B)</div>
+      <div class="agent-card-body">
+        <ul>
+          <li>Add 8 test cases in <code>study-tree-data-provider.test.ts</code></li>
+          <li>No conflict with Agent B — different file</li>
+          <li>Tests can be written from the spec above before Agent B's code lands</li>
+        </ul>
+      </div>
+    </div>
+
+    <div class="card" style="margin-top:16px;">
+      <h3>Sequential gate after A + B + C</h3>
+      <p style="margin-top:8px;">Run quality gates → single implementation commit on <code>feat/auto-hac-calculation</code>.</p>
+    </div>
+  </section>
+
+  <!-- COMMIT STRATEGY -->
+  <section id="commit">
+    <h2><span class="num">9</span> Commit Strategy</h2>
+
+    <table>
+      <thead>
+        <tr><th>Commit #</th><th>Repo</th><th>Files</th><th>Message</th></tr>
+      </thead>
+      <tbody>
+        <tr>
+          <td>1</td>
+          <td>html-docs-repo</td>
+          <td><code>plan-selecteditem-staleness.html</code><br><code>index.html</code></td>
+          <td><code>docs(plan): fix _selectedItem staleness after setTreeItems mutations</code></td>
+        </tr>
+        <tr>
+          <td>2</td>
+          <td>nEXus</td>
+          <td><code>study-tree-context-provider.tsx</code><br><code>study-tree-data-provider.test.ts</code></td>
+          <td><code>fix(provider): sync _selectedItem after setTreeItems / updateTreeItem / onRenameItem</code></td>
+        </tr>
+      </tbody>
+    </table>
+
+    <div class="callout success">
+      <span class="callout-icon">✅</span>
+      <div class="callout-body">
+        <strong>Push strategy</strong>
+        Push both commits immediately after each is created. No WIP commits needed — the change
+        is small and self-contained. The HTML plan commit can be pushed independently and
+        immediately. The implementation commit should be pushed only after all quality gates
+        pass.
+      </div>
+    </div>
+  </section>
+
+</div>
+</body>
+</html>
