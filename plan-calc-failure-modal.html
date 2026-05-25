@@ -1,0 +1,888 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8"/>
+<meta name="viewport" content="width=device-width, initial-scale=1.0"/>
+<title>Plan: Calculation Failure Modal Improvements</title>
+<style>
+  :root {
+    --bg: #0f1117;
+    --surface: #1a1d27;
+    --surface2: #1e2235;
+    --border: #2e3352;
+    --accent: #6c8ef7;
+    --accent2: #a78bfa;
+    --text: #e2e8f0;
+    --muted: #94a3b8;
+    --green: #34d399;
+    --amber: #f59e0b;
+    --red: #f87171;
+    --blue: #60a5fa;
+    --teal: #2dd4bf;
+    --risk-low: #166534;
+    --risk-low-text: #86efac;
+    --risk-med: #92400e;
+    --risk-med-text: #fcd34d;
+    --risk-high: #7f1d1d;
+    --risk-high-text: #fca5a5;
+    --code-bg: #0d1117;
+    --tag-bg: #1e2a4a;
+  }
+  *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+  body { background: var(--bg); color: var(--text); font-family: 'Segoe UI', system-ui, sans-serif; font-size: 14px; line-height: 1.6; }
+  a { color: var(--accent); text-decoration: none; }
+  a:hover { text-decoration: underline; }
+
+  /* Layout */
+  .page { max-width: 960px; margin: 0 auto; padding: 48px 24px 80px; }
+  .toc-nav { position: sticky; top: 0; z-index: 10; background: rgba(15,17,23,0.95); backdrop-filter: blur(8px); border-bottom: 1px solid var(--border); padding: 10px 24px; display: flex; gap: 16px; flex-wrap: wrap; font-size: 12px; }
+  .toc-nav a { color: var(--muted); transition: color 0.15s; }
+  .toc-nav a:hover { color: var(--accent); text-decoration: none; }
+  .toc-brand { color: var(--accent); font-weight: 700; margin-right: 8px; }
+
+  /* Header */
+  .page-header { margin-bottom: 40px; padding-bottom: 28px; border-bottom: 1px solid var(--border); }
+  .page-header h1 { font-size: 28px; font-weight: 700; color: var(--accent); margin-bottom: 8px; }
+  .meta { display: flex; flex-wrap: wrap; gap: 12px; margin-top: 14px; }
+  .meta-item { display: flex; align-items: center; gap: 6px; font-size: 12px; color: var(--muted); }
+  .meta-item strong { color: var(--text); }
+  .badge { display: inline-block; font-size: 11px; font-weight: 600; padding: 2px 8px; border-radius: 10px; }
+  .badge-plan { background: var(--tag-bg); color: var(--accent); }
+  .badge-feat { background: #1a2f1a; color: var(--green); }
+  .badge-ui { background: #2a1a3a; color: var(--accent2); }
+
+  /* Sections */
+  section { margin-bottom: 52px; }
+  section h2 { font-size: 20px; font-weight: 700; color: var(--accent2); margin-bottom: 20px; padding-bottom: 8px; border-bottom: 1px solid var(--border); display: flex; align-items: center; gap: 10px; }
+  section h2 .section-num { font-size: 12px; font-weight: 600; color: var(--muted); background: var(--surface2); border: 1px solid var(--border); border-radius: 4px; padding: 2px 7px; }
+  h3 { font-size: 15px; font-weight: 600; color: var(--text); margin: 24px 0 12px; }
+  h4 { font-size: 13px; font-weight: 600; color: var(--muted); margin: 16px 0 8px; text-transform: uppercase; letter-spacing: 0.05em; }
+
+  /* Executive summary card */
+  .summary-card { background: var(--surface); border: 1px solid var(--border); border-left: 4px solid var(--accent); border-radius: 8px; padding: 20px 24px; }
+  .summary-card p { color: var(--text); line-height: 1.7; margin-bottom: 10px; }
+  .summary-card p:last-child { margin-bottom: 0; }
+
+  /* Cards */
+  .card { background: var(--surface); border: 1px solid var(--border); border-radius: 8px; padding: 18px 20px; }
+  .card + .card { margin-top: 12px; }
+  .card-grid { display: grid; grid-template-columns: repeat(auto-fit, minmax(260px, 1fr)); gap: 14px; }
+
+  /* Before/After */
+  .ba-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 16px; }
+  .ba-before { border-left: 3px solid var(--red); }
+  .ba-after { border-left: 3px solid var(--green); }
+  .ba-label { font-size: 11px; font-weight: 700; text-transform: uppercase; letter-spacing: 0.08em; margin-bottom: 10px; }
+  .ba-before .ba-label { color: var(--red); }
+  .ba-after .ba-label { color: var(--green); }
+  ul.ba-list { list-style: none; padding: 0; }
+  ul.ba-list li { padding: 4px 0; font-size: 13px; display: flex; align-items: flex-start; gap: 8px; }
+  ul.ba-list li::before { flex-shrink: 0; margin-top: 2px; font-size: 12px; }
+  .ba-before ul.ba-list li::before { content: "✗"; color: var(--red); }
+  .ba-after ul.ba-list li::before { content: "✓"; color: var(--green); }
+
+  /* Tables */
+  table { width: 100%; border-collapse: collapse; font-size: 13px; }
+  th { text-align: left; padding: 10px 14px; background: var(--surface2); color: var(--muted); font-weight: 600; font-size: 11px; text-transform: uppercase; letter-spacing: 0.05em; border-bottom: 1px solid var(--border); }
+  td { padding: 10px 14px; border-bottom: 1px solid var(--border); vertical-align: top; }
+  tr:last-child td { border-bottom: none; }
+  tbody tr:hover td { background: rgba(108,142,247,0.04); }
+  .file-path { font-family: 'Consolas', 'Cascadia Code', monospace; font-size: 12px; color: var(--accent); }
+  .change-type { font-size: 11px; font-weight: 600; padding: 2px 7px; border-radius: 4px; white-space: nowrap; }
+  .ct-extend { background: #1a2a1a; color: var(--green); }
+  .ct-rewrite { background: #1a1a2a; color: var(--accent); }
+  .ct-new-prop { background: #2a1a2a; color: var(--accent2); }
+  .ct-wire { background: #2a2a1a; color: var(--amber); }
+  .ct-test { background: #1a2a2a; color: var(--teal); }
+
+  /* Risk levels */
+  .risk { display: inline-block; font-size: 11px; font-weight: 700; padding: 2px 8px; border-radius: 4px; }
+  .risk-low { background: var(--risk-low); color: var(--risk-low-text); }
+  .risk-med { background: var(--risk-med); color: var(--risk-med-text); }
+  .risk-high { background: var(--risk-high); color: var(--risk-high-text); }
+
+  /* Phase timeline */
+  .phase-list { display: flex; flex-direction: column; gap: 16px; }
+  .phase { background: var(--surface); border: 1px solid var(--border); border-radius: 8px; overflow: hidden; }
+  .phase-header { display: flex; align-items: center; gap: 14px; padding: 14px 18px; border-bottom: 1px solid var(--border); cursor: default; }
+  .phase-num { width: 32px; height: 32px; border-radius: 50%; display: flex; align-items: center; justify-content: center; font-size: 13px; font-weight: 700; flex-shrink: 0; }
+  .phase-1 .phase-num { background: #1e2a4a; color: var(--accent); }
+  .phase-2 .phase-num { background: #2a1a3a; color: var(--accent2); }
+  .phase-3 .phase-num { background: #1a2a1a; color: var(--green); }
+  .phase-4 .phase-num { background: #2a2a1a; color: var(--amber); }
+  .phase-title { font-weight: 700; font-size: 15px; flex: 1; }
+  .phase-parallel { font-size: 11px; font-weight: 600; padding: 2px 8px; border-radius: 4px; background: #1a2f1a; color: var(--green); }
+  .phase-serial { font-size: 11px; font-weight: 600; padding: 2px 8px; border-radius: 4px; background: #1a1a2f; color: var(--blue); }
+  .phase-body { padding: 16px 18px; }
+  .task-list { list-style: none; }
+  .task-list li { padding: 5px 0; font-size: 13px; display: flex; align-items: flex-start; gap: 10px; }
+  .task-list li::before { content: "→"; color: var(--muted); flex-shrink: 0; }
+  .task-dep { font-size: 11px; color: var(--muted); background: var(--surface2); border: 1px solid var(--border); border-radius: 4px; padding: 1px 6px; margin-top: 2px; }
+
+  /* Code blocks */
+  pre { background: var(--code-bg); border: 1px solid var(--border); border-radius: 6px; padding: 14px 16px; font-family: 'Consolas', 'Cascadia Code', 'Courier New', monospace; font-size: 12px; line-height: 1.7; overflow-x: auto; margin: 12px 0; color: #c9d1d9; }
+  code { font-family: 'Consolas', 'Cascadia Code', 'Courier New', monospace; font-size: 12px; }
+  .code-label { font-size: 11px; font-weight: 600; color: var(--muted); background: var(--surface2); border: 1px solid var(--border); border-radius: 4px 4px 0 0; border-bottom: none; padding: 4px 12px; display: inline-block; margin-bottom: -1px; position: relative; z-index: 1; }
+  .kw { color: #ff7b72; }
+  .fn { color: #d2a8ff; }
+  .str { color: #a5d6ff; }
+  .cm { color: #8b949e; font-style: italic; }
+  .type { color: #ffa657; }
+  .num { color: #79c0ff; }
+
+  /* Checklist */
+  .checklist { list-style: none; }
+  .checklist li { padding: 5px 0; font-size: 13px; display: flex; align-items: flex-start; gap: 10px; }
+  .check-box { width: 16px; height: 16px; border: 2px solid var(--border); border-radius: 3px; flex-shrink: 0; margin-top: 1px; }
+
+  /* Mermaid */
+  .mermaid-wrapper { background: var(--surface); border: 1px solid var(--border); border-radius: 8px; padding: 20px; overflow-x: auto; }
+  .mermaid { display: flex; justify-content: center; }
+
+  /* Callout */
+  .callout { border-radius: 8px; padding: 14px 18px; font-size: 13px; margin: 14px 0; display: flex; gap: 12px; align-items: flex-start; }
+  .callout-info { background: #0d1b3e; border: 1px solid #1e3a6e; }
+  .callout-warn { background: #2a1f0a; border: 1px solid #5c3a0a; }
+  .callout-icon { font-size: 16px; flex-shrink: 0; margin-top: 1px; }
+  .callout-body { flex: 1; }
+  .callout-body strong { display: block; margin-bottom: 4px; }
+
+  /* Tag pill */
+  .tag { font-size: 11px; font-weight: 600; padding: 2px 7px; border-radius: 10px; background: var(--tag-bg); color: var(--accent); }
+
+  /* Responsive */
+  @media (max-width: 640px) {
+    .page { padding: 24px 16px 60px; }
+    .ba-grid { grid-template-columns: 1fr; }
+    .card-grid { grid-template-columns: 1fr; }
+    .toc-nav { display: none; }
+    pre { font-size: 11px; }
+  }
+</style>
+<!-- Mermaid for diagrams -->
+<script type="module">
+  import mermaid from 'https://cdn.jsdelivr.net/npm/mermaid@10/dist/mermaid.esm.min.mjs';
+  mermaid.initialize({ startOnLoad: true, theme: 'dark', themeVariables: { background: '#1a1d27', primaryColor: '#6c8ef7', primaryTextColor: '#e2e8f0', primaryBorderColor: '#2e3352', lineColor: '#94a3b8', secondaryColor: '#1e2235', tertiaryColor: '#0f1117', edgeLabelBackground: '#1a1d27', clusterBkg: '#1e2235', titleColor: '#e2e8f0', nodeTextColor: '#e2e8f0' } });
+</script>
+</head>
+<body>
+
+<nav class="toc-nav">
+  <span class="toc-brand">Plan</span>
+  <a href="#summary">Summary</a>
+  <a href="#affected">Files</a>
+  <a href="#before-after">Before/After</a>
+  <a href="#architecture">Architecture</a>
+  <a href="#phases">Phases</a>
+  <a href="#detail">Task Detail</a>
+  <a href="#edge-cases">Edge Cases</a>
+  <a href="#tests">Tests</a>
+  <a href="#risks">Risks</a>
+  <a href="#commit">Commit</a>
+</nav>
+
+<div class="page">
+
+  <header class="page-header">
+    <h1>Calculation Failure Modal — Improvements</h1>
+    <p style="color:var(--muted); max-width: 620px;">Breadcrumb navigation, clickable rows, and user-friendly error messages in the <code>CalculationFailureModal</code> component.</p>
+    <div class="meta">
+      <div class="meta-item"><strong>Branch</strong> feat/auto-hac-calculation</div>
+      <div class="meta-item"><strong>Date</strong> 2026-05-25</div>
+      <div class="meta-item"><strong>Files changed</strong> 4</div>
+      <div class="meta-item"><span class="badge badge-plan">Plan</span></div>
+      <div class="meta-item"><span class="badge badge-feat">Feature</span></div>
+      <div class="meta-item"><span class="badge badge-ui">UI</span></div>
+    </div>
+  </header>
+
+  <!-- ─────────────────── EXECUTIVE SUMMARY ─────────────────── -->
+  <section id="summary">
+    <h2><span class="section-num">01</span> Executive Summary</h2>
+    <div class="summary-card">
+      <p>The current <code>CalculationFailureModal</code> shows a flat list of failed item names, raw type enum strings, and raw internal error messages. Users cannot tell where in the study hierarchy a failed item sits, cannot navigate directly to it, and see confusing messages like <em>"Equipment item outputs are undefined."</em></p>
+      <p>This plan delivers three targeted improvements with no schema migration and no breaking API changes:</p>
+      <p><strong>1. Breadcrumb path</strong> — Each row gains a compact ancestor trail (e.g., <em>Facility > Area > Compressor</em>) computed from the existing <code>getAncestorItems</code> traversal utility, with the study root excluded and names truncated at 15 characters.</p>
+      <p><strong>2. Clickable navigation</strong> — Each row becomes a button. Clicking selects the item in the study tree via the existing <code>dataProvider.onSelectItems</code> hook (which already handles ancestor expansion and scroll-into-view) and closes the modal.</p>
+      <p><strong>3. User-friendly errors with visual distinction</strong> — A sanitizer in the modal maps internal messages to plain English. <span style="color:var(--amber)">Amber</span> text flags dependency errors ("fix a parent first"); <span style="color:var(--red)">red</span> text flags input validation errors ("fix this item's inputs"). Type badges are formatted via the existing <code>formatHierarchyAsName</code> utility.</p>
+      <p>The failed-items list is also sorted hierarchically (parents before children) by replacing the arbitrary <code>Object.values()</code> scan with a depth-first traversal from the study root.</p>
+    </div>
+  </section>
+
+  <!-- ─────────────────── AFFECTED FILES ─────────────────── -->
+  <section id="affected">
+    <h2><span class="section-num">02</span> Affected Files</h2>
+    <div style="border: 1px solid var(--border); border-radius: 8px; overflow: hidden;">
+      <table>
+        <thead>
+          <tr>
+            <th>File</th>
+            <th>Change type</th>
+            <th>Summary</th>
+          </tr>
+        </thead>
+        <tbody>
+          <tr>
+            <td><span class="file-path">components/dashboard/use-auto-calculation.ts</span></td>
+            <td><span class="change-type ct-extend">Extend + Rewrite useMemo</span></td>
+            <td>Add <code>breadcrumb: string[]</code> to <code>FailedItemInfo</code>; replace <code>Object.values()</code> scan with DFS for hierarchical ordering</td>
+          </tr>
+          <tr>
+            <td><span class="file-path">components/dashboard/calculation-failure-modal.tsx</span></td>
+            <td><span class="change-type ct-rewrite">Rewrite UI + add helpers</span></td>
+            <td>Add <code>onNavigateToItem</code> prop; add sanitizer and truncation helpers; render breadcrumb, clickable rows, colour-coded errors, formatted type badge</td>
+          </tr>
+          <tr>
+            <td><span class="file-path">components/dashboard/hac-status-indicator.tsx</span></td>
+            <td><span class="change-type ct-wire">Wire new prop</span></td>
+            <td>Pass <code>onNavigateToItem</code> callback to <code>CalculationFailureModal</code></td>
+          </tr>
+          <tr>
+            <td><span class="file-path">components/dashboard/__tests__/use-auto-calculation.test.tsx</span></td>
+            <td><span class="change-type ct-test">Update + extend tests</span></td>
+            <td>Assert <code>breadcrumb</code> field in existing test #10; add hierarchical-ordering test with area → equipment → scenario chain</td>
+          </tr>
+        </tbody>
+      </table>
+    </div>
+
+    <h3>Utilities Reused (read-only)</h3>
+    <div class="card-grid">
+      <div class="card">
+        <div style="font-size:12px; color: var(--accent); font-family: monospace; margin-bottom: 6px;">lib/study-tree-traversal.ts:100</div>
+        <div style="font-weight:600; margin-bottom:4px;">getAncestorItems()</div>
+        <div style="font-size:12px; color:var(--muted);">Returns ancestors bottom-to-top (parent → root). Already imported in the provider — import directly in the hook.</div>
+      </div>
+      <div class="card">
+        <div style="font-size:12px; color: var(--accent); font-family: monospace; margin-bottom: 6px;">lib/utils.ts:10</div>
+        <div style="font-weight:600; margin-bottom:4px;">formatHierarchyAsName()</div>
+        <div style="font-size:12px; color:var(--muted);">Converts camelCase type enums to Title Case: <code>"equipmentItem"</code> → <code>"Equipment Item"</code>.</div>
+      </div>
+      <div class="card">
+        <div style="font-size:12px; color: var(--accent); font-family: monospace; margin-bottom: 6px;">study-tree-context-provider.tsx:1105</div>
+        <div style="font-weight:600; margin-bottom:4px;">dataProvider.onSelectItems()</div>
+        <div style="font-size:12px; color:var(--muted);">Selects item AND triggers ancestor expansion + scroll-into-view via the <code>onSelectionChanged</code> listener in <code>StudyTree</code>.</div>
+      </div>
+      <div class="card">
+        <div style="font-size:12px; color: var(--accent); font-family: monospace; margin-bottom: 6px;">test-utils/study-item-fixtures.ts</div>
+        <div style="font-weight:600; margin-bottom:4px;">createArea / createEquipmentItem / createScenario</div>
+        <div style="font-size:12px; color:var(--muted);">Fixture builders for setting up multi-level test hierarchies.</div>
+      </div>
+    </div>
+  </section>
+
+  <!-- ─────────────────── BEFORE / AFTER ─────────────────── -->
+  <section id="before-after">
+    <h2><span class="section-num">03</span> Before / After Behaviour</h2>
+    <div class="ba-grid">
+      <div class="card ba-before">
+        <div class="ba-label">Before</div>
+        <ul class="ba-list">
+          <li>Name + raw type enum badge (<code>"equipmentItem"</code>)</li>
+          <li>No path context — user cannot tell where in hierarchy item lives</li>
+          <li>Raw error messages: <em>"Equipment item outputs are undefined."</em></li>
+          <li>No visual distinction between dependency errors and input errors</li>
+          <li>Non-interactive rows — user must manually find item in tree</li>
+          <li>Arbitrary display order (<code>Object.values()</code>)</li>
+        </ul>
+      </div>
+      <div class="card ba-after">
+        <div class="ba-label">After</div>
+        <ul class="ba-list">
+          <li>Formatted type badge: <em>"Equipment Item"</em></li>
+          <li>Breadcrumb above name: <em>Facility A › Pump Area › Compressor</em></li>
+          <li>Plain English errors: <em>"Waiting for parent equipment calculation to complete."</em></li>
+          <li><span style="color:var(--amber)">Amber</span> text for dependency errors, <span style="color:var(--red)">red</span> for input errors</li>
+          <li>Entire row is a button — click selects item, expands tree, scrolls into view, closes modal</li>
+          <li>Hierarchical order: parent failures always shown before their children</li>
+        </ul>
+      </div>
+    </div>
+  </section>
+
+  <!-- ─────────────────── ARCHITECTURE ─────────────────── -->
+  <section id="architecture">
+    <h2><span class="section-num">04</span> Architecture &amp; Data Flow</h2>
+
+    <h3>End-to-End Data Flow</h3>
+    <div class="mermaid-wrapper">
+      <div class="mermaid">
+flowchart TD
+    SI["studyItems\n(Firestore flat map)"]
+    MEMO["useAutoCalculation\nfailedItems useMemo\n(DFS + getAncestorItems)"]
+    FII["FailedItemInfo[]\nindex · name · type\nerrorMessage · breadcrumb"]
+    MODAL["CalculationFailureModal\nsanitizeError · truncateCrumb\nformatHierarchyAsName"]
+    BTN["&lt;button&gt; row click"]
+    OSI["dataProvider.onSelectItems"]
+    TREE["StudyTree\nonSelectionChanged listener\nexpandItem × ancestors\nselectItems · focusItem"]
+
+    SI -->|"Object.values scan\n(DFS from studyIndex)"| MEMO
+    MEMO -->|"breadcrumb via\ngetAncestorItems"| FII
+    FII --> MODAL
+    MODAL -->|"onNavigateToItem(index)\n+ onClose()"| BTN
+    BTN --> OSI
+    OSI -->|"emitSelectionChanged"| TREE
+      </div>
+    </div>
+
+    <h3>DFS Traversal Logic (hierarchical ordering)</h3>
+    <div class="callout callout-info">
+      <span class="callout-icon">ℹ</span>
+      <div class="callout-body">
+        <strong>Why DFS instead of Object.values()?</strong>
+        <code>Object.values()</code> iterates in insertion order, which is arbitrary. A DFS from the study root using the <code>children[]</code> arrays on each item gives a guaranteed pre-order traversal: every parent appears before its children. This is important when both an Area and its child Scenario have failed — the Area (the root cause) appears first.
+      </div>
+    </div>
+
+    <div class="mermaid-wrapper" style="margin-top:16px;">
+      <div class="mermaid">
+flowchart LR
+    START(["studyIndex"]) --> S1["stack = [studyIndex]\nvisited = {}"]
+    S1 --> LOOP{stack empty?}
+    LOOP -->|no| POP["index = stack.pop()"]
+    POP --> VIS{visited?}
+    VIS -->|yes| LOOP
+    VIS -->|no| MARK["mark visited\nitem = studyItems[index]"]
+    MARK --> FAIL{calculationState\n=== 'failed'?}
+    FAIL -->|yes| ADD["compute breadcrumb\npush to result"]
+    FAIL -->|no| PUSH
+    ADD --> PUSH["push children\n(reversed) onto stack"]
+    PUSH --> LOOP
+    LOOP -->|yes| DONE(["return result"])
+      </div>
+    </div>
+
+    <h3>Breadcrumb Computation</h3>
+    <div class="mermaid-wrapper" style="margin-top:16px;">
+      <div class="mermaid">
+flowchart LR
+    A["getAncestorItems\n(index, studyItems)"] --> B["[parent, grandparent,\n..., study-root]\nbottom-to-top"]
+    B --> C[".reverse()\ntop-to-bottom"]
+    C --> D[".slice(1)\ndrop study-root"]
+    D --> E[".map(a => name ?? index)\nstrings only"]
+    E --> F["truncateCrumb\n15 chars + …"]
+    F --> G["breadcrumb: string[]"]
+      </div>
+    </div>
+
+    <h3>Navigation Call Chain</h3>
+    <div class="mermaid-wrapper" style="margin-top:16px;">
+      <div class="mermaid">
+sequenceDiagram
+    participant U as User
+    participant M as CalculationFailureModal
+    participant H as HacStatusIndicator
+    participant P as dataProvider
+    participant T as StudyTree
+
+    U->>M: clicks failed item row
+    M->>H: onNavigateToItem(index)
+    H->>P: onSelectItems([index])
+    H->>H: setIsModalOpen(false)
+    P->>P: emitSelectionChanged(index)
+    P-->>T: onSelectionChanged listener fires
+    T->>T: expandItem(each ancestor)
+    T->>T: expandItem(index)
+    T->>T: selectItems([index])
+    T->>T: focusItem(index)
+      </div>
+    </div>
+  </section>
+
+  <!-- ─────────────────── IMPLEMENTATION PHASES ─────────────────── -->
+  <section id="phases">
+    <h2><span class="section-num">05</span> Implementation Phases</h2>
+
+    <div class="callout callout-info">
+      <span class="callout-icon">⚡</span>
+      <div class="callout-body">
+        <strong>Parallel opportunity</strong>
+        Tasks A and B can be executed by separate agents simultaneously — Task B only depends on the <em>type definition</em> of <code>FailedItemInfo.breadcrumb</code>, not on the runtime implementation. Define the interface first (5 minutes), then both agents proceed in parallel. Task C is a 3-line wiring change that follows B. Task D (tests) runs after A completes.
+      </div>
+    </div>
+
+    <div class="mermaid-wrapper" style="margin-top:20px; margin-bottom:24px;">
+      <div class="mermaid">
+gantt
+    title Implementation Sequence
+    dateFormat X
+    axisFormat %s
+
+    section Data Layer
+    Task A — FailedItemInfo + useMemo DFS  :a, 0, 3
+    Task D — Update tests                  :d, after a, 2
+
+    section UI Layer
+    Task B — Modal rewrite                 :b, 0, 3
+    Task C — Wire indicator prop           :c, after b, 1
+
+    section Verification
+    typecheck + lint + test suite          :v, after d, 1
+      </div>
+    </div>
+
+    <div class="phase-list">
+
+      <div class="phase phase-1">
+        <div class="phase-header">
+          <div class="phase-num">A</div>
+          <div class="phase-title">Data layer — <code>use-auto-calculation.ts</code></div>
+          <span class="phase-parallel">Parallel-safe</span>
+        </div>
+        <div class="phase-body">
+          <ul class="task-list">
+            <li>Add <code>import { getAncestorItems } from "@/lib/study-tree-traversal"</code></li>
+            <li>Extend <code>FailedItemInfo</code>: add <code>breadcrumb: string[]</code> with JSDoc comment <em>"Ancestor names from root-child to immediate parent, study root excluded."</em></li>
+            <li>Replace <code>Object.values()</code> loop in <code>failedItems</code> <code>useMemo</code> with DFS from <code>dataProvider.getStudyIndex()</code> — stack + visited set, push children in reverse</li>
+            <li>For each failed item during DFS: call <code>getAncestorItems(index, studyItems)</code>, spread-copy and reverse, <code>.slice(1)</code> to drop study root, map each ancestor to <code>(information as {name?:string})?.name ?? index</code></li>
+            <li>Keep useMemo dependency array as <code>[dataProvider.studyItems]</code> — <code>getStudyIndex()</code> is derived from studyItems so no additional dep needed</li>
+            <li>Guard: if <code>studyIndex === "root"</code>, return <code>[]</code> early (same guard already exists in <code>runCalculation</code>)</li>
+          </ul>
+        </div>
+      </div>
+
+      <div class="phase phase-2">
+        <div class="phase-header">
+          <div class="phase-num">B</div>
+          <div class="phase-title">Modal rewrite — <code>calculation-failure-modal.tsx</code></div>
+          <span class="phase-parallel">Parallel-safe</span>
+        </div>
+        <div class="phase-body">
+          <ul class="task-list">
+            <li>Add imports: <code>ChevronRight</code> from <code>lucide-react</code>; <code>formatHierarchyAsName</code> from <code>@/lib/utils</code></li>
+            <li>Add required prop <code>onNavigateToItem: (index: string) =&gt; void</code> to <code>Props</code> interface</li>
+            <li>Add <code>truncateCrumb(name: string, limit = 15): string</code> — returns <code>name.slice(0, 15) + "…"</code> if over limit, else name as-is. Use Unicode <code>…</code> (U+2026), not three dots.</li>
+            <li>Add <code>type ErrorCategory = "dependency" | "validation"</code> and <code>sanitizeError(raw: string): { message: string; category: ErrorCategory }</code> — see full pattern table in Task Detail below</li>
+            <li>Replace item <code>&lt;div&gt;</code> with <code>&lt;button type="button"&gt;</code>; <code>onClick</code> calls <code>onNavigateToItem(item.index)</code> only (caller closes modal)</li>
+            <li>Render breadcrumb section above name (<code>if item.breadcrumb.length &gt; 0</code>): flex row of <code>&lt;span&gt;</code> crumbs separated by <code>&lt;ChevronRight h-3 w-3&gt;</code>, each crumb is <code>truncateCrumb(crumb)</code> with <code>title={crumb}</code> for full name on hover</li>
+            <li>Apply <code>formatHierarchyAsName(item.type)</code> to type badge text</li>
+            <li>Apply <code>sanitizeError(item.errorMessage)</code>, use <code>.message</code> for text and <code>.category === "dependency" ? "text-amber-500" : "text-destructive"</code> for className</li>
+            <li>Button hover state: <code>hover:bg-muted/50 transition-colors</code>; focus-visible ring for keyboard accessibility</li>
+          </ul>
+        </div>
+      </div>
+
+      <div class="phase phase-3">
+        <div class="phase-header">
+          <div class="phase-num">C</div>
+          <div class="phase-title">Wire prop — <code>hac-status-indicator.tsx</code></div>
+          <span class="phase-serial">Follows B</span>
+        </div>
+        <div class="phase-body">
+          <ul class="task-list">
+            <li>Add <code>onNavigateToItem</code> to the <code>&lt;CalculationFailureModal&gt;</code> JSX call:</li>
+          </ul>
+          <div class="code-label">hac-status-indicator.tsx</div>
+          <pre><span class="kw">&lt;CalculationFailureModal</span>
+  open={isModalOpen}
+  onClose={() =&gt; setIsModalOpen(<span class="num">false</span>)}
+  failedItems={failedItems}
+  onNavigateToItem={(index) =&gt; {
+    dataProvider.<span class="fn">onSelectItems</span>([index]);
+    <span class="fn">setIsModalOpen</span>(<span class="num">false</span>);
+  }}
+<span class="kw">/&gt;</span></pre>
+          <div class="callout callout-info" style="margin-top:10px;">
+            <span class="callout-icon">ℹ</span>
+            <div class="callout-body"><code>dataProvider.onSelectItems([index])</code> emits a <code>selectionChanged</code> event that the <code>StudyTree</code> component listens to. Its handler (at <code>study-tree.tsx:94–129</code>) expands all ancestors via <code>tree.current!.expandItem</code> and calls <code>selectItems</code> + <code>focusItem</code>. This already works for external callers — no additional code needed.</div>
+          </div>
+        </div>
+      </div>
+
+      <div class="phase phase-4">
+        <div class="phase-header">
+          <div class="phase-num">D</div>
+          <div class="phase-title">Tests — <code>use-auto-calculation.test.tsx</code></div>
+          <span class="phase-serial">Follows A</span>
+        </div>
+        <div class="phase-body">
+          <ul class="task-list">
+            <li><strong>Update test #10</strong> — add <code>breadcrumb</code> assertion. The fixture scenario has <code>parent: "study-1"</code> (direct child of study root). After study root is excluded, breadcrumb is <code>[]</code>:</li>
+          </ul>
+          <div class="code-label">test update — test #10</div>
+          <pre><span class="fn">expect</span>(result.current.failedItems[<span class="num">0</span>]?.breadcrumb).<span class="fn">toEqual</span>([]);</pre>
+          <ul class="task-list" style="margin-top:16px;">
+            <li><strong>Add new test</strong> — hierarchical ordering + non-empty breadcrumb. Build a 4-level chain: <code>study-1 → area-1 → equipment-1 → sc-1</code>. Set both <code>area-1</code> and <code>sc-1</code> as failed. Assert area appears first, scenario second. Assert scenario breadcrumb = <code>["Process Area", "Compressor"]</code> (default fixture names).</li>
+          </ul>
+          <div class="code-label">new test sketch</div>
+          <pre><span class="fn">it</span>(<span class="str">"failedItems are ordered hierarchically and include breadcrumb"</span>, () =&gt; {
+  <span class="kw">const</span> study = <span class="fn">createStudy</span>({ index: <span class="str">"study-1"</span>, parent: <span class="str">"root"</span>, children: [<span class="str">"area-1"</span>] });
+  <span class="kw">const</span> area = <span class="fn">createArea</span>({
+    index: <span class="str">"area-1"</span>, parent: <span class="str">"study-1"</span>, children: [<span class="str">"eq-1"</span>],
+    calculationState: { status: <span class="str">"failed"</span>, error: { message: <span class="str">"Area failed"</span> } },
+  });
+  <span class="kw">const</span> equipment = <span class="fn">createEquipmentItem</span>({
+    index: <span class="str">"eq-1"</span>, parent: <span class="str">"area-1"</span>, children: [<span class="str">"sc-1"</span>],
+  });
+  <span class="kw">const</span> scenario = <span class="fn">createScenario</span>({
+    index: <span class="str">"sc-1"</span>, parent: <span class="str">"eq-1"</span>,
+    calculationState: { status: <span class="str">"failed"</span>, error: { message: <span class="str">"Scenario failed"</span> } },
+  });
+  <span class="cm">// Wire studyItems with parent-child relationships</span>
+  currentProvider.studyItems = { <span class="str">"study-1"</span>: study, <span class="str">"area-1"</span>: area, <span class="str">"eq-1"</span>: equipment, <span class="str">"sc-1"</span>: scenario };
+
+  <span class="kw">const</span> { result } = <span class="fn">renderHook</span>(() =&gt; <span class="fn">useAutoCalculation</span>(currentProvider, mockDb));
+
+  <span class="fn">expect</span>(result.current.failedItems).<span class="fn">toHaveLength</span>(<span class="num">2</span>);
+  <span class="fn">expect</span>(result.current.failedItems[<span class="num">0</span>]?.index).<span class="fn">toBe</span>(<span class="str">"area-1"</span>);   <span class="cm">// parent first</span>
+  <span class="fn">expect</span>(result.current.failedItems[<span class="num">1</span>]?.index).<span class="fn">toBe</span>(<span class="str">"sc-1"</span>);     <span class="cm">// child second</span>
+  <span class="fn">expect</span>(result.current.failedItems[<span class="num">0</span>]?.breadcrumb).<span class="fn">toEqual</span>([]);  <span class="cm">// area: direct child of study (study root excluded)</span>
+  <span class="fn">expect</span>(result.current.failedItems[<span class="num">1</span>]?.breadcrumb)
+    .<span class="fn">toEqual</span>([<span class="str">"Process Area"</span>, <span class="str">"Compressor"</span>]);               <span class="cm">// default fixture names</span>
+});</pre>
+        </div>
+      </div>
+
+    </div>
+  </section>
+
+  <!-- ─────────────────── TASK DETAIL ─────────────────── -->
+  <section id="detail">
+    <h2><span class="section-num">06</span> Task Detail — Key Implementations</h2>
+
+    <h3>A1 — <code>FailedItemInfo</code> interface (final shape)</h3>
+    <div class="code-label">use-auto-calculation.ts</div>
+    <pre><span class="kw">export interface</span> <span class="type">FailedItemInfo</span> {
+  index: <span class="type">string</span>;
+  name: <span class="type">string</span>;
+  type: <span class="type">string</span>;
+  errorMessage: <span class="type">string</span>;
+  <span class="cm">/** Ancestor names from root-child → immediate parent. Study root excluded. */</span>
+  breadcrumb: <span class="type">string</span>[];
+}</pre>
+
+    <h3>A2 — Rewritten <code>failedItems</code> useMemo</h3>
+    <div class="code-label">use-auto-calculation.ts</div>
+    <pre><span class="kw">const</span> failedItems = <span class="fn">useMemo</span>(() =&gt; {
+  <span class="kw">const</span> studyIndex = dataProvider.<span class="fn">getStudyIndex</span>();
+  <span class="kw">if</span> (studyIndex === <span class="str">"root"</span>) <span class="kw">return</span> [];
+
+  <span class="kw">const</span> { studyItems } = dataProvider;
+  <span class="kw">const</span> result: <span class="type">FailedItemInfo</span>[] = [];
+  <span class="kw">const</span> visited = <span class="kw">new</span> <span class="type">Set</span>&lt;<span class="type">string</span>&gt;();
+  <span class="kw">const</span> stack: <span class="type">string</span>[] = [studyIndex];
+
+  <span class="kw">while</span> (stack.length &gt; <span class="num">0</span>) {
+    <span class="kw">const</span> index = stack.<span class="fn">pop</span>()!;
+    <span class="kw">if</span> (visited.<span class="fn">has</span>(index)) <span class="kw">continue</span>;
+    visited.<span class="fn">add</span>(index);
+
+    <span class="kw">const</span> item = studyItems[index];
+    <span class="kw">if</span> (!item) <span class="kw">continue</span>;
+
+    <span class="kw">if</span> (item.calculationState?.status === <span class="str">"failed"</span>) {
+      <span class="kw">const</span> info = item.information <span class="kw">as</span> { name?: <span class="type">string</span> } | <span class="type">undefined</span>;
+      <span class="kw">const</span> ancestors = <span class="fn">getAncestorItems</span>(index, studyItems);
+      <span class="kw">const</span> breadcrumb = [...ancestors]
+        .<span class="fn">reverse</span>()          <span class="cm">// bottom-to-top → top-to-bottom</span>
+        .<span class="fn">slice</span>(<span class="num">1</span>)            <span class="cm">// drop study root (first item after reverse)</span>
+        .<span class="fn">map</span>((a) =&gt; (<span class="fn">a.information</span> <span class="kw">as</span> { name?: <span class="type">string</span> } | <span class="type">undefined</span>)?.name ?? a.index);
+
+      result.<span class="fn">push</span>({
+        index,
+        name: info?.name ?? index,
+        type: item.type,
+        errorMessage: item.calculationState.error?.message ?? <span class="str">"Unknown error"</span>,
+        breadcrumb,
+      });
+    }
+
+    <span class="kw">if</span> (item.children) {
+      <span class="kw">for</span> (<span class="kw">let</span> i = item.children.length - <span class="num">1</span>; i &gt;= <span class="num">0</span>; i--) {
+        <span class="kw">const</span> child = item.children[i];
+        <span class="kw">if</span> (child &amp;&amp; !visited.<span class="fn">has</span>(child)) stack.<span class="fn">push</span>(child);
+      }
+    }
+  }
+
+  <span class="kw">return</span> result;
+}, [dataProvider.studyItems]);</pre>
+
+    <h3>B1 — Error sanitizer (full pattern table)</h3>
+    <div style="border: 1px solid var(--border); border-radius: 8px; overflow: hidden; margin-bottom: 16px;">
+      <table>
+        <thead><tr><th>Raw error pattern (regex)</th><th>Sanitized message</th><th>Category</th></tr></thead>
+        <tbody>
+          <tr><td><code>/equipment item outputs are undefined/i</code></td><td>Waiting for parent equipment calculation to complete.</td><td><span style="color:var(--amber)">dependency</span></td></tr>
+          <tr><td><code>/area outputs are undefined/i</code></td><td>Waiting for parent area calculation to complete.</td><td><span style="color:var(--amber)">dependency</span></td></tr>
+          <tr><td><code>/airchangerate or effectivevolume is undefined/i</code></td><td>Parent area is missing air change rate or effective volume.</td><td><span style="color:var(--amber)">dependency</span></td></tr>
+          <tr><td><code>/lflvol or molecularweight is undefined/i</code></td><td>Parent equipment is missing LFL volume or molecular weight.</td><td><span style="color:var(--amber)">dependency</span></td></tr>
+          <tr><td><code>/one or more required area hac properties/i</code></td><td>One or more required area properties are missing — check area inputs.</td><td><span style="color:var(--red)">validation</span></td></tr>
+          <tr><td><code>/one or more required scenario hac properties/i</code></td><td>One or more required scenario properties are missing — check scenario inputs.</td><td><span style="color:var(--red)">validation</span></td></tr>
+          <tr><td><code>/scenario hac data is undefined/i</code></td><td>Scenario HAC data is missing — check scenario inputs.</td><td><span style="color:var(--red)">validation</span></td></tr>
+          <tr><td><code>/ventilation inefficiency and xcrit required/i</code></td><td>Indoor calculation requires ventilation inefficiency and Xcrit values.</td><td><span style="color:var(--red)">validation</span></td></tr>
+          <tr><td><code>/unsupported hactype/i</code></td><td>Unsupported calculation type — please contact support.</td><td><span style="color:var(--red)">validation</span></td></tr>
+          <tr><td><code>/unsupported ventilationdirection/i</code></td><td>Unsupported ventilation direction — please contact support.</td><td><span style="color:var(--red)">validation</span></td></tr>
+          <tr><td><code>/validation failed/i</code></td><td>Invalid input data — check all required fields.</td><td><span style="color:var(--red)">validation</span></td></tr>
+          <tr><td><code>/^http \d+$/</code> (trimmed)</td><td>Server error — please try again.</td><td><span style="color:var(--red)">validation</span></td></tr>
+          <tr><td><em>(anything else, including "Missing or invalid inputs: X, Y")</em></td><td>Pass through unchanged</td><td><span style="color:var(--red)">validation</span></td></tr>
+        </tbody>
+      </table>
+    </div>
+
+    <h3>B2 — Modal component (final structure)</h3>
+    <div class="code-label">calculation-failure-modal.tsx</div>
+    <pre><span class="kw">type</span> <span class="type">ErrorCategory</span> = <span class="str">"dependency"</span> | <span class="str">"validation"</span>;
+
+<span class="kw">function</span> <span class="fn">truncateCrumb</span>(name: <span class="type">string</span>, limit = <span class="num">15</span>): <span class="type">string</span> {
+  <span class="kw">return</span> name.length &gt; limit ? name.<span class="fn">slice</span>(<span class="num">0</span>, limit) + <span class="str">"…"</span> : name;
+}
+
+<span class="kw">function</span> <span class="fn">sanitizeError</span>(raw: <span class="type">string</span>): { message: <span class="type">string</span>; category: <span class="type">ErrorCategory</span> } {
+  <span class="cm">// ... regex tests as per pattern table above ...</span>
+}
+
+<span class="kw">interface</span> <span class="type">Props</span> {
+  open: <span class="type">boolean</span>;
+  onClose: () =&gt; <span class="type">void</span>;
+  failedItems: <span class="type">FailedItemInfo</span>[];
+  onNavigateToItem: (index: <span class="type">string</span>) =&gt; <span class="type">void</span>;
+}
+
+<span class="kw">export function</span> <span class="fn">CalculationFailureModal</span>({ open, onClose, failedItems, onNavigateToItem }: <span class="type">Props</span>) {
+  <span class="kw">return</span> (
+    &lt;<span class="type">Dialog</span> open={open} onOpenChange={(isOpen) =&gt; { <span class="kw">if</span> (!isOpen) <span class="fn">onClose</span>(); }}&gt;
+      &lt;<span class="type">DialogContent</span> className=<span class="str">"max-w-lg"</span>&gt;
+        &lt;<span class="type">DialogHeader</span>&gt;
+          &lt;<span class="type">DialogTitle</span>&gt;Calculation Failures&lt;/<span class="type">DialogTitle</span>&gt;
+          &lt;<span class="type">DialogDescription</span>&gt;
+            {failedItems.length} item{failedItems.length === <span class="num">1</span> ? <span class="str">""</span> : <span class="str">"s"</span>} failed to calculate.
+            Correct the inputs below and results will update automatically.
+          &lt;/<span class="type">DialogDescription</span>&gt;
+        &lt;/<span class="type">DialogHeader</span>&gt;
+        &lt;div className=<span class="str">"flex flex-col gap-2 max-h-96 overflow-y-auto"</span>&gt;
+          {failedItems.<span class="fn">map</span>((item) =&gt; {
+            <span class="kw">const</span> { message, category } = <span class="fn">sanitizeError</span>(item.errorMessage);
+            <span class="kw">return</span> (
+              &lt;button
+                key={item.index}
+                type=<span class="str">"button"</span>
+                onClick={() =&gt; <span class="fn">onNavigateToItem</span>(item.index)}
+                className=<span class="str">"rounded-md border p-3 text-sm text-left w-full hover:bg-muted/50 transition-colors focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring"</span>
+              &gt;
+                {item.breadcrumb.length &gt; <span class="num">0</span> &amp;&amp; (
+                  &lt;div className=<span class="str">"flex items-center flex-wrap gap-0.5 mb-1 text-xs text-muted-foreground"</span>&gt;
+                    {item.breadcrumb.<span class="fn">map</span>((crumb, i) =&gt; (
+                      &lt;span key={i} className=<span class="str">"flex items-center gap-0.5"</span>&gt;
+                        {i &gt; <span class="num">0</span> &amp;&amp; &lt;<span class="type">ChevronRight</span> className=<span class="str">"h-3 w-3 shrink-0"</span> /&gt;}
+                        &lt;span title={crumb}&gt;{<span class="fn">truncateCrumb</span>(crumb)}&lt;/span&gt;
+                      &lt;/span&gt;
+                    ))}
+                  &lt;/div&gt;
+                )}
+                &lt;div className=<span class="str">"flex items-center gap-2 mb-1"</span>&gt;
+                  &lt;span className=<span class="str">"font-semibold"</span>&gt;{item.name}&lt;/span&gt;
+                  &lt;span className=<span class="str">"text-xs text-muted-foreground bg-muted px-1.5 py-0.5 rounded"</span>&gt;
+                    {<span class="fn">formatHierarchyAsName</span>(item.type)}
+                  &lt;/span&gt;
+                &lt;/div&gt;
+                &lt;p className={category === <span class="str">"dependency"</span> ? <span class="str">"text-amber-500 text-xs"</span> : <span class="str">"text-destructive text-xs"</span>}&gt;
+                  {message}
+                &lt;/p&gt;
+              &lt;/button&gt;
+            );
+          })}
+        &lt;/div&gt;
+      &lt;/<span class="type">DialogContent</span>&gt;
+    &lt;/<span class="type">Dialog</span>&gt;
+  );
+}</pre>
+  </section>
+
+  <!-- ─────────────────── EDGE CASES ─────────────────── -->
+  <section id="edge-cases">
+    <h2><span class="section-num">07</span> Edge Cases &amp; Preserved Behaviour</h2>
+    <div style="border: 1px solid var(--border); border-radius: 8px; overflow: hidden;">
+      <table>
+        <thead><tr><th>Scenario</th><th>Behaviour</th><th>Handled by</th></tr></thead>
+        <tbody>
+          <tr>
+            <td>Item is direct child of study root</td>
+            <td><code>breadcrumb: []</code> — breadcrumb section not rendered in modal</td>
+            <td><code>.slice(1)</code> drops study root, leaving empty array; conditional render</td>
+          </tr>
+          <tr>
+            <td>Ancestor <code>information.name</code> is missing/undefined</td>
+            <td>Falls back to raw <code>ancestor.index</code> string</td>
+            <td><code>?.name ?? a.index</code> fallback in breadcrumb map</td>
+          </tr>
+          <tr>
+            <td>Both parent and child items fail</td>
+            <td>Both appear; parent before child; child breadcrumb includes failed parent name (not distinguished — expected behaviour)</td>
+            <td>DFS pre-order traversal</td>
+          </tr>
+          <tr>
+            <td>Cycle in children[] (corrupted data)</td>
+            <td>DFS visited set prevents infinite loop; <code>getAncestorItems</code> has independent cycle detection</td>
+            <td>Visited set in useMemo DFS; existing cycle guard in traversal utility</td>
+          </tr>
+          <tr>
+            <td>Error message doesn't match any regex pattern</td>
+            <td>Passed through unchanged; categorised as <code>"validation"</code> (red)</td>
+            <td>Default return in <code>sanitizeError</code></td>
+          </tr>
+          <tr>
+            <td>Item name is exactly 15 characters</td>
+            <td>Displayed in full (no truncation — condition is <code>&gt;</code> not <code>&gt;=</code>)</td>
+            <td><code>truncateCrumb</code> helper</td>
+          </tr>
+          <tr>
+            <td><code>studyIndex === "root"</code> (no study loaded)</td>
+            <td>Returns <code>[]</code> early; modal button in indicator is non-clickable anyway</td>
+            <td>Early return guard in useMemo</td>
+          </tr>
+          <tr>
+            <td>Zero failed items but modal somehow opened</td>
+            <td>Modal renders with empty list (no items in scroll area) — no special empty state (agreed)</td>
+            <td>N/A — caller guards against this</td>
+          </tr>
+          <tr>
+            <td>Navigating to item that is already selected</td>
+            <td><code>onSelectItems</code> is a no-op if item is already selected (checked in provider); modal still closes</td>
+            <td>Provider's existing guard at line 488</td>
+          </tr>
+          <tr>
+            <td>99+ failed items (very long list)</td>
+            <td>Modal scroll area is capped at <code>max-h-96</code>; list is scrollable — no change from current behaviour</td>
+            <td>Existing <code>max-h-96 overflow-y-auto</code> class</td>
+          </tr>
+        </tbody>
+      </table>
+    </div>
+  </section>
+
+  <!-- ─────────────────── TEST PLAN ─────────────────── -->
+  <section id="tests">
+    <h2><span class="section-num">08</span> Test Plan</h2>
+
+    <h3>Automated Tests</h3>
+    <div style="border: 1px solid var(--border); border-radius: 8px; overflow: hidden; margin-bottom: 20px;">
+      <table>
+        <thead><tr><th>Test file</th><th>Test case</th><th>Assertion</th></tr></thead>
+        <tbody>
+          <tr>
+            <td rowspan="4" style="vertical-align:top; white-space:nowrap;"><span class="file-path">use-auto-calculation.test.tsx</span></td>
+            <td>Test #10 (updated)</td>
+            <td><code>failedItems[0]?.breadcrumb</code> equals <code>[]</code> (direct child of study)</td>
+          </tr>
+          <tr>
+            <td>New test — hierarchical ordering</td>
+            <td>Area (parent) appears at index 0, scenario (child) at index 1</td>
+          </tr>
+          <tr>
+            <td>New test — breadcrumb content</td>
+            <td>Scenario breadcrumb equals <code>["Process Area", "Compressor"]</code></td>
+          </tr>
+          <tr>
+            <td>New test — area breadcrumb</td>
+            <td>Area breadcrumb equals <code>[]</code> (direct child of study root)</td>
+          </tr>
+        </tbody>
+      </table>
+    </div>
+
+    <h3>Quality Gate Commands (run in order)</h3>
+    <ul class="checklist">
+      <li><span class="check-box"></span><div><code>npx vitest run components/dashboard/__tests__/use-auto-calculation.test.tsx</code> — verify data-layer changes and new test cases pass</div></li>
+      <li><span class="check-box"></span><div><code>npm run typecheck</code> — verify <code>FailedItemInfo.breadcrumb</code> is satisfied everywhere the type is used; verify <code>onNavigateToItem</code> prop is wired correctly</div></li>
+      <li><span class="check-box"></span><div><code>npm run lint</code> — must pass with zero warnings (CI blocks otherwise)</div></li>
+      <li><span class="check-box"></span><div><code>npm test</code> — full Vitest suite to catch any regressions in related tests</div></li>
+    </ul>
+
+    <div class="callout callout-warn" style="margin-top:20px;">
+      <span class="callout-icon">⚠</span>
+      <div class="callout-body">
+        <strong>TypeScript strict-mode note</strong>
+        The <code>FailedItemInfo</code> type is exported. Any code that constructs a <code>FailedItemInfo</code> object literal will fail to compile until <code>breadcrumb</code> is added. Based on codebase inspection, objects are only constructed in the <code>useMemo</code> inside <code>useAutoCalculation</code> — no other construction sites exist. The typecheck step will surface any missed sites.
+      </div>
+    </div>
+
+    <div class="callout callout-info" style="margin-top:12px;">
+      <span class="callout-icon">ℹ</span>
+      <div class="callout-body">
+        <strong>Manual verification (optional but recommended)</strong>
+        Run <code>npm run dev</code>, open a study with at least one failing scenario. Click the failure indicator in the sidebar. Verify: (1) breadcrumb appears above item name; (2) clicking a row navigates and closes the modal; (3) dependency vs validation error colours are correct.
+      </div>
+    </div>
+  </section>
+
+  <!-- ─────────────────── RISKS ─────────────────── -->
+  <section id="risks">
+    <h2><span class="section-num">09</span> Risks &amp; Mitigations</h2>
+    <div style="border: 1px solid var(--border); border-radius: 8px; overflow: hidden;">
+      <table>
+        <thead><tr><th>Risk</th><th>Level</th><th>Mitigation</th></tr></thead>
+        <tbody>
+          <tr>
+            <td>New error message from BS engine doesn't match any sanitizer pattern — shows raw internal text</td>
+            <td><span class="risk risk-low">LOW</span></td>
+            <td>Default passthrough returns raw message as-is (no crash). New patterns can be added incrementally as discovered.</td>
+          </tr>
+          <tr>
+            <td>DFS traversal over large study tree causes useMemo to be noticeably slow</td>
+            <td><span class="risk risk-low">LOW</span></td>
+            <td>useMemo only re-runs when <code>studyItems</code> changes. DFS is O(n) on number of items. Studies are typically small (tens to low hundreds of items). The existing <code>Object.values()</code> scan was already O(n).</td>
+          </tr>
+          <tr>
+            <td><code>onNavigateToItem</code> is now a required prop — any future use of the modal without it breaks compilation</td>
+            <td><span class="risk risk-low">LOW</span></td>
+            <td>Only one usage site (<code>hac-status-indicator.tsx</code>). Typecheck catches missing prop immediately. If a second call site is ever added, the prop must be provided.</td>
+          </tr>
+          <tr>
+            <td>Breadcrumb truncation at 15 chars may cut through the middle of meaningful words</td>
+            <td><span class="risk risk-low">LOW</span></td>
+            <td>Full name is available on hover via <code>title={crumb}</code>. Users can see the full crumb by hovering. Truncation limit is a UX trade-off already agreed.</td>
+          </tr>
+          <tr>
+            <td>Calling <code>dataProvider.onSelectItems</code> from the modal could theoretically trigger a HAC re-calculation if the newly selected item has stale results</td>
+            <td><span class="risk risk-low">LOW</span></td>
+            <td>Selection changes do not trigger HAC calculations. Only HAC-relevant input changes (via <code>hacRelevantChangeCallback</code>) trigger debounced re-calculation. Navigation is read-only.</td>
+          </tr>
+        </tbody>
+      </table>
+    </div>
+  </section>
+
+  <!-- ─────────────────── COMMIT STRATEGY ─────────────────── -->
+  <section id="commit">
+    <h2><span class="section-num">10</span> Commit &amp; Push Strategy</h2>
+    <div class="card-grid">
+      <div class="card">
+        <h4>Recommended approach</h4>
+        <p style="font-size:13px; margin-top:6px; color:var(--text);">Single logical commit after all four tasks pass the quality gates. The change is small (4 files, ~100 lines), cohesive, and all parts must ship together to avoid a broken intermediate state where <code>onNavigateToItem</code> is required but not yet provided.</p>
+      </div>
+      <div class="card">
+        <h4>If using parallel subagents</h4>
+        <p style="font-size:13px; margin-top:6px; color:var(--text);">Agent A commits Task A + D (data layer + tests). Agent B commits Task B + C (modal + indicator). Merge order: A first, then B (B depends on the <code>breadcrumb</code> field from A). Resolve any trivial conflicts on the Props interface.</p>
+      </div>
+    </div>
+
+    <h3 style="margin-top:20px;">Commit message</h3>
+    <pre style="margin-top:8px;">feat(modal): breadcrumbs, navigation, and cleaner errors in calculation failure modal
+
+- Add breadcrumb: string[] to FailedItemInfo (ancestor names, study root excluded)
+- Sort failed items hierarchically via DFS (parents before children)
+- Each modal row is now a button; clicking selects the item and closes modal
+- Selection triggers existing ancestor-expand + scroll-into-view in StudyTree
+- sanitizeError() maps internal engine messages to plain English
+- Dependency errors shown in amber, validation errors in red
+- Type badges formatted via formatHierarchyAsName()
+- Update test #10; add hierarchical-ordering + breadcrumb test</pre>
+
+    <div class="callout callout-info" style="margin-top:16px;">
+      <span class="callout-icon">ℹ</span>
+      <div class="callout-body">
+        <strong>Push timing</strong>
+        Push to <code>origin/feat/auto-hac-calculation</code> after the full test suite passes locally. The Husky pre-push hook runs the test suite — do not bypass with <code>--no-verify</code>.
+      </div>
+    </div>
+  </section>
+
+  <footer style="margin-top: 48px; padding-top: 20px; border-top: 1px solid var(--border); color: var(--muted); font-size: 12px; display:flex; justify-content:space-between; flex-wrap:wrap; gap:8px;">
+    <span>Generated by Claude Code · nEXus project · 2026-05-25</span>
+    <a href="index.html" style="color:var(--accent);">← Back to Review Docs</a>
+  </footer>
+
+</div>
+</body>
+</html>
