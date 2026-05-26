@@ -33,16 +33,13 @@ h4{font-size:13px;font-weight:600;color:var(--muted);margin:14px 0 8px;text-tran
 .subtitle{color:var(--muted);font-size:13px;margin-bottom:6px;}
 .branch-badge{display:inline-block;background:#1a2a3a;color:var(--accent);border-radius:10px;padding:2px 10px;font-size:12px;font-family:monospace;margin-left:8px;}
 
-/* Cards */
 .card{background:var(--surface);border:1px solid var(--border);border-radius:10px;padding:20px;margin-bottom:16px;}
 .card-grid{display:grid;grid-template-columns:repeat(auto-fill,minmax(300px,1fr));gap:14px;margin-bottom:16px;}
 .card-sm{background:var(--surface);border:1px solid var(--border);border-radius:8px;padding:14px;}
 
-/* Executive summary */
 .exec-card{background:linear-gradient(135deg,#1a1d27 0%,#1e2340 100%);border:1px solid #3a4070;border-radius:12px;padding:24px;margin-bottom:28px;}
 .exec-card p{color:#c7d2e7;line-height:1.75;}
 
-/* Badges / pills */
 .badge{display:inline-block;border-radius:12px;padding:2px 9px;font-size:11px;font-weight:600;white-space:nowrap;}
 .badge-red{background:#3d1515;color:var(--red);}
 .badge-yellow{background:#3d2a0a;color:var(--yellow);}
@@ -51,24 +48,23 @@ h4{font-size:13px;font-weight:600;color:var(--muted);margin:14px 0 8px;text-tran
 .badge-purple{background:#251a3d;color:var(--accent2);}
 .badge-teal{background:#0a2420;color:var(--teal);}
 .badge-orange{background:#3d1f00;color:var(--orange);}
+.badge-grey{background:#1e2235;color:var(--muted);}
 
-/* Risk colours */
 .risk-high{border-left:3px solid var(--red);padding-left:12px;}
 .risk-med{border-left:3px solid var(--yellow);padding-left:12px;}
 .risk-low{border-left:3px solid var(--green);padding-left:12px;}
+.risk-drop{border-left:3px solid var(--muted);padding-left:12px;opacity:.5;}
 
-/* Tables */
 table{width:100%;border-collapse:collapse;font-size:13px;margin-bottom:12px;}
 th{background:var(--surface2);color:var(--muted);text-align:left;padding:8px 12px;border-bottom:1px solid var(--border);font-weight:600;font-size:12px;text-transform:uppercase;letter-spacing:.04em;}
 td{padding:8px 12px;border-bottom:1px solid #232640;vertical-align:top;}
 tr:last-child td{border-bottom:none;}
 tr:hover td{background:#1c1f30;}
+.strike{text-decoration:line-through;opacity:.45;}
 
-/* Code */
 pre{background:var(--code-bg);border:1px solid var(--border);border-radius:8px;padding:14px;font-size:12px;font-family:'Cascadia Code','Fira Code',monospace;overflow-x:auto;line-height:1.55;margin:10px 0;}
 code{background:var(--code-bg);border-radius:4px;padding:1px 5px;font-size:12px;font-family:'Cascadia Code','Fira Code',monospace;color:var(--teal);}
 
-/* Before/After */
 .diff-grid{display:grid;grid-template-columns:1fr 1fr;gap:12px;margin:14px 0;}
 .diff-before{border:1px solid #4a1a1a;border-radius:8px;overflow:hidden;}
 .diff-after{border:1px solid #1a4a2a;border-radius:8px;overflow:hidden;}
@@ -77,27 +73,13 @@ code{background:var(--code-bg);border-radius:4px;padding:1px 5px;font-size:12px;
 .diff-after .diff-label{background:#0f2e20;color:var(--green);}
 .diff-before pre,.diff-after pre{margin:0;border:none;border-radius:0;}
 
-/* Phase steps */
 .phase{background:var(--surface);border:1px solid var(--border);border-radius:10px;margin-bottom:20px;overflow:hidden;}
 .phase-header{display:flex;align-items:center;gap:12px;padding:14px 20px;background:var(--surface2);border-bottom:1px solid var(--border);}
 .phase-num{width:28px;height:28px;border-radius:50%;display:flex;align-items:center;justify-content:center;font-weight:700;font-size:13px;flex-shrink:0;}
 .phase-title{font-weight:700;font-size:15px;}
-.phase-meta{margin-left:auto;display:flex;gap:8px;align-items:center;}
+.phase-meta{margin-left:auto;display:flex;gap:8px;align-items:center;flex-wrap:wrap;justify-content:flex-end;}
 .phase-body{padding:18px 20px;}
 
-/* Task items */
-.task{display:flex;gap:10px;padding:10px 12px;border-radius:7px;margin-bottom:8px;border:1px solid var(--border);}
-.task-check{width:18px;height:18px;border-radius:4px;border:2px solid var(--border);flex-shrink:0;margin-top:2px;}
-.task-content{flex:1;}
-.task-title{font-weight:600;margin-bottom:3px;font-size:13px;}
-.task-detail{color:var(--muted);font-size:12px;line-height:1.5;}
-.task-file{font-family:monospace;font-size:11px;color:var(--accent);background:#0f1e3d;padding:1px 6px;border-radius:4px;display:inline-block;margin-top:4px;}
-
-/* Mermaid diagram */
-.mermaid-container{background:var(--code-bg);border:1px solid var(--border);border-radius:10px;padding:20px;margin:14px 0;overflow-x:auto;}
-.diagram-placeholder{font-size:12px;color:var(--muted);text-align:center;padding:20px;}
-
-/* Checklist */
 .checklist{list-style:none;padding:0;}
 .checklist li{display:flex;gap:10px;padding:6px 0;border-bottom:1px solid #1a1d2a;font-size:13px;}
 .checklist li:last-child{border-bottom:none;}
@@ -105,127 +87,110 @@ code{background:var(--code-bg);border-radius:4px;padding:1px 5px;font-size:12px;
 .check-icon.warn{color:var(--yellow);}
 .check-icon.info{color:var(--accent);}
 
-/* Section divider */
 .divider{height:1px;background:var(--border);margin:32px 0;}
 
-/* Parallel badge */
 .parallel-note{display:flex;align-items:center;gap:8px;background:#1a2a0f;border:1px solid #2a4a1a;border-radius:7px;padding:8px 12px;font-size:12px;color:var(--green);margin:10px 0;}
 
-/* Open decisions */
 .decision{background:var(--surface);border:1px solid var(--yellow);border-left:3px solid var(--yellow);border-radius:8px;padding:14px;margin-bottom:12px;}
 .decision-q{font-weight:600;margin-bottom:6px;font-size:13px;}
-.decision-a{color:var(--text);font-size:13px;}
 
-/* Responsive */
+.precedent-box{background:#0a1a0a;border:1px solid #1a4a1a;border-radius:8px;padding:14px;margin:12px 0;}
+.precedent-label{font-size:11px;color:var(--green);font-weight:700;text-transform:uppercase;letter-spacing:.05em;margin-bottom:6px;}
+
+.dropped-phase{opacity:.4;pointer-events:none;}
+
 @media(max-width:640px){
   .diff-grid{grid-template-columns:1fr;}
   .card-grid{grid-template-columns:1fr;}
+  .phase-meta{margin-left:0;margin-top:6px;}
+  .phase-header{flex-wrap:wrap;}
 }
-
-/* Flow legend */
-.flow-box{display:inline-flex;align-items:center;gap:6px;padding:5px 10px;border-radius:6px;font-size:12px;font-weight:600;}
-.flow-arrow{color:var(--muted);font-size:16px;margin:0 4px;}
 </style>
 </head>
 <body>
 <div class="page">
 
-  <!-- Header -->
   <div style="margin-bottom:8px;">
     <h1>Inherited Field Propagation on Equipment Clear <span class="branch-badge">feat/auto-hac-calculation</span></h1>
-    <p class="subtitle">Implementation Plan · nEXus · 2026-05-25</p>
+    <p class="subtitle">Implementation Plan · nEXus · 2026-05-25 · Revised: A1b approach</p>
   </div>
 
   <!-- Executive Summary -->
   <div class="exec-card">
     <h4 style="color:var(--accent);margin-bottom:10px;">Executive Summary</h4>
     <p>
-      When a user clears the <strong>pressure</strong> or <strong>temperature</strong> field on an EquipmentItem, descendant
-      Scenarios that have <code>inheritPressure: true</code> / <code>inheritTemperature: true</code> silently retain
-      their old value rather than reflecting the cleared state. The same bug exists in three layers:
-      the live form sync (useEffect), the form-load default construction (buildHacDefaultValues), and the
-      calculation service (which silently falls back to stale stored data instead of producing an error).
+      When a user clears <strong>pressure</strong> or <strong>temperature</strong> on an EquipmentItem,
+      descendant Scenarios with <code>inheritPressure: true</code> / <code>inheritTemperature: true</code>
+      silently retain their old value. The fix follows the <strong>existing codebase precedent</strong>
+      established by the <code>sourceAirVelocity / useGeneralAreaVelocity</code> pattern: when the
+      parent value is missing, the inherit toggle is automatically turned <strong>OFF</strong>,
+      leaving the scenario's last known value as an editable override.
     </p>
     <p style="margin-top:10px;">
-      The fix touches <strong>5 files</strong> across 4 logical layers, adds conditional Zod validation with a custom
-      error message, cascades the cleared state through in-memory StudyTreeDataProvider state for
-      unmounted scenario forms, and guards the calculation service with an explicit early-exit error. Two
-      tasks are fully independent and can be implemented in parallel.
+      This approach requires <strong>no schema changes</strong> — all calculation inputs remain required
+      numbers throughout. The fix touches <strong>3 files</strong> across 3 logical layers (form sync,
+      in-memory cascade, calculation guard). Tasks B and C are fully independent and can run in parallel.
     </p>
   </div>
 
-  <!-- Design Decisions Recap -->
-  <h2>Agreed Design Decisions</h2>
+  <!-- Design Decisions -->
+  <h2>Design Decisions</h2>
   <table>
     <thead><tr><th>#</th><th>Decision</th><th>Status</th></tr></thead>
     <tbody>
-      <tr><td><span class="badge badge-blue">A1a</span></td><td>When equipment value cleared with inherit=true, scenario field becomes <strong>blank with a validation error</strong>. User must restore equipment value or disable the toggle.</td><td><span class="badge badge-green">Confirmed</span></td></tr>
-      <tr><td><span class="badge badge-blue">B1a</span></td><td>Make <code>temperature</code>/<code>pressure</code> <code>.optional()</code> in relevant Zod variant schemas. Add <code>.superRefine()</code> with two custom error paths: one when inherit=true (linked-but-missing message), one when inherit=false (standard required).</td><td><span class="badge badge-green">Confirmed</span></td></tr>
-      <tr><td><span class="badge badge-blue">C1a</span></td><td>Cascade cleared state to unmounted scenario in-memory state via <code>saveFormData</code> in StudyTreeDataProvider. Mounted scenarios self-cascade via fixed useEffect + autosave.</td><td><span class="badge badge-green">Confirmed</span></td></tr>
-      <tr><td><span class="badge badge-blue">D1a</span></td><td>Fix both the live <code>useEffect</code> path (scenario-forms.tsx) and the form-load <code>buildHacDefaultValues</code> path (scenario-hac-defaults.ts).</td><td><span class="badge badge-green">Confirmed</span></td></tr>
-      <tr><td><span class="badge badge-blue">E1a</span></td><td>Calc service: when <code>inheritTemperature=true</code> but equipment temperature is <code>undefined</code>, return a descriptive error rather than falling back to stale scenario data.</td><td><span class="badge badge-green">Confirmed</span></td></tr>
-      <tr><td><span class="badge badge-blue">F1b</span></td><td>Custom validation error on the field: <em>"Equipment [temperature/pressure] is not set — restore the value or disable 'Use [Temperature/Pressure] from Equipment Item'"</em></td><td><span class="badge badge-green">Confirmed</span></td></tr>
+      <tr>
+        <td><span class="badge badge-green">A1b</span></td>
+        <td>When equipment value cleared with inherit=true, the <strong>inherit toggle auto-turns OFF</strong>. Scenario retains last known value as editable override. Matches <code>sourceAirVelocity</code> precedent. <em class="strike">A1a (blank + error) dropped — would require schema changes inconsistent with other required calc fields.</em></td>
+        <td><span class="badge badge-green">Confirmed</span></td>
+      </tr>
+      <tr>
+        <td><span class="badge badge-grey" style="text-decoration:line-through;">B1a</span></td>
+        <td class="strike">Make temperature/pressure optional in Zod schemas + superRefine — dropped in favour of A1b.</td>
+        <td><span class="badge badge-grey">Dropped</span></td>
+      </tr>
+      <tr>
+        <td><span class="badge badge-blue">C1a</span></td>
+        <td>Cascade: when equipment saves with cleared value, set <code>inheritPressure/inheritTemperature = false</code> for unmounted linked scenarios in-memory. Mounted scenarios self-cascade via fixed useEffect.</td>
+        <td><span class="badge badge-green">Confirmed</span></td>
+      </tr>
+      <tr>
+        <td><span class="badge badge-grey" style="text-decoration:line-through;">D1a</span></td>
+        <td class="strike">Fix buildHacDefaultValues — not required with A1b (form loads correctly via useEffect auto-off on open).</td>
+        <td><span class="badge badge-grey">Dropped</span></td>
+      </tr>
+      <tr>
+        <td><span class="badge badge-blue">E1a</span></td>
+        <td>Calc service: when <code>inheritTemperature=true</code> but equipment value is undefined, return descriptive error. Safety net in case calculation fires before form or cascade has run.</td>
+        <td><span class="badge badge-green">Confirmed</span></td>
+      </tr>
+      <tr>
+        <td><span class="badge badge-grey" style="text-decoration:line-through;">F1b</span></td>
+        <td class="strike">Custom Zod error message — not required with A1b (no blank-field-with-error UX).</td>
+        <td><span class="badge badge-grey">Dropped</span></td>
+      </tr>
     </tbody>
   </table>
 
-  <div class="divider"></div>
-
-  <!-- Architecture / Data Flow -->
-  <h2>Architecture: Inheritance Data Flow</h2>
-
-  <h3>Current (Buggy) Flow</h3>
-  <div class="card" style="background:var(--code-bg);">
-<pre>
-EquipmentItem.hac.pressure = undefined   (user clears field)
-       │
-       ▼
-useAutoSaveFormData → saveFormData("hac", {..., pressure: undefined})
-       │
-       ├── [SCENARIO FORM MOUNTED]
-       │      Scenario useEffect fires
-       │      Line 334: "if (parentPressure === undefined) return;"  ← BUG: early exit
-       │      Scenario form still shows 15 barg
-       │
-       ├── [SCENARIO FORM UNMOUNTED]
-       │      No cascade. StudyTreeDataProvider in-memory state NOT updated.
-       │      Scenario still has pressure: 101325 in state.
-       │
-       └── [CALCULATION RUNS]
-              Line 663: "typeof equipmentItem.hac.pressure === 'number'" → false
-              BUG: skips overwrite, uses stale scenario.hac.pressure = 101325
-              Calculation succeeds with WRONG pressure value.
-</pre>
-  </div>
-
-  <h3>Fixed Flow</h3>
-  <div class="card" style="background:var(--code-bg);">
-<pre>
-EquipmentItem.hac.pressure = undefined   (user clears field)
-       │
-       ▼
-useAutoSaveFormData → saveFormData("hac", {..., pressure: undefined})
-       │
-       ├── [INSIDE saveFormData — NEW CASCADE LOGIC]
-       │      Detects equipment item + hac.pressure just cleared
-       │      Finds descendant scenarios with inheritPressure=true
-       │      Updates their in-memory hac.pressure → undefined
-       │
-       ├── [SCENARIO FORM MOUNTED]
-       │      useEffect fires: inheritPressure=true, parentPressure=undefined
-       │      NEW: setValue("pressure", undefined)  → field clears
-       │      Zod superRefine fires → custom error shown on field
-       │      autosave saves pressure: undefined to dataProvider
-       │
-       ├── [SCENARIO FORM UNMOUNTED]
-       │      StudyTreeDataProvider in-memory state already updated by cascade ✓
-       │      buildHacDefaultValues on next open: candidate.pressure = undefined ✓
-       │      Zod superRefine shows custom error on form open ✓
-       │
-       └── [CALCULATION RUNS]
-              NEW: if inheritPressure=true && typeof equipment.pressure !== 'number'
-              → return { success: false, error: "Equipment pressure not set..." }
-              Calculation correctly aborts. ✓
-</pre>
+  <!-- Existing Precedent -->
+  <div class="precedent-box">
+    <div class="precedent-label">Existing codebase precedent — sourceAirVelocity pattern</div>
+    <p style="font-size:13px;color:var(--muted);margin-bottom:8px;">
+      The <code>sourceAirVelocity / useGeneralAreaVelocity</code> useEffect at <code>scenario-forms.tsx:349</code>
+      already implements this exact behaviour. When <code>generalBackgroundVentilationVelocity == null</code>,
+      it calls <code>setValue("useGeneralAreaVelocity", false, {shouldDirty:true, shouldTouch:true})</code>
+      and returns early. Task C is a direct copy of this pattern for temperature and pressure.
+    </p>
+<pre>// Existing pattern (lines 349–374) — exact template for Task C
+useEffect(() => {
+  if (!useGeneralAreaVelocity) return;
+  if (generalBackgroundVentilationVelocity == null) {
+    setValue("useGeneralAreaVelocity", false,
+      { shouldDirty: true, shouldTouch: true });
+    return;
+  }
+  setValue("sourceAirVelocity", generalBackgroundVentilationVelocity,
+    { shouldDirty: true, shouldTouch: true });
+}, [useGeneralAreaVelocity, generalBackgroundVentilationVelocity, setValue]);</pre>
   </div>
 
   <div class="divider"></div>
@@ -235,205 +200,86 @@ useAutoSaveFormData → saveFormData("hac", {..., pressure: undefined})
   <div class="card-grid">
     <div class="card-sm">
       <div style="display:flex;gap:8px;align-items:center;margin-bottom:8px;">
-        <span class="badge badge-purple">Schema</span>
-        <span style="font-size:12px;color:var(--muted);">Task A</span>
-      </div>
-      <code style="display:block;margin-bottom:6px;">app/types/firestore.tsx</code>
-      <div style="font-size:12px;color:var(--muted);">Make temperature/pressure optional in 3 variant schemas. Add superRefine to BsScenarioHacSchema and PhastScenarioHacSchema.</div>
-    </div>
-    <div class="card-sm">
-      <div style="display:flex;gap:8px;align-items:center;margin-bottom:8px;">
-        <span class="badge badge-blue">Form Live</span>
-        <span style="font-size:12px;color:var(--muted);">Task C — depends on A</span>
-      </div>
-      <code style="display:block;margin-bottom:6px;">components/dashboard/forms/scenario-forms.tsx</code>
-      <div style="font-size:12px;color:var(--muted);">Remove undefined early-return guards from temperature and pressure useEffect hooks.</div>
-    </div>
-    <div class="card-sm">
-      <div style="display:flex;gap:8px;align-items:center;margin-bottom:8px;">
-        <span class="badge badge-blue">Form Load</span>
-        <span style="font-size:12px;color:var(--muted);">Task D — depends on A</span>
-      </div>
-      <code style="display:block;margin-bottom:6px;">components/dashboard/forms/scenario-hac-defaults.ts</code>
-      <div style="font-size:12px;color:var(--muted);">Fix buildHacDefaultValues to propagate undefined when inherit=true regardless of parent value type.</div>
-    </div>
-    <div class="card-sm">
-      <div style="display:flex;gap:8px;align-items:center;margin-bottom:8px;">
-        <span class="badge badge-teal">Cascade</span>
-        <span style="font-size:12px;color:var(--muted);">Task E — depends on A</span>
-      </div>
-      <code style="display:block;margin-bottom:6px;">components/dashboard/study-tree/study-tree-context-provider.tsx</code>
-      <div style="font-size:12px;color:var(--muted);">Add cascade logic in saveFormData to propagate cleared fields to unmounted scenario in-memory state.</div>
-    </div>
-    <div class="card-sm">
-      <div style="display:flex;gap:8px;align-items:center;margin-bottom:8px;">
-        <span class="badge badge-orange">Calc</span>
-        <span style="font-size:12px;color:var(--muted);">Task B — fully independent</span>
+        <span class="badge badge-orange">B — Calc guard</span>
+        <span style="font-size:12px;color:var(--green);">Independent</span>
       </div>
       <code style="display:block;margin-bottom:6px;">lib/bscalculations/bs-calculation-service.ts</code>
-      <div style="font-size:12px;color:var(--muted);">Add early-exit error when inherit=true but equipment value is undefined. Uses existing BsCalculationHandlerResult error pattern.</div>
+      <div style="font-size:12px;color:var(--muted);">Add early-exit error when inherit=true and equipment value is undefined. Safety net for calculation running before toggle is turned off.</div>
     </div>
     <div class="card-sm">
       <div style="display:flex;gap:8px;align-items:center;margin-bottom:8px;">
-        <span class="badge badge-green">Tests</span>
-        <span style="font-size:12px;color:var(--muted);">Task F — depends on all</span>
+        <span class="badge badge-blue">C — Form sync</span>
+        <span style="font-size:12px;color:var(--green);">Independent</span>
       </div>
-      <code style="display:block;margin-bottom:6px;">components/dashboard/forms/__tests__/scenario-hac-form.integration.test.tsx<br/>components/dashboard/forms/__tests__/scenario-hac-defaults.test.tsx</code>
-      <div style="font-size:12px;color:var(--muted);">Add cleared-parent test cases. Possibly add calc service unit tests.</div>
+      <code style="display:block;margin-bottom:6px;">components/dashboard/forms/scenario-forms.tsx</code>
+      <div style="font-size:12px;color:var(--muted);">Replace undefined early-return with auto-off pattern in two useEffects. Exact match to sourceAirVelocity precedent.</div>
+    </div>
+    <div class="card-sm">
+      <div style="display:flex;gap:8px;align-items:center;margin-bottom:8px;">
+        <span class="badge badge-teal">E — Cascade</span>
+        <span style="font-size:12px;color:var(--muted);">Independent</span>
+      </div>
+      <code style="display:block;margin-bottom:6px;">components/dashboard/study-tree/study-tree-context-provider.tsx</code>
+      <div style="font-size:12px;color:var(--muted);">In saveFormData, cascade toggle-off to unmounted descendant scenarios when equipment value is cleared.</div>
+    </div>
+    <div class="card-sm">
+      <div style="display:flex;gap:8px;align-items:center;margin-bottom:8px;">
+        <span class="badge badge-green">F — Tests</span>
+        <span style="font-size:12px;color:var(--muted);">After B+C+E</span>
+      </div>
+      <code style="display:block;margin-bottom:6px;">components/dashboard/forms/__tests__/scenario-hac-form.integration.test.tsx</code>
+      <div style="font-size:12px;color:var(--muted);">New test: inherit toggle auto-turns off when parent value removed.</div>
     </div>
   </div>
 
   <div class="divider"></div>
 
-  <!-- Implementation Phases -->
-  <h2>Implementation Phases</h2>
-
-  <div class="parallel-note">
-    ⚡ Tasks A+C+D+E are sequentially dependent; Task B is fully independent and can run in parallel with the entire A→E chain.
+  <!-- Data Flow -->
+  <h2>Fixed Data Flow</h2>
+  <div class="card" style="background:var(--code-bg);">
+<pre>
+EquipmentItem.hac.pressure = undefined   (user clears field, 500ms autosave debounce)
+       │
+       ▼
+saveFormData("hac", {..., pressure: undefined})
+       │
+       ├── [INSIDE saveFormData — Task E CASCADE]
+       │      Detects equipment item + hac.pressure just cleared (number → undefined)
+       │      getDescendantItemsByType(..., "scenario", ...)
+       │      For each scenario with inheritPressure=true:
+       │        finalStudyItems[scenario.index].hac.inheritPressure = false
+       │      (pressure VALUE preserved — becomes explicit override)
+       │
+       ├── [SCENARIO FORM MOUNTED — Task C]
+       │      useEffect fires: inheritPressure=true, parentPressure=undefined
+       │      → setValue("inheritPressure", false, {shouldDirty:true})
+       │      → Pressure field becomes editable with last known value ✓
+       │      → autosave fires: saves inheritPressure:false to state
+       │
+       ├── [SCENARIO FORM OPENS LATER]
+       │      Loads with inheritPressure:false (from cascade) ✓
+       │      Pressure field shows last known value, editable ✓
+       │      No error — field has a valid value ✓
+       │
+       └── [CALCULATION RUNS — Task B]
+              1000ms debounce fires after saveFormData
+              Scenario already has inheritPressure:false (from cascade)
+              → Calc uses scenario's own stored pressure ✓
+              If somehow inheritPressure=true AND equipment pressure undefined:
+              → Task B guard fires: explicit error returned ✓ (safety net)
+</pre>
   </div>
 
-  <!-- Phase 1: Schema -->
-  <div class="phase">
-    <div class="phase-header">
-      <div class="phase-num" style="background:#251a3d;color:var(--accent2);">A</div>
-      <span class="phase-title">Zod Schema Changes</span>
-      <div class="phase-meta">
-        <span class="badge badge-purple">app/types/firestore.tsx</span>
-        <span class="badge badge-yellow">Prerequisite for C, D, E</span>
-      </div>
-    </div>
-    <div class="phase-body">
+  <div class="divider"></div>
 
-      <h3>1. Make temperature/pressure optional in variant schemas</h3>
-      <p style="color:var(--muted);font-size:13px;margin-bottom:10px;">Three schemas define temperature/pressure as required numbers. Change each to <code>.optional()</code>:</p>
+  <!-- Implementation Tasks -->
+  <h2>Implementation Tasks</h2>
 
-      <div class="diff-grid">
-        <div class="diff-before">
-          <div class="diff-label">Before</div>
-<pre>// BsEvaporatingPoolSchema (line ~1059)
-temperature: z.coerce.number().min(-273.1)
-
-// BsPressurisedLiquidSchema (line ~1067)
-pressure: z.coerce.number().positive()
-
-// BsPressurisedGasSchema (line ~1084)
-temperature: z.coerce.number().min(-273.1)
-pressure: z.coerce.number().positive()
-
-// PhastScenarioHacSchema (line ~1137)
-pressure: z.coerce.number().positive()
-temperature: z.coerce.number().min(-273.1)</pre>
-        </div>
-        <div class="diff-after">
-          <div class="diff-label">After</div>
-<pre>// BsEvaporatingPoolSchema
-temperature: z.coerce.number().min(-273.1).optional()
-
-// BsPressurisedLiquidSchema
-pressure: z.coerce.number().positive().optional()
-
-// BsPressurisedGasSchema
-temperature: z.coerce.number().min(-273.1).optional()
-pressure: z.coerce.number().positive().optional()
-
-// PhastScenarioHacSchema
-pressure: z.coerce.number().positive().optional()
-temperature: z.coerce.number().min(-273.1).optional()</pre>
-        </div>
-      </div>
-
-      <h3>2. Add superRefine to BsScenarioHacSchema</h3>
-      <p style="color:var(--muted);font-size:13px;margin-bottom:10px;">
-        The existing <code>BsScenarioHacSchema</code> already has a <code>.superRefine()</code> for Indoor ventilation validation (lines 1111–1130).
-        Add temperature and pressure checks to that same <code>.superRefine()</code>:
-      </p>
-<pre>// Extend the existing .superRefine() on BsScenarioHacSchema
-// (already checks ventilationInefficiency and xcrit for Indoor)
-.superRefine((data, ctx) => {
-  // --- EXISTING Indoor ventilation checks (preserve as-is) ---
-
-  // --- NEW: Inherited-but-missing temperature ---
-  if ("temperature" in data) {
-    const temp = data.temperature;
-    if (temp === undefined || (typeof temp === "number" && Number.isNaN(temp))) {
-      ctx.addIssue({
-        code: z.ZodIssueCode.custom,
-        path: ["temperature"],
-        message: data.inheritTemperature
-          ? "Equipment temperature is not set — restore the value or disable 'Use Temperature from Equipment Item'"
-          : "Temperature is required",
-      });
-    }
-  }
-
-  // --- NEW: Inherited-but-missing pressure ---
-  if ("pressure" in data) {
-    const pres = data.pressure;
-    if (pres === undefined || (typeof pres === "number" && Number.isNaN(pres))) {
-      ctx.addIssue({
-        code: z.ZodIssueCode.custom,
-        path: ["pressure"],
-        message: data.inheritPressure
-          ? "Equipment pressure is not set — restore the value or disable 'Use Pressure from Equipment Item'"
-          : "Pressure is required",
-      });
-    }
-  }
-})</pre>
-      <p style="color:var(--muted);font-size:12px;margin-top:8px;">
-        Note: <code>"temperature" in data</code> is true only for <code>BsEvaporatingPoolSchema</code> and <code>BsPressurisedGasSchema</code>
-        variants. <code>"pressure" in data</code> is true for <code>BsPressurisedLiquidSchema</code> and <code>BsPressurisedGasSchema</code>.
-        <code>BsUserDefinedSchema</code> has neither, so both checks are silently skipped.
-      </p>
-
-      <h3>3. Add superRefine to PhastScenarioHacSchema</h3>
-      <p style="color:var(--muted);font-size:13px;margin-bottom:10px;">
-        <code>PhastScenarioHacSchema</code> has both fields at the top level. Add a <code>.superRefine()</code> after the existing schema object:
-      </p>
-<pre>const PhastScenarioHacSchema = z.object({
-  // ... existing fields ...
-}).superRefine((data, ctx) => {
-  const temp = data.temperature;
-  if (temp === undefined || (typeof temp === "number" && Number.isNaN(temp))) {
-    ctx.addIssue({
-      code: z.ZodIssueCode.custom,
-      path: ["temperature"],
-      message: data.inheritTemperature
-        ? "Equipment temperature is not set — restore the value or disable 'Use Temperature from Equipment Item'"
-        : "Temperature is required",
-    });
-  }
-  const pres = data.pressure;
-  if (pres === undefined || (typeof pres === "number" && Number.isNaN(pres))) {
-    ctx.addIssue({
-      code: z.ZodIssueCode.custom,
-      path: ["pressure"],
-      message: data.inheritPressure
-        ? "Equipment pressure is not set — restore the value or disable 'Use Pressure from Equipment Item'"
-        : "Pressure is required",
-    });
-  }
-});</pre>
-
-      <h3>TypeScript type impact</h3>
-      <p style="color:var(--muted);font-size:13px;">
-        Making temperature/pressure <code>.optional()</code> changes inferred types from <code>number</code>
-        to <code>number | undefined</code>. <code>npm run typecheck</code> must pass before committing.
-        The only consuming code that reads these fields as <code>number</code> is:
-      </p>
-      <ul style="font-size:12px;color:var(--muted);margin:8px 0 0 18px;">
-        <li><code>bs-calculation-service.ts</code> — already guarded (Task B adds explicit guard)</li>
-        <li><code>validate-inputs.ts</code> — already uses <code>hac.temperature != null &amp;&amp; typeof hac.temperature === "number"</code> guard (no change needed)</li>
-        <li><code>scenario-forms.tsx</code> — reads via <code>watch("temperature")</code>, RHF returns typed value; Task C handles</li>
-      </ul>
-    </div>
-  </div>
-
-  <!-- Phase B: Calc Service (parallel) -->
+  <!-- Task B -->
   <div class="phase">
     <div class="phase-header">
       <div class="phase-num" style="background:#3d1f00;color:var(--orange);">B</div>
-      <span class="phase-title">Calculation Service Guard (E1a)</span>
+      <span class="phase-title">Calculation Service Guard</span>
       <div class="phase-meta">
         <span class="badge badge-orange">lib/bscalculations/bs-calculation-service.ts</span>
         <span class="badge badge-green">Fully Independent</span>
@@ -441,15 +287,16 @@ temperature: z.coerce.number().min(-273.1).optional()</pre>
     </div>
     <div class="phase-body">
       <p style="color:var(--muted);font-size:13px;margin-bottom:14px;">
-        Currently in the scenario calculation handler (around line 651), the inheritance logic silently skips
-        the overwrite when equipment value is undefined, leaving the scenario with stale data. Add an explicit
-        early-exit error <strong>before</strong> the existing inheritance block.
+        Safety net: explicit error when <code>inherit*=true</code> and equipment value is undefined,
+        preventing a silent stale-data calculation. Insert <strong>before</strong> the existing
+        inheritance block (~line 651). Uses the existing <code>{ success: false, error: string, updatedItem }</code> return pattern.
       </p>
 
       <div class="diff-grid">
         <div class="diff-before">
           <div class="diff-label">Before (~line 651)</div>
-<pre>if (
+<pre>// First check: apply inherited temperature
+if (
   scenarioClone.hac.inheritTemperature &&
   typeof equipmentItem.hac.temperature === "number"
 ) {
@@ -458,20 +305,11 @@ temperature: z.coerce.number().min(-273.1).optional()</pre>
     temperature: equipmentItem.hac.temperature,
   };
 }
-
-if (
-  scenarioClone.hac.inheritPressure &&
-  typeof equipmentItem.hac.pressure === "number"
-) {
-  scenarioClone.hac = {
-    ...scenarioClone.hac,
-    pressure: equipmentItem.hac.pressure,
-  };
-}</pre>
+// (pressure check follows)</pre>
         </div>
         <div class="diff-after">
           <div class="diff-label">After</div>
-<pre>// --- NEW: Guard inherited-but-missing fields ---
+<pre>// NEW: guard against stale inherit when parent missing
 if (
   scenarioClone.hac.inheritTemperature &&
   "temperature" in scenarioClone.hac &&
@@ -480,9 +318,9 @@ if (
   return {
     success: false,
     error:
-      "Equipment temperature is not set. " +
-      "Set a temperature on the parent equipment item " +
-      "or disable temperature inheritance on the scenario.",
+      "Equipment temperature is not set. Set a " +
+      "temperature on the parent equipment item or " +
+      "disable temperature inheritance on the scenario.",
     updatedItem,
   };
 }
@@ -494,60 +332,44 @@ if (
   return {
     success: false,
     error:
-      "Equipment pressure is not set. " +
-      "Set a pressure on the parent equipment item " +
-      "or disable pressure inheritance on the scenario.",
+      "Equipment pressure is not set. Set a pressure " +
+      "on the parent equipment item or disable pressure " +
+      "inheritance on the scenario.",
     updatedItem,
   };
 }
 
-// EXISTING: Apply inherited values when equipment has them
-if (
-  scenarioClone.hac.inheritTemperature &&
-  typeof equipmentItem.hac.temperature === "number"
-) { ... }
-
-if (
-  scenarioClone.hac.inheritPressure &&
-  typeof equipmentItem.hac.pressure === "number"
-) { ... }</pre>
+// EXISTING: apply inherited values when present
+if (scenarioClone.hac.inheritTemperature && ...) { ... }
+if (scenarioClone.hac.inheritPressure && ...) { ... }</pre>
         </div>
       </div>
 
       <div class="card" style="background:#1a1f00;border-color:#3a4010;margin-top:14px;">
-        <h4 style="color:var(--yellow);">Key guards</h4>
+        <h4 style="color:var(--yellow);">Critical: "field in data" guard</h4>
         <p style="font-size:13px;color:var(--muted);">
-          The <code>"temperature" in scenarioClone.hac</code> check ensures the guard only fires when the
-          scenario's release type actually uses temperature (e.g., Pressurised Gas, Evaporating Pool) —
-          <strong>not</strong> for User-defined scenarios which have neither field.
-          Similarly <code>"pressure" in scenarioClone.hac</code> for pressure-using variants.
+          <code>"temperature" in scenarioClone.hac</code> is required. User-defined scenarios have
+          <code>inheritTemperature: true</code> (from BaseBsScenarioHacSchema) but <strong>no</strong>
+          temperature field. Without this guard, those scenarios would get a false error.
         </p>
       </div>
-
-      <h3>Error return pattern</h3>
-      <p style="color:var(--muted);font-size:13px;">
-        Uses the existing <code>BsCalculationHandlerResult</code> pattern:
-        <code>{ success: false, error: string, updatedItem }</code>. This is identical to the existing
-        "Missing equipmentItem or area for scenario" guard at ~line 629. No new types needed.
-      </p>
     </div>
   </div>
 
-  <!-- Phase C: Form useEffect -->
+  <!-- Task C -->
   <div class="phase">
     <div class="phase-header">
       <div class="phase-num" style="background:#0f1e3d;color:var(--accent);">C</div>
-      <span class="phase-title">Live Form Sync — useEffect Fix</span>
+      <span class="phase-title">Live Form Sync — useEffect Auto-Off</span>
       <div class="phase-meta">
         <span class="badge badge-blue">components/dashboard/forms/scenario-forms.tsx</span>
-        <span class="badge badge-yellow">Depends on Task A</span>
+        <span class="badge badge-green">Fully Independent</span>
       </div>
     </div>
     <div class="phase-body">
       <p style="color:var(--muted);font-size:13px;margin-bottom:14px;">
-        Two useEffect hooks at lines 311–347 each have an early-return guard that prevents propagation
-        when the equipment value is <code>undefined</code>. Remove those guards and always apply the
-        parent value (including <code>undefined</code>) when the inherit flag is true.
+        Two useEffect hooks at lines 311–347. Replace the <code>if (parent === undefined) return;</code>
+        guard with the <strong>auto-off pattern</strong> that already exists for <code>sourceAirVelocity</code>.
       </p>
 
       <div class="diff-grid">
@@ -556,150 +378,90 @@ if (
 <pre>useEffect(() => {
   if (!inheritTemperature) return;
 
-  const parentTemperature = equipmentItem?.hac?.temperature;
+  const parentTemperature =
+    equipmentItem?.hac?.temperature;
   if (parentTemperature === undefined) return;  // ← BUG
 
   const currentTemperature = watch("temperature");
   if (currentTemperature === parentTemperature) return;
 
   (setValue as UseFormSetValue<...>)(
-    "temperature",
-    parentTemperature,
+    "temperature", parentTemperature,
     { shouldDirty: false, shouldTouch: false }
   );
-}, [equipmentItem, inheritTemperature, setValue, watch]);</pre>
+}, [...]);</pre>
         </div>
         <div class="diff-after">
           <div class="diff-label">After — Temperature</div>
 <pre>useEffect(() => {
   if (!inheritTemperature) return;
 
-  const parentTemperature = equipmentItem?.hac?.temperature;
-  // Remove the `if (parentTemperature === undefined) return` guard
+  const parentTemperature =
+    equipmentItem?.hac?.temperature;
+
+  // Auto-off when parent missing (matches sourceAirVelocity)
+  if (parentTemperature === undefined) {
+    (setValue as UseFormSetValue<...>)(
+      "inheritTemperature", false,
+      { shouldDirty: true, shouldTouch: true }
+    );
+    return;
+  }
 
   const currentTemperature = watch("temperature");
   if (currentTemperature === parentTemperature) return;
 
   (setValue as UseFormSetValue<...>)(
-    "temperature",
-    parentTemperature,  // may be undefined — propagate it
+    "temperature", parentTemperature,
     { shouldDirty: false, shouldTouch: false }
   );
-}, [equipmentItem, inheritTemperature, setValue, watch]);</pre>
+}, [...]);</pre>
         </div>
       </div>
 
-      <p style="font-size:12px;color:var(--muted);margin:10px 0 16px;">Apply the identical change to the <strong>pressure useEffect</strong> at lines 330–347 — remove the <code>if (parentPressure === undefined) return;</code> guard.</p>
+      <p style="font-size:12px;color:var(--muted);margin:10px 0 16px;">
+        Apply the identical change to the <strong>pressure useEffect</strong> (lines 330–347):
+        replace <code>if (parentPressure === undefined) return;</code> with
+        <code>setValue("inheritPressure", false, {shouldDirty:true, shouldTouch:true}); return;</code>
+      </p>
 
-      <div class="card" style="background:#1a1a0a;border-color:#3a3a10;">
-        <h4 style="color:var(--yellow);">What happens after this change</h4>
+      <div class="card" style="background:#0a1a0a;border-color:#1a4a1a;">
+        <h4 style="color:var(--green);">shouldDirty: true — why it matters</h4>
         <p style="font-size:13px;color:var(--muted);">
-          When equipment temperature is cleared while the scenario form is open:
-          <ol style="margin:8px 0 0 18px;font-size:13px;color:var(--muted);line-height:2;">
-            <li>useEffect fires → <code>setValue("temperature", undefined, {shouldDirty:false})</code></li>
-            <li>RHF form state: temperature = undefined</li>
-            <li>Zod superRefine (Task A) fires → custom error shown on the disabled field</li>
-            <li><code>useAutoSaveFormData</code> fires (it does NOT check validity) → saves <code>temperature: undefined</code> to dataProvider in-memory state</li>
-          </ol>
+          Setting <code>shouldDirty: true, shouldTouch: true</code> matches the sourceAirVelocity
+          precedent and ensures <code>useAutoSaveFormData</code> treats the toggle-off as a real
+          change, persisting <code>inheritTemperature: false</code> to in-memory state.
+          The existing sync uses <code>shouldDirty: false</code> (user-neutral propagation);
+          a forced toggle-off should be treated as a meaningful state change.
         </p>
       </div>
     </div>
   </div>
 
-  <!-- Phase D: Defaults fix -->
-  <div class="phase">
-    <div class="phase-header">
-      <div class="phase-num" style="background:#0f1e3d;color:var(--accent);">D</div>
-      <span class="phase-title">Form Load Default — buildHacDefaultValues Fix</span>
-      <div class="phase-meta">
-        <span class="badge badge-blue">components/dashboard/forms/scenario-hac-defaults.ts</span>
-        <span class="badge badge-yellow">Depends on Task A</span>
-      </div>
-    </div>
-    <div class="phase-body">
-      <p style="color:var(--muted);font-size:13px;margin-bottom:14px;">
-        <code>buildHacDefaultValues</code> at lines 44–56 only copies equipment defaults into the
-        candidate when they are numbers. When equipment value is <code>undefined</code>, the
-        scenario's stored (stale) value is used instead. Fix: when <code>inherit*=true</code>,
-        always assign the equipment default (even if <code>undefined</code>), overwriting the stored value.
-      </p>
-
-      <div class="diff-grid">
-        <div class="diff-before">
-          <div class="diff-label">Before (line 44)</div>
-<pre>if (
-  candidate.inheritTemperature === true &&
-  typeof equipmentDefaults?.temperature === "number"
-) {
-  candidate.temperature = equipmentDefaults.temperature;
-}
-
-if (
-  candidate.inheritPressure === true &&
-  typeof equipmentDefaults?.pressure === "number"
-) {
-  candidate.pressure = equipmentDefaults.pressure;
-}</pre>
-        </div>
-        <div class="diff-after">
-          <div class="diff-label">After</div>
-<pre>if (candidate.inheritTemperature === true) {
-  // Always reflect parent, even when undefined.
-  // Zod superRefine will surface the error if undefined.
-  candidate.temperature = equipmentDefaults?.temperature;
-}
-
-if (candidate.inheritPressure === true) {
-  candidate.pressure = equipmentDefaults?.pressure;
-}</pre>
-        </div>
-      </div>
-
-      <p style="font-size:13px;color:var(--muted);margin-top:10px;">
-        This ensures that if a user had equipment at 15 barg, cleared it, closed the scenario form,
-        then later re-opened the scenario form — the form loads correctly with blank temperature/pressure
-        and the custom error message, rather than showing the stale 15 barg value.
-      </p>
-    </div>
-  </div>
-
-  <!-- Phase E: Cascade -->
+  <!-- Task E -->
   <div class="phase">
     <div class="phase-header">
       <div class="phase-num" style="background:#0a2420;color:var(--teal);">E</div>
-      <span class="phase-title">In-Memory State Cascade for Unmounted Scenarios</span>
+      <span class="phase-title">In-Memory Cascade for Unmounted Scenarios</span>
       <div class="phase-meta">
         <span class="badge badge-teal">study-tree-context-provider.tsx</span>
-        <span class="badge badge-yellow">Depends on Task A</span>
+        <span class="badge badge-yellow">Independent, large file — care needed</span>
       </div>
     </div>
     <div class="phase-body">
       <p style="color:var(--muted);font-size:13px;margin-bottom:14px;">
-        Tasks C and D handle scenarios whose forms are currently open or are subsequently opened after
-        equipment save. Task E handles scenarios that are <strong>never reopened</strong> before the
-        user presses Save — their in-memory state needs to be updated so stale data is never
-        persisted to Firestore.
+        Handles scenarios whose forms are not currently open. The cascade sets
+        <code>inheritPressure/inheritTemperature = false</code> in-memory so that:
+        a) any subsequent form open loads with the correct state, and
+        b) the calculation (triggered 1000ms after <code>saveFormData</code>) sees the correct flags.
       </p>
       <p style="color:var(--muted);font-size:13px;margin-bottom:14px;">
-        Note: Firestore is only written on explicit Save button press (<code>save-study-modal.tsx</code>).
-        <code>useAutoSaveFormData</code> only updates in-memory state. The cascade below updates
-        in-memory state for all affected closed scenarios at the moment of equipment save.
+        <strong>Location:</strong> inside <code>saveFormData</code>, after the descendant out-of-sync
+        marking block (~line 1221), before <code>this._studyItems = finalStudyItems</code> (~line 1251).
       </p>
 
-      <h3>Location</h3>
-      <p style="font-size:13px;color:var(--muted);">
-        Inside <code>saveFormData</code> (line ~1146), after <code>finalStudyItems</code> is assembled
-        and the out-of-sync marking completes — <strong>before</strong> <code>this._studyItems = finalStudyItems</code>
-        at line 1251. Specifically, inject the cascade after the descendant out-of-sync marking block (lines 1208–1221).
-      </p>
-
-      <h3>Implementation</h3>
-<pre>// --- NEW BLOCK: cascade cleared equipment values to linked scenarios ---
-// Insert after the existing "CASCADE DOWN: Mark all descendants as out-of-sync" block
-if (
-  section === "hac" &&
-  itemWithRevision.type === "equipmentItem"
-) {
+<pre>// NEW BLOCK — insert after "CASCADE DOWN" out-of-sync marking, before this._studyItems = finalStudyItems
+if (section === "hac" && itemWithRevision.type === "equipmentItem") {
   const prevHac = previousItem.hac as Record&lt;string, unknown&gt; | undefined;
   const newHac  = itemWithRevision.hac as Record&lt;string, unknown&gt; | undefined;
 
@@ -709,8 +471,7 @@ if (
     typeof prevHac?.temperature === "number" && newHac?.temperature === undefined;
 
   if (pressureCleared || temperatureCleared) {
-    // getDescendantItemsByType is available via lib/study-tree-traversal.ts
-    // It is already imported in this file. Use the updated finalStudyItems.
+    // getDescendantItemsByType from lib/study-tree-traversal.ts (already imported)
     const scenarioDescendants = getDescendantItemsByType(
       itemWithRevision.index,
       "scenario",
@@ -725,74 +486,70 @@ if (
       let didChange = false;
 
       if (pressureCleared && hacData.inheritPressure === true) {
-        updatedHac = { ...updatedHac, pressure: undefined };
+        updatedHac = { ...updatedHac, inheritPressure: false };
         didChange = true;
       }
       if (temperatureCleared && hacData.inheritTemperature === true) {
-        updatedHac = { ...updatedHac, temperature: undefined };
+        updatedHac = { ...updatedHac, inheritTemperature: false };
         didChange = true;
       }
 
       if (didChange) {
         finalStudyItems = {
           ...finalStudyItems,
-          [descendant.index]: {
-            ...descendant,
-            hac: updatedHac,
-          },
+          [descendant.index]: { ...descendant, hac: updatedHac },
         };
       }
     }
   }
 }
-// --- END new cascade block ---</pre>
+// END new cascade block</pre>
 
       <div class="card" style="background:#0a2420;border-color:#1a4a35;margin-top:14px;">
         <h4 style="color:var(--teal);">Utility to use</h4>
         <p style="font-size:13px;color:var(--muted);">
           <code>getDescendantItemsByType</code> from <code>lib/study-tree-traversal.ts</code> —
-          already imported in this file (see CLAUDE.md). Includes cycle detection and depth guards.
+          already imported in this file. Includes cycle detection and depth guards.
           Do NOT write a manual parent/children traversal.
         </p>
       </div>
 
       <div class="card" style="background:#1a1a0a;border-color:#3a3010;margin-top:12px;">
-        <h4 style="color:var(--yellow);">Why only cascade on clear (not on every value change)</h4>
+        <h4 style="color:var(--yellow);">Value is NOT cleared</h4>
         <p style="font-size:13px;color:var(--muted);">
-          The "equipment changed to a new number" case is already handled at calculation time
-          by <code>bs-calculation-service.ts</code> lines 651–669, and at form-open time by
-          <code>buildHacDefaultValues</code>. Cascading every equipment HAC write to all descendant
-          scenarios would duplicate that logic and add unnecessary write overhead.
-          Only clearing needs an explicit cascade because the existing mechanism silently skips it.
+          The cascade sets the <strong>flag</strong> to false but leaves <code>temperature</code>
+          and <code>pressure</code> values unchanged. The scenario's last inherited value becomes
+          its explicit override — consistent with the A1b UX.
+          Only fires on CLEAR (number→undefined). Value changes (number→number) are already
+          handled at calc time by the existing inheritance block.
         </p>
       </div>
     </div>
   </div>
 
-  <!-- Phase F: Tests -->
+  <!-- Task F -->
   <div class="phase">
     <div class="phase-header">
       <div class="phase-num" style="background:#0f2e20;color:var(--green);">F</div>
       <span class="phase-title">Tests</span>
       <div class="phase-meta">
-        <span class="badge badge-green">Depends on all tasks</span>
+        <span class="badge badge-green">After B + C + E</span>
       </div>
     </div>
     <div class="phase-body">
-
-      <h3>scenario-hac-form.integration.test.tsx — New test case</h3>
+      <h3>scenario-hac-form.integration.test.tsx — New test (5th)</h3>
       <p style="color:var(--muted);font-size:13px;margin-bottom:10px;">
-        Add a 5th test in the existing <code>describe("ScenarioHacForm integration")</code> block,
-        following the pattern of the existing test 3 (syncs on parent change):
+        Add in the existing <code>describe("ScenarioHacForm integration")</code> block after
+        the "syncs from parent equipment on parent value changes" test.
       </p>
 <pre>it(
-  "clears inherited temperature and pressure when parent equipment values are removed",
+  "auto-disables inherit toggle when parent equipment value is removed",
   async () => {
     render(&lt;ScenarioHacForm /&gt;);
     enableBsPressurisedGas();
     ensureInheritanceEnabled();
 
-    // Initial values from equipment (900000 Pa, 330 K)
+    // Initial values from equipment
     await waitFor(() =&gt; {
       expect(screen.getByTestId("unit-pressure")).toHaveValue("900000");
       expect(screen.getByTestId("unit-temperature")).toHaveValue("330");
@@ -801,295 +558,192 @@ if (
     // Equipment values cleared
     equipmentAncestor = {
       ...equipmentAncestor,
-      hac: {
-        ...equipmentAncestor.hac,
-        pressure: undefined,
-        temperature: undefined,
-      },
+      hac: { ...equipmentAncestor.hac, pressure: undefined, temperature: undefined },
     };
     rerender(&lt;ScenarioHacForm /&gt;);
 
-    // Fields should now be blank/empty
+    // Inherit toggles should have auto-turned off
     await waitFor(() =&gt; {
-      expect(screen.getByTestId("unit-pressure")).toHaveValue("");
-      expect(screen.getByTestId("unit-temperature")).toHaveValue("");
+      expect(screen.getByTestId("switch-inheritPressure")).not.toBeChecked();
+      expect(screen.getByTestId("switch-inheritTemperature")).not.toBeChecked();
     });
 
-    // Fields should still be disabled (inherit switches still on)
-    expect(screen.getByTestId("unit-pressure")).toBeDisabled();
-    expect(screen.getByTestId("unit-temperature")).toBeDisabled();
+    // Fields become editable (inherit is off)
+    expect(screen.getByTestId("unit-pressure")).not.toBeDisabled();
+    expect(screen.getByTestId("unit-temperature")).not.toBeDisabled();
 
-    // Custom error messages should be present
-    await waitFor(() =&gt; {
-      expect(screen.getByText(
-        /Equipment pressure is not set/i
-      )).toBeInTheDocument();
-      expect(screen.getByText(
-        /Equipment temperature is not set/i
-      )).toBeInTheDocument();
-    });
+    // Last known values are preserved (900000 Pa, 330 K)
+    expect(screen.getByTestId("unit-pressure")).toHaveValue("900000");
+    expect(screen.getByTestId("unit-temperature")).toHaveValue("330");
   }
 );</pre>
-
-      <h3>scenario-hac-defaults.test.tsx — New test cases</h3>
-      <p style="color:var(--muted);font-size:13px;margin-bottom:10px;">
-        Add two new tests for the cleared-parent case in <code>buildHacDefaultValues</code>:
-      </p>
-<pre>it("clears inherited temperature when parent equipment temperature is undefined", () => {
-  const hacRaw = {
-    hacType: "BS EN 60079-10-1",
-    releaseType: "Pressurised gas",
-    inheritTemperature: true,
-    temperature: 330,   // stale stored value
-    // ... other required fields ...
-  };
-
-  const result = buildHacDefaultValues(
-    hacRaw as ScenarioHacFormData,
-    "Outdoor",
-    { pressure: 900000, temperature: undefined }  // equipment cleared temperature
-  );
-
-  // Should override the stale stored value with undefined
-  expect((result.defaults as Record&lt;string,unknown&gt;).temperature).toBeUndefined();
-});
-
-it("preserves manual temperature when inherit is false and parent is undefined", () =&gt; {
-  const hacRaw = {
-    // ...
-    inheritTemperature: false,
-    temperature: 330,
-  };
-  const result = buildHacDefaultValues(
-    hacRaw as ScenarioHacFormData,
-    "Outdoor",
-    { pressure: 900000, temperature: undefined }
-  );
-  // inherit is off — keep the stored value
-  expect((result.defaults as Record&lt;string,unknown&gt;).temperature).toBe(330);
-});</pre>
-
-      <h3>Calculation service test (recommended addition)</h3>
-      <p style="color:var(--muted);font-size:13px;margin-bottom:10px;">
-        Find or create a test file for <code>bs-calculation-service.ts</code>. Add a test asserting
-        that when <code>inheritTemperature=true</code> and <code>equipmentItem.hac.temperature</code>
-        is undefined, the handler returns <code>{ success: false, error: "Equipment temperature is not set..." }</code>.
-      </p>
     </div>
   </div>
 
   <div class="divider"></div>
 
-  <!-- Execution Sequence -->
-  <h2>Execution Sequence &amp; Parallelism</h2>
-
-  <div class="card">
-    <table>
-      <thead><tr><th>Wave</th><th>Tasks</th><th>Can run in parallel?</th><th>Commit strategy</th></tr></thead>
-      <tbody>
-        <tr>
-          <td>1</td>
-          <td>
-            <span class="badge badge-purple">A (Schema)</span>
-            <span class="badge badge-orange" style="margin-left:4px;">B (Calc guard)</span>
-          </td>
-          <td><span class="badge badge-green">✓ Yes — different files</span></td>
-          <td>Commit A and B separately; both must pass <code>npm run typecheck &amp;&amp; npm run lint</code></td>
-        </tr>
-        <tr>
-          <td>2</td>
-          <td>
-            <span class="badge badge-blue">C (useEffect)</span>
-            <span class="badge badge-blue" style="margin-left:4px;">D (defaults)</span>
-          </td>
-          <td><span class="badge badge-green">✓ Yes — different files, both depend on A</span></td>
-          <td>Commit C+D together (both reference the updated formSchema type from Task A)</td>
-        </tr>
-        <tr>
-          <td>3</td>
-          <td><span class="badge badge-teal">E (Cascade)</span></td>
-          <td><span class="badge badge-yellow">Sequential after A</span></td>
-          <td>Separate commit; pass typecheck + lint before committing</td>
-        </tr>
-        <tr>
-          <td>4</td>
-          <td><span class="badge badge-green">F (Tests)</span></td>
-          <td>Sequential — needs all code in place</td>
-          <td>Separate commit; <code>npm test</code> must pass</td>
-        </tr>
-      </tbody>
-    </table>
-
-    <div class="parallel-note" style="margin-top:12px;">
-      ⚡ <strong>Optimal parallel split:</strong> Agent 1 handles A → C → D → E sequentially.
-      Agent 2 handles B independently at the same time. Agent 1 (or a merged agent) handles F last.
-    </div>
-  </div>
-
-  <div class="divider"></div>
-
-  <!-- Before / After Behaviour -->
+  <!-- Before / After -->
   <h2>Before / After Behaviour</h2>
   <table>
-    <thead><tr><th>Scenario</th><th style="color:var(--red);">Before fix</th><th style="color:var(--green);">After fix</th></tr></thead>
+    <thead><tr><th>Scenario</th><th style="color:var(--red);">Before</th><th style="color:var(--green);">After</th></tr></thead>
     <tbody>
       <tr>
-        <td>Equipment pressure cleared; scenario form is open; inherit=true</td>
-        <td>Scenario field stays at 15 barg (stale). No error shown.</td>
-        <td>Scenario field clears immediately. Custom error: "Equipment pressure is not set…"</td>
+        <td>Equipment pressure cleared; scenario form open; inherit=true</td>
+        <td>Scenario field stays at 15 barg. No change.</td>
+        <td>Inherit toggle auto-turns OFF. Field becomes editable with last known value (15 barg).</td>
       </tr>
       <tr>
-        <td>Equipment pressure cleared; scenario form is closed; inherit=true</td>
-        <td>In-memory state not updated. If opened later: form loads with stale 15 barg.</td>
-        <td>Cascade updates in-memory state immediately. On next open: form loads blank with error.</td>
+        <td>Equipment pressure cleared; scenario form closed; inherit=true</td>
+        <td>In-memory not updated. Opens later with stale 15 barg and inherit still on.</td>
+        <td>Cascade sets inheritPressure=false in-memory. Opens with inherit OFF, 15 barg editable.</td>
       </tr>
       <tr>
-        <td>Equipment pressure cleared; scenario form previously closed; user presses Save</td>
-        <td>Stale 15 barg persisted to Firestore.</td>
-        <td>Correct undefined (no field) persisted to Firestore via cascade.</td>
+        <td>User presses Save after equipment cleared</td>
+        <td>Stale 15 barg and inherit=true persisted to Firestore.</td>
+        <td>inheritPressure=false and 15 barg (now explicit) correctly persisted.</td>
       </tr>
       <tr>
-        <td>Calculation triggered after equipment pressure cleared; scenario inherit=true</td>
-        <td>Calculation silently uses stale 15 barg. Result is incorrect.</td>
-        <td>Calculation returns explicit error: "Equipment pressure not set…". Result is not produced.</td>
+        <td>Calculation triggered after equipment cleared; inherit=true</td>
+        <td>Silently uses stale 15 barg. Incorrect result.</td>
+        <td>Cascade has already set inherit=false before calc fires (1000ms debounce). Calc uses scenario's own value correctly. If somehow inherit=true remains, Task B guard fires with descriptive error.</td>
       </tr>
       <tr>
-        <td>Scenario form opened after equipment cleared; inherit=true</td>
-        <td>Form loads with stale 15 barg (buildHacDefaultValues skips the cascade).</td>
-        <td>Form loads with blank field and custom error message.</td>
+        <td>User re-enables inherit after equipment value cleared</td>
+        <td>N/A (toggle was never auto-off)</td>
+        <td>Toggle is off. User manually re-enables it. Equipment still has no value → useEffect fires → auto-off again. User is guided to set equipment value first.</td>
       </tr>
       <tr>
-        <td>inherit=false; user manually clears the field</td>
-        <td>Standard Zod error ("must be a number") shown.</td>
-        <td>superRefine shows "Pressure is required" (same effective UX, new code path).</td>
-      </tr>
-      <tr>
-        <td>User sets temperature to a value that was previously undefined on equipment</td>
-        <td>Linked scenario forms don't update (but are already correct after this fix).</td>
-        <td>No change to this path — existing positive value propagation already works.</td>
+        <td>Equipment value restored (e.g. 15 barg re-entered)</td>
+        <td>Linked scenarios still not updated (existing positive-value bug was already fixed).</td>
+        <td>No change to this path — existing positive-value propagation already works correctly.</td>
       </tr>
     </tbody>
   </table>
 
   <div class="divider"></div>
 
-  <!-- Risks & Edge Cases -->
-  <h2>Risks, Edge Cases &amp; Preserved Behaviour</h2>
-
+  <!-- Risks -->
+  <h2>Risks &amp; Edge Cases</h2>
   <div class="card-grid">
-    <div class="card-sm risk-high">
+    <div class="card-sm risk-med">
       <div style="display:flex;align-items:center;gap:8px;margin-bottom:8px;">
-        <span class="badge badge-red">High</span>
-        <strong style="font-size:13px;">TypeScript type regressions from optional fields</strong>
+        <span class="badge badge-yellow">Medium</span>
+        <strong style="font-size:13px;">Timing: calc fires before cascade</strong>
       </div>
       <p style="font-size:12px;color:var(--muted);">
-        Making temperature/pressure <code>optional()</code> changes inferred types throughout the codebase.
-        The calculation engine reads these fields. <strong>Mitigation:</strong> Run <code>npm run typecheck</code>
-        after Task A before proceeding. The calc service guard (Task B) is designed to prevent
-        undefined values ever reaching downstream calculation code.
-      </p>
-    </div>
-
-    <div class="card-sm risk-high">
-      <div style="display:flex;align-items:center;gap:8px;margin-bottom:8px;">
-        <span class="badge badge-red">High</span>
-        <strong style="font-size:13px;">superRefine overrides field-level Zod errors</strong>
-      </div>
-      <p style="font-size:12px;color:var(--muted);">
-        With <code>.optional()</code>, Zod's built-in number validation won't fire for undefined.
-        The superRefine covers undefined but not NaN from coercion of empty strings.
-        Verify <code>ControlledUnitField</code> sends <code>undefined</code> (not empty string)
-        when cleared so Zod's <code>.coerce.number()</code> doesn't silently produce <code>NaN</code>.
+        Equipment autosave debounce: 500ms. Cascade runs inside saveFormData (sync).
+        Calc debounce: 1000ms — triggered as microtask after saveFormData.
+        So cascade always runs before calculation. Task B guard is a safety net for
+        edge cases (e.g., direct tree manipulation bypassing saveFormData).
       </p>
     </div>
 
     <div class="card-sm risk-med">
-      <div style="display:flex;align-items:center;gap:8px;margin-bottom:8px;">
+      <div style="display:flex;gap:8px;align-items:center;margin-bottom:8px;">
         <span class="badge badge-yellow">Medium</span>
+        <strong style="font-size:13px;">User re-enables toggle immediately</strong>
+      </div>
+      <p style="font-size:12px;color:var(--muted);">
+        If user re-enables inherit toggle after auto-off: the useEffect fires again
+        immediately, sees <code>parentTemperature === undefined</code>, and auto-turns-off
+        again. This is correct — the user is guided to restore the equipment value first.
+        No infinite loop (the useEffect guard <code>if (!inheritTemperature) return</code>
+        catches the settled state).
+      </p>
+    </div>
+
+    <div class="card-sm risk-low">
+      <div style="display:flex;gap:8px;align-items:center;margin-bottom:8px;">
+        <span class="badge badge-green">Low</span>
+        <strong style="font-size:13px;">User-defined scenarios</strong>
+      </div>
+      <p style="font-size:12px;color:var(--muted);">
+        User-defined scenarios have <code>inheritTemperature: true</code> (from BaseBsScenarioHacSchema)
+        but no temperature or pressure fields. The Task B guard uses
+        <code>"temperature" in scenarioClone.hac</code> to skip these. Task C useEffects have
+        no temperature/pressure fields in their forms, so setValue has no effect. Task E cascade
+        will still set <code>inheritTemperature: false</code> on User-defined scenarios — this
+        is harmless (the flag has no functional effect for them).
+      </p>
+    </div>
+
+    <div class="card-sm risk-low">
+      <div style="display:flex;gap:8px;align-items:center;margin-bottom:8px;">
+        <span class="badge badge-green">Low</span>
         <strong style="font-size:13px;">Cascade modifies finalStudyItems mid-build</strong>
       </div>
       <p style="font-size:12px;color:var(--muted);">
-        Task E modifies <code>finalStudyItems</code> after the out-of-sync marks but before
-        <code>this._studyItems = finalStudyItems</code>. Ensure the cascade does NOT call
-        <code>saveFormData</code> recursively (it directly modifies the map — no recursion risk).
-      </p>
-    </div>
-
-    <div class="card-sm risk-med">
-      <div style="display:flex;align-items:center;gap:8px;margin-bottom:8px;">
-        <span class="badge badge-yellow">Medium</span>
-        <strong style="font-size:13px;">shouldDirty: false and autosave interaction</strong>
-      </div>
-      <p style="font-size:12px;color:var(--muted);">
-        The useEffect fix uses <code>shouldDirty: false, shouldTouch: false</code> to avoid
-        marking the form as user-modified. Despite this, <code>useAutoSaveFormData</code> fires on
-        every <code>useWatch</code> reference change regardless of dirty state — confirmed by
-        reading <code>form-hooks.tsx</code>. The undefined value WILL be persisted to in-memory state.
+        Task E modifies <code>finalStudyItems</code> after out-of-sync marking but before
+        <code>this._studyItems = finalStudyItems</code>. The cascade directly modifies the
+        map — no calls to saveFormData, no recursion. Safe.
       </p>
     </div>
 
     <div class="card-sm risk-low">
-      <div style="display:flex;align-items:center;gap:8px;margin-bottom:8px;">
-        <span class="badge badge-green">Low</span>
-        <strong style="font-size:13px;">BsUserDefinedSchema — no temperature/pressure</strong>
-      </div>
-      <p style="font-size:12px;color:var(--muted);">
-        User-defined scenarios have <code>inheritTemperature: true</code> (from base schema)
-        but no temperature field. The <code>"temperature" in data</code> guard in superRefine
-        and <code>"temperature" in scenarioClone.hac</code> in the calc service correctly skip
-        these scenarios.
-      </p>
-    </div>
-
-    <div class="card-sm risk-low">
-      <div style="display:flex;align-items:center;gap:8px;margin-bottom:8px;">
+      <div style="display:flex;gap:8px;align-items:center;margin-bottom:8px;">
         <span class="badge badge-green">Low</span>
         <strong style="font-size:13px;">Phast scenarios</strong>
       </div>
       <p style="font-size:12px;color:var(--muted);">
-        <code>PhastScenarioHacSchema</code> has both fields at the top level. Task A adds a
-        separate superRefine. Tasks C and D apply to all scenario types (the useEffect and
-        buildHacDefaultValues are HAC-type-agnostic). Task E cascade applies to all scenario
-        descendants regardless of HAC type.
+        PhastScenarioHacSchema has both temperature and pressure at the top level with the
+        same inherit flags. Tasks B, C, and E are HAC-type-agnostic — they check the flags
+        regardless of hacType. No special handling needed.
       </p>
     </div>
 
     <div class="card-sm risk-low">
-      <div style="display:flex;align-items:center;gap:8px;margin-bottom:8px;">
+      <div style="display:flex;gap:8px;align-items:center;margin-bottom:8px;">
         <span class="badge badge-green">Low</span>
-        <strong style="font-size:13px;">Existing "parent has value" path unaffected</strong>
+        <strong style="font-size:13px;">No schema changes — zero type regressions</strong>
       </div>
       <p style="font-size:12px;color:var(--muted);">
-        The fix only removes an <code>undefined</code> early-return guard. When parent has a
-        value (the normal case), the logic is unchanged — the equality check
-        <code>if (currentTemperature === parentTemperature) return;</code> still short-circuits
-        no-op updates.
+        temperature/pressure remain <code>number</code> (not <code>number | undefined</code>).
+        No TypeScript audit needed. No downstream consumers affected.
       </p>
     </div>
+  </div>
 
-    <div class="card-sm risk-low">
-      <div style="display:flex;align-items:center;gap:8px;margin-bottom:8px;">
-        <span class="badge badge-green">Low</span>
-        <strong style="font-size:13px;">validate-inputs.ts — already guarded</strong>
-      </div>
-      <p style="font-size:12px;color:var(--muted);">
-        <code>validate-inputs.ts</code> checks <code>hac.temperature != null &amp;&amp; typeof hac.temperature === "number"</code>
-        before calling <code>validateTemperature</code>. No change needed — undefined is silently
-        skipped. The calc service guard (Task B) fires before this code is reached.
-      </p>
-    </div>
+  <div class="divider"></div>
 
-    <div class="card-sm risk-low">
-      <div style="display:flex;align-items:center;gap:8px;margin-bottom:8px;">
-        <span class="badge badge-green">Low</span>
-        <strong style="font-size:13px;">Backwards compatibility — existing Firestore data</strong>
-      </div>
-      <p style="font-size:12px;color:var(--muted);">
-        All existing scenario documents in Firestore have valid numbers for temperature/pressure
-        (they were required before). The schema change to optional is backwards-compatible —
-        existing numbers still parse successfully.
-      </p>
-    </div>
+  <!-- Execution & Commits -->
+  <h2>Execution Sequence &amp; Commits</h2>
+
+  <div class="parallel-note">
+    ⚡ Tasks B, C, E all touch different files and have no dependencies on each other.
+    Agents 1 and 2 can implement B+C and E in parallel. Task F runs last.
+  </div>
+
+  <div class="card">
+    <table>
+      <thead><tr><th>Wave</th><th>Tasks</th><th>Parallel?</th><th>Commit</th><th>Gate</th></tr></thead>
+      <tbody>
+        <tr>
+          <td>1</td>
+          <td><span class="badge badge-orange">B</span> <span class="badge badge-blue" style="margin-left:4px;">C</span></td>
+          <td><span class="badge badge-green">✓ Yes</span></td>
+          <td><code>fix(calc): error when inherited equipment field not set</code><br/><code>fix(forms): auto-disable inherit when equipment value cleared</code></td>
+          <td>typecheck + lint</td>
+        </tr>
+        <tr>
+          <td>1</td>
+          <td><span class="badge badge-teal">E</span></td>
+          <td><span class="badge badge-green">✓ Yes (parallel with B+C)</span></td>
+          <td><code>fix(provider): cascade inherit flag off for unmounted scenarios</code></td>
+          <td>typecheck + lint</td>
+        </tr>
+        <tr>
+          <td>2</td>
+          <td><span class="badge badge-green">F</span></td>
+          <td>Sequential after all</td>
+          <td><code>test: verify inherit toggle auto-off when equipment value cleared</code></td>
+          <td>npm test (full suite)</td>
+        </tr>
+        <tr>
+          <td>Push</td>
+          <td colspan="4">Push all commits to origin after F passes. Pre-push hook runs full test suite.</td>
+        </tr>
+      </tbody>
+    </table>
   </div>
 
   <div class="divider"></div>
@@ -1097,118 +751,55 @@ it("preserves manual temperature when inherit is false and parent is undefined",
   <!-- Test Plan -->
   <h2>Test Plan &amp; Verification</h2>
 
-  <h3>Automated verification sequence</h3>
+  <h3>Automated checks</h3>
   <div class="card">
     <ul class="checklist">
-      <li><span class="check-icon">✓</span><div><strong>After Task A:</strong> <code>npm run typecheck</code> — must pass before continuing. Catch any <code>number | undefined</code> regressions early.</div></li>
-      <li><span class="check-icon">✓</span><div><strong>After Task B:</strong> <code>npm run typecheck &amp;&amp; npm run lint</code> — calc service change is self-contained.</div></li>
-      <li><span class="check-icon">✓</span><div><strong>After Tasks C+D:</strong> <code>npm run typecheck &amp;&amp; npm run lint</code> — form layer changes.</div></li>
-      <li><span class="check-icon">✓</span><div><strong>After Task E:</strong> <code>npm run typecheck &amp;&amp; npm run lint</code> — cascade in context provider.</div></li>
-      <li><span class="check-icon">✓</span><div><strong>After Task F:</strong> <code>npm test</code> — full test suite including new tests.</div></li>
-      <li><span class="check-icon">✓</span><div><strong>Final:</strong> <code>npm run build</code> — production build must succeed (includes type-checking).</div></li>
+      <li><span class="check-icon">✓</span><div><strong>After each task:</strong> <code>npm run typecheck &amp;&amp; npm run lint</code> — no schema changes so type regressions are very unlikely, but run after every commit.</div></li>
+      <li><span class="check-icon">✓</span><div><strong>After Task F:</strong> <code>npm test</code> — full Vitest suite including new test case.</div></li>
+      <li><span class="check-icon">✓</span><div><strong>Final:</strong> <code>npm run build</code> — production build must succeed.</div></li>
     </ul>
   </div>
 
   <h3>Manual verification steps</h3>
   <div class="card">
     <ul class="checklist">
-      <li><span class="check-icon info">→</span><div>Start dev server: <code>npm run dev</code>. Open a study with equipment item → scenario (Pressurised Gas or Phast with inherit toggles on).</div></li>
-      <li><span class="check-icon info">→</span><div>Verify both inherit toggles are ON and scenario shows equipment's temperature/pressure values.</div></li>
-      <li><span class="check-icon info">→</span><div>Clear the pressure on the equipment item. <strong>Expected:</strong> Scenario pressure field immediately blanks and shows custom error "Equipment pressure is not set…"</div></li>
-      <li><span class="check-icon info">→</span><div>Clear the temperature. <strong>Expected:</strong> Scenario temperature field blanks with custom error.</div></li>
-      <li><span class="check-icon info">→</span><div>Navigate away from the scenario (close form). Reopen it. <strong>Expected:</strong> Still shows blank fields with custom errors (not stale values).</div></li>
-      <li><span class="check-icon info">→</span><div>Press Save. Reopen the study (or refresh). <strong>Expected:</strong> Fields remain blank (correct Firestore state).</div></li>
-      <li><span class="check-icon info">→</span><div>Trigger a HAC calculation. <strong>Expected:</strong> Calculation fails with "Equipment pressure/temperature not set…" error, NOT a silent result with wrong values.</div></li>
-      <li><span class="check-icon info">→</span><div>Restore the equipment pressure/temperature. <strong>Expected:</strong> Scenario fields immediately show the restored values. No error.</div></li>
-      <li><span class="check-icon info">→</span><div>Disable inherit toggle, then clear the field manually. <strong>Expected:</strong> Standard "Pressure is required" error (not the custom inherit error).</div></li>
+      <li><span class="check-icon info">→</span><div>Start dev server: <code>npm run dev</code>. Open a study with EquipmentItem → Scenario (Pressurised Gas or Phast). Verify both inherit toggles are ON and scenario shows equipment values.</div></li>
+      <li><span class="check-icon info">→</span><div>Clear the pressure on the equipment item. <strong>Expected:</strong> Scenario pressure inherit toggle immediately turns OFF. Pressure field becomes editable with the last known value.</div></li>
+      <li><span class="check-icon info">→</span><div>Clear the temperature. <strong>Expected:</strong> Temperature inherit toggle turns OFF. Field editable with last known value.</div></li>
+      <li><span class="check-icon info">→</span><div>Navigate away from the scenario (close form). Reopen it. <strong>Expected:</strong> Still shows inherit OFF and last known value (not stale with inherit still on).</div></li>
+      <li><span class="check-icon info">→</span><div>Press Save. Reopen the study. <strong>Expected:</strong> Inherit OFF and explicit value persisted to Firestore correctly.</div></li>
+      <li><span class="check-icon info">→</span><div>Trigger a HAC calculation. <strong>Expected:</strong> Calculation uses the scenario's own (last known) temperature/pressure successfully. No stale-data issue.</div></li>
+      <li><span class="check-icon info">→</span><div>Try to manually re-enable the inherit toggle while equipment value is still blank. <strong>Expected:</strong> Toggle auto-turns off again immediately (can't inherit from a blank parent).</div></li>
+      <li><span class="check-icon info">→</span><div>Restore equipment temperature/pressure. Manually re-enable inherit toggle. <strong>Expected:</strong> Scenario field syncs to the restored equipment value.</div></li>
     </ul>
   </div>
 
   <div class="divider"></div>
 
-  <!-- Commit & Push Strategy -->
-  <h2>Commit &amp; Push Strategy</h2>
+  <!-- Dropped tasks -->
+  <h2>Scope Not Required (vs. Original Plan)</h2>
   <div class="card">
     <table>
-      <thead><tr><th>#</th><th>Commit message</th><th>Files</th><th>Gate</th></tr></thead>
+      <thead><tr><th>Originally planned</th><th>Why dropped</th></tr></thead>
       <tbody>
         <tr>
-          <td>1</td>
-          <td><code>feat(schema): make scenario temperature/pressure optional for inheritance</code></td>
-          <td><code>app/types/firestore.tsx</code></td>
-          <td>typecheck + lint</td>
+          <td>Task A — Zod schema changes (make temperature/pressure optional)</td>
+          <td>A1b keeps schema consistent. All calculation inputs remain required numbers. No optional fields, no TypeScript type changes.</td>
         </tr>
         <tr>
-          <td>2</td>
-          <td><code>fix(calc): error when inherited equipment field is not set</code></td>
-          <td><code>lib/bscalculations/bs-calculation-service.ts</code></td>
-          <td>typecheck + lint</td>
+          <td>Task D — Fix buildHacDefaultValues</td>
+          <td>With A1b, when a closed scenario's form opens, the useEffect immediately detects inherit=true + parent missing → auto-turns off. No need to change default construction.</td>
         </tr>
         <tr>
-          <td>3</td>
-          <td><code>fix(forms): propagate cleared equipment values to linked scenarios</code></td>
-          <td><code>scenario-forms.tsx</code>, <code>scenario-hac-defaults.ts</code></td>
-          <td>typecheck + lint</td>
-        </tr>
-        <tr>
-          <td>4</td>
-          <td><code>fix(provider): cascade cleared equipment fields to unmounted scenarios</code></td>
-          <td><code>study-tree-context-provider.tsx</code></td>
-          <td>typecheck + lint</td>
-        </tr>
-        <tr>
-          <td>5</td>
-          <td><code>test: verify inheritance cleared when equipment value removed</code></td>
-          <td>test files</td>
-          <td>npm test (full suite)</td>
-        </tr>
-        <tr>
-          <td>Push</td>
-          <td colspan="3">Push all commits to origin after commit 5 passes. Pre-push hook runs full test suite.</td>
+          <td>F1b — Custom Zod error messages</td>
+          <td>No blank-field-with-error UX. The auto-off behaviour is self-explanatory. Standard form behaviour applies.</td>
         </tr>
       </tbody>
     </table>
-    <p style="font-size:12px;color:var(--muted);margin-top:10px;">
-      Commits 1 and 2 can be pushed in either order (or together). Do not push commits 3–4 before commit 1
-      (schema) since TypeScript would fail without the optional type changes.
-    </p>
-  </div>
-
-  <div class="divider"></div>
-
-  <!-- Open Items -->
-  <h2>Open Items / Post-Implementation Notes</h2>
-
-  <div class="decision">
-    <div class="decision-q">⚠ ControlledUnitField clear behaviour</div>
-    <div class="decision-a">
-      Verify that clearing the temperature/pressure field in <code>ControlledUnitField</code> sends
-      <code>undefined</code> (not <code>NaN</code> or <code>""</code>) to RHF. If it sends <code>NaN</code>,
-      the superRefine check needs to cover NaN too — which is already included in the proposed code:
-      <code>(typeof temp === "number" &amp;&amp; Number.isNaN(temp))</code>. If it sends <code>""</code>,
-      the coerce will produce <code>0</code> which would pass the min check — investigate before finalising.
-    </div>
-  </div>
-
-  <div class="decision">
-    <div class="decision-q">ℹ useGeneralAreaVelocity / sourceAirVelocity — not in scope</div>
-    <div class="decision-a">
-      This field already handles the null parent case by auto-disabling the toggle (different UX pattern).
-      Confirmed not affected by this change. No action needed.
-    </div>
-  </div>
-
-  <div class="decision">
-    <div class="decision-q">ℹ Zone inheritEquipmentClassification — not in scope</div>
-    <div class="decision-a">
-      Zone <code>equipmentGroup</code>/<code>temperatureClass</code> are inherited from calculation
-      <em>outputs</em>, not user-entered inputs. They are optional in the zone schema, so stale values
-      don't block saves. Not equivalent to this bug.
-    </div>
   </div>
 
   <div style="margin-top:40px;padding-top:20px;border-top:1px solid var(--border);color:var(--muted);font-size:12px;">
-    Generated by Claude Code · nEXus project · 2026-05-25 · Branch: feat/auto-hac-calculation
+    Generated by Claude Code · nEXus project · 2026-05-25 · Branch: feat/auto-hac-calculation · Revised: A1b approach
   </div>
 
 </div>
