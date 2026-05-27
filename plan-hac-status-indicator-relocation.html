@@ -1,0 +1,866 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8"/>
+<meta name="viewport" content="width=device-width, initial-scale=1.0"/>
+<title>Plan: HacStatusIndicator Relocation</title>
+<style>
+  :root {
+    --bg: #0f1117;
+    --surface: #1a1d27;
+    --surface2: #1e2235;
+    --surface3: #232840;
+    --border: #2e3352;
+    --accent: #6c8ef7;
+    --accent2: #a78bfa;
+    --text: #e2e8f0;
+    --muted: #94a3b8;
+    --green: #34d399;
+    --amber: #f59e0b;
+    --red: #f87171;
+    --blue: #60a5fa;
+    --teal: #2dd4bf;
+    --risk-low: #166534;
+    --risk-low-text: #86efac;
+    --risk-med: #92400e;
+    --risk-med-text: #fcd34d;
+    --risk-high: #7f1d1d;
+    --risk-high-text: #fca5a5;
+    --code-bg: #0d1117;
+    --tag-bg: #1e2a4a;
+  }
+  *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+  body { background: var(--bg); color: var(--text); font-family: 'Segoe UI', system-ui, sans-serif; font-size: 14px; line-height: 1.6; }
+  a { color: var(--accent); text-decoration: none; }
+  a:hover { text-decoration: underline; }
+
+  /* Nav */
+  .toc-nav {
+    position: sticky; top: 0; z-index: 10;
+    background: rgba(15,17,23,0.96); backdrop-filter: blur(8px);
+    border-bottom: 1px solid var(--border);
+    padding: 10px 24px; display: flex; gap: 16px; flex-wrap: wrap; font-size: 12px;
+    align-items: center;
+  }
+  .toc-nav .toc-brand { color: var(--accent); font-weight: 700; margin-right: 8px; font-size: 13px; }
+  .toc-nav a { color: var(--muted); transition: color 0.15s; }
+  .toc-nav a:hover { color: var(--accent); text-decoration: none; }
+
+  /* Layout */
+  .page { max-width: 980px; margin: 0 auto; padding: 48px 24px 80px; }
+
+  /* Header */
+  .page-header { margin-bottom: 44px; padding-bottom: 28px; border-bottom: 1px solid var(--border); }
+  .page-header h1 { font-size: 28px; font-weight: 700; color: var(--accent); margin-bottom: 8px; }
+  .page-header .subtitle { color: var(--muted); font-size: 15px; margin-top: 6px; max-width: 640px; line-height: 1.5; }
+  .meta { display: flex; flex-wrap: wrap; gap: 12px; margin-top: 16px; }
+  .meta-item { display: flex; align-items: center; gap: 6px; font-size: 12px; color: var(--muted); }
+  .meta-item strong { color: var(--text); }
+  .badge { display: inline-block; font-size: 11px; font-weight: 600; padding: 2px 8px; border-radius: 10px; }
+  .badge-plan { background: var(--tag-bg); color: var(--accent); }
+  .badge-ui { background: #2a1a3a; color: var(--accent2); }
+  .badge-refactor { background: #1a2a3a; color: var(--blue); }
+  .badge-test { background: #1a2f1a; color: var(--green); }
+
+  /* Sections */
+  section { margin-bottom: 56px; }
+  section h2 {
+    font-size: 19px; font-weight: 700; color: var(--accent2);
+    margin-bottom: 20px; padding-bottom: 8px;
+    border-bottom: 1px solid var(--border);
+    display: flex; align-items: center; gap: 10px;
+  }
+  .section-num {
+    font-size: 11px; font-weight: 600; color: var(--muted);
+    background: var(--surface2); border: 1px solid var(--border);
+    border-radius: 4px; padding: 2px 7px;
+  }
+  h3 { font-size: 15px; font-weight: 600; color: var(--text); margin: 24px 0 12px; }
+  h4 { font-size: 12px; font-weight: 600; color: var(--muted); margin: 16px 0 8px; text-transform: uppercase; letter-spacing: 0.06em; }
+  p { margin-bottom: 10px; color: var(--text); }
+  p:last-child { margin-bottom: 0; }
+
+  /* Summary card */
+  .summary-card {
+    background: var(--surface); border: 1px solid var(--border);
+    border-left: 4px solid var(--accent); border-radius: 8px; padding: 20px 24px;
+  }
+  .summary-card p { line-height: 1.75; }
+
+  /* Cards */
+  .card { background: var(--surface); border: 1px solid var(--border); border-radius: 8px; padding: 18px 20px; }
+  .card + .card { margin-top: 12px; }
+  .card-grid { display: grid; grid-template-columns: repeat(auto-fit, minmax(280px, 1fr)); gap: 14px; }
+
+  /* File table */
+  table { width: 100%; border-collapse: collapse; font-size: 13px; }
+  th { text-align: left; padding: 8px 14px; color: var(--muted); font-weight: 600; font-size: 11px; text-transform: uppercase; letter-spacing: 0.06em; background: var(--surface2); border-bottom: 1px solid var(--border); }
+  td { padding: 10px 14px; border-bottom: 1px solid var(--border); vertical-align: top; }
+  tr:last-child td { border-bottom: none; }
+  tbody tr:hover td { background: var(--surface2); }
+  .file-path { font-family: 'Consolas', 'Cascadia Code', monospace; font-size: 12px; color: var(--blue); }
+  .change-type { white-space: nowrap; }
+
+  /* Code blocks */
+  pre {
+    background: var(--code-bg); border: 1px solid var(--border); border-radius: 6px;
+    padding: 14px 16px; overflow-x: auto; font-family: 'Consolas', 'Cascadia Code', monospace;
+    font-size: 12px; line-height: 1.6; color: var(--text); margin: 12px 0;
+  }
+  code { font-family: 'Consolas', 'Cascadia Code', monospace; font-size: 12px; background: var(--code-bg); padding: 1px 5px; border-radius: 3px; color: var(--blue); }
+
+  /* Before/After */
+  .ba-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 16px; }
+  @media (max-width: 640px) { .ba-grid { grid-template-columns: 1fr; } }
+  .ba-card { background: var(--surface); border: 1px solid var(--border); border-radius: 8px; padding: 16px 18px; }
+  .ba-before { border-left: 3px solid var(--red); }
+  .ba-after { border-left: 3px solid var(--green); }
+  .ba-label { font-size: 11px; font-weight: 700; text-transform: uppercase; letter-spacing: 0.08em; margin-bottom: 10px; }
+  .ba-before .ba-label { color: var(--red); }
+  .ba-after .ba-label { color: var(--green); }
+  ul.ba-list { list-style: none; }
+  ul.ba-list li { padding: 4px 0; font-size: 13px; display: flex; align-items: flex-start; gap: 8px; }
+  ul.ba-list li::before { flex-shrink: 0; margin-top: 1px; }
+  .ba-before ul.ba-list li::before { content: '✗'; color: var(--red); }
+  .ba-after ul.ba-list li::before { content: '✓'; color: var(--green); }
+
+  /* Layout diagram */
+  .layout-diagram {
+    background: var(--code-bg); border: 1px solid var(--border); border-radius: 8px;
+    padding: 18px 20px; font-family: 'Consolas', 'Cascadia Code', monospace;
+    font-size: 12px; line-height: 1.8;
+  }
+  .layout-diagram .dim { color: var(--muted); }
+  .layout-diagram .highlight { color: var(--amber); font-weight: 700; }
+  .layout-diagram .new { color: var(--green); font-weight: 700; }
+  .layout-diagram .removed { color: var(--red); text-decoration: line-through; }
+  .layout-diagram .label { color: var(--accent2); }
+
+  /* Phase cards */
+  .phase { border: 1px solid var(--border); border-radius: 8px; overflow: hidden; margin-bottom: 16px; }
+  .phase-header {
+    display: flex; align-items: center; gap: 12px;
+    padding: 14px 18px; background: var(--surface2);
+    border-bottom: 1px solid var(--border);
+  }
+  .phase-num {
+    width: 28px; height: 28px; border-radius: 50%;
+    display: flex; align-items: center; justify-content: center;
+    font-size: 13px; font-weight: 700; flex-shrink: 0;
+  }
+  .phase-num-1 { background: #1a2a4a; color: var(--blue); }
+  .phase-num-2 { background: #1a2a3a; color: var(--teal); }
+  .phase-num-3 { background: #2a1a3a; color: var(--accent2); }
+  .phase-num-4 { background: #1a2f1a; color: var(--green); }
+  .phase-title { font-weight: 700; font-size: 15px; }
+  .phase-badge { margin-left: auto; font-size: 11px; font-weight: 600; padding: 2px 8px; border-radius: 8px; white-space: nowrap; }
+  .parallel-badge { background: #1a2a3a; color: var(--teal); }
+  .sequential-badge { background: #2a1a4a; color: var(--accent2); }
+  .phase-body { padding: 16px 18px; background: var(--surface); }
+  .phase-body p { font-size: 13px; margin-bottom: 10px; color: var(--muted); }
+  .phase-body ul { list-style: none; display: flex; flex-direction: column; gap: 8px; }
+  .phase-body ul li { display: flex; align-items: flex-start; gap: 10px; font-size: 13px; }
+  .phase-body ul li::before { content: '→'; color: var(--accent); flex-shrink: 0; font-weight: 700; margin-top: 1px; }
+  .task-dep { font-size: 11px; color: var(--muted); margin-top: 2px; }
+
+  /* Parallel indicator */
+  .parallel-group { border: 1px dashed var(--teal); border-radius: 8px; padding: 14px; margin: 16px 0; }
+  .parallel-group-label { font-size: 11px; font-weight: 700; color: var(--teal); text-transform: uppercase; letter-spacing: 0.06em; margin-bottom: 12px; display: flex; align-items: center; gap: 8px; }
+  .parallel-inner { display: grid; grid-template-columns: 1fr 1fr; gap: 12px; }
+  @media (max-width: 640px) { .parallel-inner { grid-template-columns: 1fr; } }
+
+  /* Risk table */
+  .risk-low { background: var(--risk-low); color: var(--risk-low-text); padding: 2px 8px; border-radius: 4px; font-size: 11px; font-weight: 700; white-space: nowrap; }
+  .risk-med { background: var(--risk-med); color: var(--risk-med-text); padding: 2px 8px; border-radius: 4px; font-size: 11px; font-weight: 700; white-space: nowrap; }
+  .risk-high { background: var(--risk-high); color: var(--risk-high-text); padding: 2px 8px; border-radius: 4px; font-size: 11px; font-weight: 700; white-space: nowrap; }
+
+  /* Test checklist */
+  .checklist { list-style: none; display: flex; flex-direction: column; gap: 8px; }
+  .checklist li {
+    display: flex; align-items: flex-start; gap: 10px; font-size: 13px;
+    background: var(--surface); border: 1px solid var(--border); border-radius: 6px;
+    padding: 10px 14px;
+  }
+  .checklist li .check-icon { flex-shrink: 0; margin-top: 1px; font-size: 14px; }
+  .test-state { display: inline-block; font-size: 10px; font-weight: 700; padding: 1px 6px; border-radius: 4px; margin-right: 6px; white-space: nowrap; }
+  .state-sync { background: #1a2f1a; color: var(--green); }
+  .state-pending { background: #2a1f0a; color: var(--amber); }
+  .state-calc { background: #0a1f2a; color: var(--blue); }
+  .state-failed { background: #2a0a0a; color: var(--red); }
+  .state-oos { background: #2a1a0a; color: #fbbf24; }
+  .state-disabled { background: #1a1a2a; color: var(--muted); }
+
+  /* Commit timeline */
+  .commit-timeline { display: flex; flex-direction: column; gap: 0; position: relative; padding-left: 24px; }
+  .commit-timeline::before { content: ''; position: absolute; left: 7px; top: 0; bottom: 0; width: 2px; background: var(--border); }
+  .commit-item { position: relative; padding: 0 0 20px 16px; }
+  .commit-dot { position: absolute; left: -17px; top: 4px; width: 12px; height: 12px; border-radius: 50%; border: 2px solid var(--bg); flex-shrink: 0; }
+  .dot-green { background: var(--green); }
+  .dot-blue { background: var(--blue); }
+  .dot-amber { background: var(--amber); }
+  .dot-purple { background: var(--accent2); }
+  .commit-item h4 { font-size: 13px; font-weight: 700; color: var(--text); margin: 0 0 4px; text-transform: none; letter-spacing: 0; }
+  .commit-item p { font-size: 12px; color: var(--muted); margin: 0; }
+  .commit-msg { font-family: 'Consolas', monospace; font-size: 11px; color: var(--accent); background: var(--code-bg); padding: 4px 8px; border-radius: 4px; margin-top: 6px; display: inline-block; }
+
+  /* Data flow diagram - CSS boxes */
+  .df-container { background: var(--code-bg); border: 1px solid var(--border); border-radius: 8px; padding: 24px; overflow-x: auto; }
+  .df-row { display: flex; align-items: center; gap: 8px; margin-bottom: 8px; }
+  .df-box {
+    display: inline-flex; align-items: center; justify-content: center;
+    padding: 6px 12px; border-radius: 6px; font-size: 12px; font-weight: 600;
+    text-align: center; white-space: nowrap;
+  }
+  .df-component { background: #1e2a4a; border: 1px solid #2e4a8a; color: var(--blue); }
+  .df-highlight { background: #2a1e4a; border: 1px solid #6c3aaa; color: var(--accent2); }
+  .df-changed { background: #1e3a1e; border: 1px solid #2a7a2a; color: var(--green); }
+  .df-removed { background: #3a1e1e; border: 1px solid #7a2a2a; color: var(--red); }
+  .df-arrow { color: var(--muted); font-size: 16px; flex-shrink: 0; }
+  .df-label { font-size: 11px; color: var(--muted); }
+  .df-section-label { font-size: 11px; font-weight: 700; color: var(--muted); text-transform: uppercase; letter-spacing: 0.06em; margin-bottom: 14px; }
+  .df-divider { border: none; border-top: 1px dashed var(--border); margin: 16px 0; }
+
+  /* Decision table */
+  .decision-row { display: flex; gap: 12px; align-items: flex-start; padding: 12px 0; border-bottom: 1px solid var(--border); }
+  .decision-row:last-child { border-bottom: none; }
+  .decision-icon { font-size: 18px; flex-shrink: 0; margin-top: 2px; }
+  .decision-q { font-size: 13px; font-weight: 600; color: var(--text); margin-bottom: 4px; }
+  .decision-a { font-size: 13px; color: var(--green); }
+  .decision-a::before { content: '→ '; color: var(--muted); }
+
+  /* Info box */
+  .info-box { background: var(--surface); border: 1px solid var(--border); border-left: 4px solid var(--blue); border-radius: 6px; padding: 14px 16px; font-size: 13px; }
+  .info-box.warn { border-left-color: var(--amber); }
+  .info-box.ok { border-left-color: var(--green); }
+  .info-box strong { color: var(--text); }
+
+  footer { margin-top: 64px; padding-top: 20px; border-top: 1px solid var(--border); color: var(--muted); font-size: 12px; display: flex; justify-content: space-between; flex-wrap: wrap; gap: 8px; }
+</style>
+</head>
+<body>
+
+<nav class="toc-nav">
+  <span class="toc-brand">📋 nEXus Plan</span>
+  <a href="#summary">Summary</a>
+  <a href="#files">Files</a>
+  <a href="#architecture">Architecture</a>
+  <a href="#behaviour">Before/After</a>
+  <a href="#phases">Phases</a>
+  <a href="#risks">Risks</a>
+  <a href="#tests">Tests</a>
+  <a href="#decisions">Decisions</a>
+  <a href="#commits">Commits</a>
+</nav>
+
+<div class="page">
+
+  <header class="page-header">
+    <div style="display:flex;align-items:center;gap:10px;margin-bottom:8px;">
+      <span class="badge badge-plan">Plan</span>
+      <span class="badge badge-ui">UI/UX</span>
+      <span class="badge badge-refactor">Refactor</span>
+      <span class="badge badge-test">+Tests</span>
+    </div>
+    <h1>HacStatusIndicator — Move Inline with Study Name</h1>
+    <p class="subtitle">Relocate the HAC calculation status indicator from a toolbar spacer to sit inline beside the study name <code>&lt;h1&gt;</code>, dropping all button chrome and gaining a contextually meaningful home.</p>
+    <div class="meta">
+      <div class="meta-item">📁 <strong>Branch</strong> feat/auto-hac-calculation</div>
+      <div class="meta-item">🗂️ <strong>Files changed</strong> 3 (2 edit · 1 new)</div>
+      <div class="meta-item">🧪 <strong>Tests</strong> New test file, 9 cases</div>
+      <div class="meta-item">⚡ <strong>Risk</strong> Low</div>
+    </div>
+  </header>
+
+  <!-- EXECUTIVE SUMMARY -->
+  <section id="summary">
+    <h2><span class="section-num">01</span> Executive Summary</h2>
+    <div class="summary-card">
+      <p>
+        <code>HacStatusIndicator</code> currently occupies the sidebar toolbar as a <code>flex-1</code> spacer between Save and Export. This placement is accidental — the component carries study-level calculation status, not an action, yet it is styled as an outline <code>&lt;Button&gt;</code> and fills leftover space. 90% of the time it is non-interactive (<code>cursor-default, pointer-events-none</code>), so it looks like a button that does nothing.
+      </p>
+      <p>
+        The fix moves the indicator to sit flush-right of the study name <code>&lt;h1&gt;</code>. This ties the status directly to the study entity (the thing being calculated), follows the pattern used by GitHub CI badges next to PR titles and Figma sync indicators next to filenames, and allows the component to shed its button chrome entirely — no border, no background — gaining a subtle hover ring only in the single state where it is clickable (failed).
+      </p>
+      <p>
+        Alongside the relocation, the toolbar gains a proper <code>flex-1</code> spacer to keep the file actions (File / Save) left-grouped and export/settings right-grouped. Icons are upscaled from <code>h-4 w-4</code> to <code>h-5 w-5</code> to match the <code>text-xl</code> heading.
+      </p>
+    </div>
+  </section>
+
+  <!-- AFFECTED FILES -->
+  <section id="files">
+    <h2><span class="section-num">02</span> Affected Files</h2>
+    <table>
+      <thead>
+        <tr>
+          <th>File</th>
+          <th>Change</th>
+          <th>Description</th>
+        </tr>
+      </thead>
+      <tbody>
+        <tr>
+          <td class="file-path">components/dashboard/hac-status-indicator.tsx</td>
+          <td class="change-type"><span class="badge badge-refactor">Refactor</span></td>
+          <td>Drop <code>&lt;Button&gt;</code> wrapper. Return fragment. Use <code>&lt;button&gt;</code> (failed) or <code>&lt;span&gt;</code> (inert). Icons <code>h-4→h-5</code>. Hover ring on failed only.</td>
+        </tr>
+        <tr>
+          <td class="file-path">app/(main)/(protected)/studies/side-bar.tsx</td>
+          <td class="change-type"><span class="badge badge-ui">Move</span></td>
+          <td>Wrap <code>&lt;h1&gt;</code> + indicator in a flex row. Remove indicator from toolbar. Add <code>flex-1</code> spacer between Save and Export.</td>
+        </tr>
+        <tr>
+          <td class="file-path">components/dashboard/__tests__/hac-status-indicator.test.tsx</td>
+          <td class="change-type"><span class="badge badge-test">New</span></td>
+          <td>9 test cases covering every display state, click behaviour, and modal opening.</td>
+        </tr>
+      </tbody>
+    </table>
+
+    <h3>Key utilities / modules to understand (no changes needed)</h3>
+    <table>
+      <thead><tr><th>Module</th><th>Role</th></tr></thead>
+      <tbody>
+        <tr>
+          <td class="file-path">lib/calculation-versioning.ts → getSyncStatusLabel()</td>
+          <td>Returns <code>"in-sync" | "out-of-sync" | "calculating" | "failed" | "unknown"</code> from a study item. Must be mocked in tests.</td>
+        </tr>
+        <tr>
+          <td class="file-path">components/dashboard/use-auto-calculation.ts → AutoCalculationState</td>
+          <td>Provides <code>isPending, isCalculating, failedItems</code>. Called in <code>side-bar.tsx</code>, passed as props. No change.</td>
+        </tr>
+        <tr>
+          <td class="file-path">components/dashboard/calculation-failure-modal.tsx</td>
+          <td>Dialog that opens when indicator is clicked in failed state. Stays inside <code>HacStatusIndicator</code>, travels with the component. No change.</td>
+        </tr>
+        <tr>
+          <td class="file-path">components/ui/button.tsx</td>
+          <td>Import removed from hac-status-indicator. Uses standard <code>focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2</code> pattern.</td>
+        </tr>
+      </tbody>
+    </table>
+  </section>
+
+  <!-- ARCHITECTURE / DATA FLOW -->
+  <section id="architecture">
+    <h2><span class="section-num">03</span> Architecture &amp; Data Flow</h2>
+
+    <h3>Component tree (before)</h3>
+    <div class="df-container">
+      <div class="df-section-label">SideBar</div>
+      <div class="df-row">
+        <div class="df-box df-component">SideBar</div>
+        <span class="df-arrow">→</span>
+        <div class="df-box df-component">h1 (study name)</div>
+        <span class="df-label" style="margin-left:8px">— standalone, no wrapper</span>
+      </div>
+      <div class="df-row" style="margin-top:4px">
+        <div class="df-box df-component">SideBar</div>
+        <span class="df-arrow">→</span>
+        <div class="df-box df-component">Toolbar row</div>
+        <span class="df-arrow">→</span>
+        <div class="df-box df-removed">[FileDropdown] [Save] [HacStatus flex-1] [Export] [Settings]</div>
+      </div>
+    </div>
+
+    <h3 style="margin-top:20px">Component tree (after)</h3>
+    <div class="df-container">
+      <div class="df-section-label">SideBar</div>
+      <div class="df-row">
+        <div class="df-box df-component">SideBar</div>
+        <span class="df-arrow">→</span>
+        <div class="df-box df-changed">Title row (flex)</div>
+        <span class="df-arrow">→</span>
+        <div class="df-box df-component">h1 (flex-1 truncate)</div>
+        <span class="df-arrow">+</span>
+        <div class="df-box df-highlight">HacStatusIndicator</div>
+      </div>
+      <div class="df-row" style="margin-top:8px">
+        <div class="df-box df-component">SideBar</div>
+        <span class="df-arrow">→</span>
+        <div class="df-box df-component">Toolbar row</div>
+        <span class="df-arrow">→</span>
+        <div class="df-box df-changed">[FileDropdown] [Save] [flex-1 spacer] [Export] [Settings]</div>
+      </div>
+    </div>
+
+    <h3 style="margin-top:20px">State / props flow (unchanged)</h3>
+    <div class="df-container">
+      <div class="df-row">
+        <div class="df-box df-component">useAutoCalculation(dataProvider, db)</div>
+        <span class="df-arrow">→</span>
+        <div class="df-box df-component">autoCalcState {isPending, isCalculating, failedItems}</div>
+      </div>
+      <hr class="df-divider"/>
+      <div class="df-row">
+        <div class="df-box df-component">SideBar</div>
+        <span class="df-arrow">passes props →</span>
+        <div class="df-box df-highlight">HacStatusIndicator</div>
+        <span class="df-label" style="margin-left:8px">— same Props interface, no API change</span>
+      </div>
+      <hr class="df-divider"/>
+      <div class="df-row">
+        <div class="df-box df-highlight">HacStatusIndicator</div>
+        <span class="df-arrow">derives →</span>
+        <div class="df-box df-component">displayState enum</div>
+        <span class="df-arrow">→</span>
+        <div class="df-box df-component">icon + tooltip + clickability</div>
+      </div>
+      <div class="df-row" style="margin-top:6px">
+        <div class="df-box df-highlight">HacStatusIndicator</div>
+        <span class="df-arrow">opens →</span>
+        <div class="df-box df-component">CalculationFailureModal (portal to body)</div>
+        <span class="df-label" style="margin-left:8px">— dialog portal unaffected by DOM location</span>
+      </div>
+    </div>
+
+    <h3 style="margin-top:20px">HacStatusIndicator internal state machine</h3>
+    <pre>
+displayState  ←  priority order
+─────────────────────────────────────────────────────────────────
+"disabled"    if studyIndex === "root"              → faded ✓ icon
+"pending"     if isPending                          → amber spinner
+"calculating" if isCalculating || sync=="calculating" → blue spinner
+"failed"      if failedItems.length > 0 || sync=="failed"
+                                                    → ✗ + badge (CLICKABLE)
+"in-sync"     if syncStatus === "in-sync"           → green ✓
+"out-of-sync" (fallback)                            → amber clock
+─────────────────────────────────────────────────────────────────
+isClickable = displayState === "failed"
+    </pre>
+  </section>
+
+  <!-- BEFORE / AFTER BEHAVIOUR -->
+  <section id="behaviour">
+    <h2><span class="section-num">04</span> Before / After Behaviour</h2>
+
+    <h3>Visual layout (sidebar top area)</h3>
+    <div class="ba-grid">
+      <div class="ba-card ba-before">
+        <div class="ba-label">Before</div>
+        <div class="layout-diagram">
+<span class="dim">┌──────────────────────────────────────┐</span>
+<span class="dim">│</span> <span class="label">Study Name</span>                            <span class="dim">│</span>
+<span class="dim">│</span> <span class="removed">[File▾][Save][  STATUS  ][Export][⚙]</span>  <span class="dim">│</span>
+<span class="dim">│</span>                                        <span class="dim">│</span>
+<span class="dim">│</span>  Study Tree…                           <span class="dim">│</span>
+<span class="dim">└──────────────────────────────────────┘</span>
+        </div>
+        <ul class="ba-list" style="margin-top:12px">
+          <li>Status fills toolbar as flex-1 spacer</li>
+          <li>Button chrome on a non-action indicator</li>
+          <li>cursor-default 90% of the time</li>
+          <li>No visual connection to the study name</li>
+        </ul>
+      </div>
+      <div class="ba-card ba-after">
+        <div class="ba-label">After</div>
+        <div class="layout-diagram">
+<span class="dim">┌──────────────────────────────────────┐</span>
+<span class="dim">│</span> <span class="label">Study Name</span>                    <span class="new"> ✓ </span>      <span class="dim">│</span>
+<span class="dim">│</span> <span class="highlight">[File▾][Save]</span>  <span class="dim">···</span>  <span class="highlight">[Export][⚙]</span>    <span class="dim">│</span>
+<span class="dim">│</span>                                        <span class="dim">│</span>
+<span class="dim">│</span>  Study Tree…                           <span class="dim">│</span>
+<span class="dim">└──────────────────────────────────────┘</span>
+        </div>
+        <ul class="ba-list" style="margin-top:12px">
+          <li>Status is a lightweight annotation on the title</li>
+          <li>No button chrome at rest — pure information</li>
+          <li>Hover ring appears only when clickable (failed)</li>
+          <li>Toolbar is clean: actions left, export right</li>
+        </ul>
+      </div>
+    </div>
+
+    <h3>Component markup (hac-status-indicator.tsx)</h3>
+    <div class="ba-grid">
+      <div class="ba-card ba-before">
+        <div class="ba-label">Before</div>
+        <pre style="margin:0;border:none;background:transparent;padding:0;">
+&lt;div className="flex min-w-0 flex-row"&gt;
+  &lt;TooltipProvider&gt;
+    &lt;Tooltip&gt;
+      &lt;TooltipTrigger asChild&gt;
+        &lt;span className="w-full"&gt;
+          &lt;Button
+            size="sm"
+            variant="outline"
+            disabled={isDisabled}
+            className={... pointer-events-none ...}
+            tabIndex={isClickable ? 0 : -1}
+          &gt;
+            {icon}
+          &lt;/Button&gt;
+        &lt;/span&gt;
+      &lt;/TooltipTrigger&gt;
+    &lt;/Tooltip&gt;
+  &lt;/TooltipProvider&gt;
+  &lt;CalculationFailureModal /&gt;
+&lt;/div&gt;</pre>
+      </div>
+      <div class="ba-card ba-after">
+        <div class="ba-label">After</div>
+        <pre style="margin:0;border:none;background:transparent;padding:0;">
+&lt;&gt;
+  &lt;TooltipProvider&gt;
+    &lt;Tooltip&gt;
+      &lt;TooltipTrigger asChild&gt;
+        {isClickable ? (
+          &lt;button
+            type="button"
+            onClick={() =&gt; setIsModalOpen(true)}
+            aria-label={tooltipText}
+            className={cn(
+              "relative inline-flex shrink-0 ...",
+              "hover:bg-destructive/10",
+              "focus-visible:ring-2 ...",
+              className
+            )}
+          &gt;
+            {icon}
+          &lt;/button&gt;
+        ) : (
+          &lt;span
+            role="img"
+            aria-label={tooltipText}
+            tabIndex={0}
+            className={cn("relative inline-flex ...", className)}
+          &gt;
+            {icon}
+          &lt;/span&gt;
+        )}
+      &lt;/TooltipTrigger&gt;
+    &lt;/Tooltip&gt;
+  &lt;/TooltipProvider&gt;
+  &lt;CalculationFailureModal /&gt;
+&lt;/&gt;</pre>
+      </div>
+    </div>
+
+    <h3>No-study-loaded state</h3>
+    <div class="info-box ok" style="margin-top:12px">
+      <strong>Confirmed behaviour:</strong> When no study is loaded (<code>isStudyLoaded === false</code>), the title row does not render at all — the indicator disappears with it. The toolbar still renders normally with the spacer. This is intentional; the disabled state (faint icon, tooltip "No study loaded") is no longer needed since the context (title row) itself disappears.
+    </div>
+  </section>
+
+  <!-- IMPLEMENTATION PHASES -->
+  <section id="phases">
+    <h2><span class="section-num">05</span> Implementation Phases</h2>
+
+    <div class="info-box" style="margin-bottom:20px">
+      <strong>Parallelism:</strong> Tasks A and B (component refactor + test writing) can be executed by separate agents simultaneously since they share no overlapping edits. Task C (sidebar changes) depends on Task A being complete.
+    </div>
+
+    <div class="parallel-group">
+      <div class="parallel-group-label">⚡ Parallel — Tasks A &amp; B can run simultaneously</div>
+      <div class="parallel-inner">
+
+        <div class="phase">
+          <div class="phase-header">
+            <div class="phase-num phase-num-1">A</div>
+            <div class="phase-title">Refactor HacStatusIndicator</div>
+            <span class="phase-badge parallel-badge">Parallel-safe</span>
+          </div>
+          <div class="phase-body">
+            <p>File: <code>components/dashboard/hac-status-indicator.tsx</code></p>
+            <ul>
+              <li>Remove <code>Button</code> import and all <code>&lt;Button&gt;</code> markup</li>
+              <li>Remove outer <code>&lt;div className="flex min-w-0 flex-row"&gt;</code> wrapper</li>
+              <li>Return a React fragment <code>&lt;&gt;&lt;/&gt;</code></li>
+              <li>Replace trigger with conditional: <code>&lt;button&gt;</code> when <code>isClickable</code>, <code>&lt;span role="img" tabIndex={0}&gt;</code> otherwise</li>
+              <li>Add hover ring classes to <code>&lt;button&gt;</code>: <code>hover:bg-destructive/10 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2</code></li>
+              <li>Update all icon sizes: <code>h-4 w-4</code> → <code>h-5 w-5</code> (5 occurrences: pending, calculating, in-sync, disabled, failed XCircle)</li>
+              <li>Keep <code>className</code> prop forwarded to the trigger element</li>
+              <li>Keep <code>isDisabled</code> guard and <code>CalculationFailureModal</code> unchanged</li>
+              <li>Remove unused <code>Button</code> import; keep all other imports</li>
+            </ul>
+          </div>
+        </div>
+
+        <div class="phase">
+          <div class="phase-header">
+            <div class="phase-num phase-num-2">B</div>
+            <div class="phase-title">Write Tests</div>
+            <span class="phase-badge parallel-badge">Parallel-safe</span>
+          </div>
+          <div class="phase-body">
+            <p>New file: <code>components/dashboard/__tests__/hac-status-indicator.test.tsx</code></p>
+            <ul>
+              <li>Mock <code>@/lib/calculation-versioning</code> → <code>getSyncStatusLabel</code></li>
+              <li>Mock <code>@/components/dashboard/study-tree/study-tree-context-provider</code> for any indirect imports</li>
+              <li>Create minimal <code>StudyTreeDataProvider</code>-shaped mock with <code>getStudyIndex()</code> and <code>studyItems</code></li>
+              <li>Write 9 test cases (see §Tests section)</li>
+              <li>Follow Vitest + Testing Library patterns from <code>run-hac.test.tsx</code></li>
+            </ul>
+          </div>
+        </div>
+
+      </div>
+    </div>
+
+    <div class="phase" style="margin-top:12px">
+      <div class="phase-header">
+        <div class="phase-num phase-num-3">C</div>
+        <div class="phase-title">Update SideBar placement</div>
+        <span class="phase-badge sequential-badge">After Task A</span>
+      </div>
+      <div class="phase-body">
+        <p>File: <code>app/(main)/(protected)/studies/side-bar.tsx</code></p>
+        <ul>
+          <li>
+            Wrap existing <code>&lt;h1&gt;</code> (lines 125–128) in <code>&lt;div className="flex items-center gap-2 px-1"&gt;</code>; move <code>px-1</code> from <code>&lt;h1&gt;</code> to wrapper; add <code>flex-1</code> to <code>&lt;h1&gt;</code>
+            <div class="task-dep">Dependency: Task A must complete so the refactored component renders correctly here</div>
+          </li>
+          <li>Add <code>&lt;HacStatusIndicator dataProvider={dataProvider} autoCalcState={autoCalcState} /&gt;</code> inside the new wrapper, after <code>&lt;h1&gt;</code></li>
+          <li>Remove the existing <code>&lt;HacStatusIndicator ... className="flex-1" /&gt;</code> block from the toolbar row (lines 159–163)</li>
+          <li>Insert <code>&lt;div className="flex-1" /&gt;</code> spacer in the toolbar between the Save button group and the Export button</li>
+        </ul>
+      </div>
+    </div>
+
+    <div class="phase" style="margin-top:12px">
+      <div class="phase-header">
+        <div class="phase-num phase-num-4">D</div>
+        <div class="phase-title">Verify &amp; Quality Gates</div>
+        <span class="phase-badge sequential-badge">After A + B + C</span>
+      </div>
+      <div class="phase-body">
+        <p>All tasks complete — run quality gates before committing.</p>
+        <ul>
+          <li>Run new tests: <code>npx vitest run components/dashboard/__tests__/hac-status-indicator.test.tsx</code></li>
+          <li>Run full test suite: <code>npm test</code> — no regressions</li>
+          <li>Run typecheck: <code>npm run typecheck</code></li>
+          <li>Run lint: <code>npm run lint</code></li>
+        </ul>
+      </div>
+    </div>
+  </section>
+
+  <!-- RISKS & EDGE CASES -->
+  <section id="risks">
+    <h2><span class="section-num">06</span> Risks &amp; Edge Cases</h2>
+    <table>
+      <thead>
+        <tr><th>Risk / Edge Case</th><th>Level</th><th>Mitigation</th></tr>
+      </thead>
+      <tbody>
+        <tr>
+          <td><strong>Badge overflow clipping</strong><br/>The failed-state badge uses <code>absolute -right-2 -top-2</code>. Without the button's outer padding, the badge could be clipped by a parent with <code>overflow-hidden</code>.</td>
+          <td><span class="risk-low">LOW</span></td>
+          <td>The new title row wrapper uses default <code>overflow-visible</code>. The <code>&lt;h1&gt;</code> has <code>truncate</code> but that applies text overflow, not box overflow. Verify visually after implementation.</td>
+        </tr>
+        <tr>
+          <td><strong>Tooltip on non-focusable span</strong><br/>Radix <code>TooltipTrigger asChild</code> on a non-focusable element means keyboard users lose tooltip access for inert states.</td>
+          <td><span class="risk-low">LOW</span></td>
+          <td>Mitigated by adding <code>tabIndex={0}</code> to the <code>&lt;span&gt;</code> wrapper, making it keyboard-focusable. Current Button already removes keyboard access for non-clickable states (<code>tabIndex={-1}</code>), so this is actually an improvement.</td>
+        </tr>
+        <tr>
+          <td><strong>Toolbar layout with no authenticated user</strong><br/>When <code>canUseFileActions=false</code> (unauthenticated), the left side of the toolbar is empty. The flex-1 spacer alone with Export/Settings on the right is the intended layout.</td>
+          <td><span class="risk-low">LOW</span></td>
+          <td>The spacer pushes Export/Settings right — same visual as the current <code>HacStatus flex-1</code> behaviour. No change needed.</td>
+        </tr>
+        <tr>
+          <td><strong>Icon size change affects badge position</strong><br/>Changing <code>h-4 w-4</code> → <code>h-5 w-5</code> on the XCircle icon shifts the badge attachment point slightly.</td>
+          <td><span class="risk-low">LOW</span></td>
+          <td>The badge uses <code>-right-2 -top-2</code> absolute offsets which are relative to the containing <code>relative inline-flex</code> span, not the icon itself. The protrusion is cosmetic. Verify badge remains visible and doesn't overlap text.</td>
+        </tr>
+        <tr>
+          <td><strong>Study name truncation with icon present</strong><br/>Adding a <code>shrink-0</code> icon to the title flex row reduces space available for the study name.</td>
+          <td><span class="risk-low">LOW</span></td>
+          <td><code>flex-1</code> on the <code>&lt;h1&gt;</code> ensures it takes remaining space and truncates correctly. The icon is <code>h-5 w-5</code> + <code>p-0.5</code> ≈ 24px, minimal footprint.</td>
+        </tr>
+        <tr>
+          <td><strong>isDisabled state still in component internals</strong><br/>After move, <code>isDisabled</code> is never true at the new call site (title row is guarded by <code>isStudyLoaded</code>). Dead code path.</td>
+          <td><span class="risk-low">LOW</span></td>
+          <td>Kept deliberately for defensive self-containment and test coverage. The disabled state is tested in the new test file. Not removed.</td>
+        </tr>
+        <tr>
+          <td><strong>CalculationFailureModal DOM nesting</strong><br/>Modal now lives inside the title row flex container in the DOM.</td>
+          <td><span class="risk-low">LOW</span></td>
+          <td>Radix <code>Dialog</code> portals to <code>document.body</code>. DOM nesting has zero effect on rendering, z-index, or focus management.</td>
+        </tr>
+      </tbody>
+    </table>
+  </section>
+
+  <!-- TEST PLAN -->
+  <section id="tests">
+    <h2><span class="section-num">07</span> Test Plan</h2>
+
+    <h3>New: <code>components/dashboard/__tests__/hac-status-indicator.test.tsx</code></h3>
+    <p style="color:var(--muted);font-size:13px;margin-bottom:16px;">Mock pattern mirrors <code>run-hac.test.tsx</code> and <code>use-auto-calculation.test.tsx</code>. Mocks: <code>getSyncStatusLabel</code> from <code>@/lib/calculation-versioning</code>.</p>
+
+    <ul class="checklist">
+      <li>
+        <span class="check-icon">🧪</span>
+        <div>
+          <span class="test-state state-sync">in-sync</span>
+          <strong>In-sync state renders CheckCircle</strong><br/>
+          <span style="color:var(--muted);font-size:12px">CheckCircle icon visible; tooltip text "All results up to date"; trigger element is a <code>&lt;span&gt;</code>, not a <code>&lt;button&gt;</code></span>
+        </div>
+      </li>
+      <li>
+        <span class="check-icon">🧪</span>
+        <div>
+          <span class="test-state state-pending">pending</span>
+          <strong>isPending shows amber spinner</strong><br/>
+          <span style="color:var(--muted);font-size:12px">Loader2 with <code>text-amber-500</code> present; tooltip "Calculating…"; not a button</span>
+        </div>
+      </li>
+      <li>
+        <span class="check-icon">🧪</span>
+        <div>
+          <span class="test-state state-calc">calculating</span>
+          <strong>isCalculating shows blue spinner</strong><br/>
+          <span style="color:var(--muted);font-size:12px">Loader2 with <code>text-blue-500</code> present; tooltip "Calculating…"; not a button</span>
+        </div>
+      </li>
+      <li>
+        <span class="check-icon">🧪</span>
+        <div>
+          <span class="test-state state-failed">failed × 1</span>
+          <strong>Single failure renders XCircle with badge "1"</strong><br/>
+          <span style="color:var(--muted);font-size:12px">XCircle visible; badge text "1"; tooltip contains "1 calculation failure"; trigger is a <code>&lt;button&gt;</code></span>
+        </div>
+      </li>
+      <li>
+        <span class="check-icon">🧪</span>
+        <div>
+          <span class="test-state state-failed">failed × 3</span>
+          <strong>Multiple failures badge count and plural tooltip</strong><br/>
+          <span style="color:var(--muted);font-size:12px">Badge shows "3"; tooltip contains "3 calculation failures" (plural)</span>
+        </div>
+      </li>
+      <li>
+        <span class="check-icon">🧪</span>
+        <div>
+          <span class="test-state state-oos">out-of-sync</span>
+          <strong>Out-of-sync renders Clock icon</strong><br/>
+          <span style="color:var(--muted);font-size:12px">Clock with <code>text-amber-500</code>; tooltip "Results out of date — calculating automatically"; not a button</span>
+        </div>
+      </li>
+      <li>
+        <span class="check-icon">🧪</span>
+        <div>
+          <span class="test-state state-disabled">disabled</span>
+          <strong>Root studyIndex shows disabled state</strong><br/>
+          <span style="color:var(--muted);font-size:12px">Faded CheckCircle (<code>text-muted-foreground/30</code>); tooltip "No study loaded"</span>
+        </div>
+      </li>
+      <li>
+        <span class="check-icon">🧪</span>
+        <div>
+          <span class="test-state state-failed">click: failed</span>
+          <strong>Click in failed state opens CalculationFailureModal</strong><br/>
+          <span style="color:var(--muted);font-size:12px">Fire click on <code>&lt;button&gt;</code>; Dialog content becomes visible in DOM</span>
+        </div>
+      </li>
+      <li>
+        <span class="check-icon">🧪</span>
+        <div>
+          <span class="test-state state-sync">click: inert</span>
+          <strong>Click in non-failed state does not open modal</strong><br/>
+          <span style="color:var(--muted);font-size:12px">Fire click on <code>&lt;span&gt;</code>; Dialog content absent from DOM</span>
+        </div>
+      </li>
+    </ul>
+
+    <h3 style="margin-top:24px">Existing tests — no changes expected</h3>
+    <div class="info-box ok">
+      <strong>No regressions expected.</strong> The underlying state logic (<code>useAutoCalculation</code>, <code>getSyncStatusLabel</code>, <code>CalculationFailureModal</code>) is entirely unchanged. Existing tests in <code>use-auto-calculation.test.tsx</code> and <code>run-hac.test.tsx</code> continue to pass as-is.
+    </div>
+  </section>
+
+  <!-- OPEN DECISIONS -->
+  <section id="decisions">
+    <h2><span class="section-num">08</span> Open Decisions</h2>
+    <div class="info-box ok">
+      <strong>All decisions resolved.</strong> No open questions remain — all design choices were confirmed with the project owner before planning.
+    </div>
+    <div style="margin-top:16px;">
+      <div class="decision-row">
+        <div class="decision-icon">✅</div>
+        <div>
+          <div class="decision-q">No-study state: disappear or show placeholder?</div>
+          <div class="decision-a">Disappear entirely — indicator only renders inside the <code>isStudyLoaded</code> guard</div>
+        </div>
+      </div>
+      <div class="decision-row">
+        <div class="decision-icon">✅</div>
+        <div>
+          <div class="decision-q">Toolbar gap after removing indicator?</div>
+          <div class="decision-a">Insert <code>flex-1</code> spacer between Save and Export — keeps file actions left, export/settings right</div>
+        </div>
+      </div>
+      <div class="decision-row">
+        <div class="decision-icon">✅</div>
+        <div>
+          <div class="decision-q">Button wrapper: refactor, prop, or className override?</div>
+          <div class="decision-a">Refactor internals — drop Button, use bare <code>&lt;button&gt;</code>/<code>&lt;span&gt;</code> for clean separation of concerns</div>
+        </div>
+      </div>
+      <div class="decision-row">
+        <div class="decision-icon">✅</div>
+        <div>
+          <div class="decision-q">Icon + label, or icon only in title row?</div>
+          <div class="decision-a">Icon only with tooltip — keeps title row clean, consistent with existing discovery model</div>
+        </div>
+      </div>
+      <div class="decision-row">
+        <div class="decision-icon">✅</div>
+        <div>
+          <div class="decision-q">Icon size in context of <code>text-xl</code> heading?</div>
+          <div class="decision-a"><code>h-5 w-5</code> (1.25rem) — matches heading scale</div>
+        </div>
+      </div>
+      <div class="decision-row">
+        <div class="decision-icon">✅</div>
+        <div>
+          <div class="decision-q">Should tests be added?</div>
+          <div class="decision-a">Yes — 9 test cases in a new <code>hac-status-indicator.test.tsx</code> file</div>
+        </div>
+      </div>
+    </div>
+  </section>
+
+  <!-- COMMIT STRATEGY -->
+  <section id="commits">
+    <h2><span class="section-num">09</span> Commit &amp; Push Strategy</h2>
+
+    <div class="commit-timeline">
+      <div class="commit-item">
+        <div class="commit-dot dot-blue"></div>
+        <h4>Step 1 — Refactor component + tests together</h4>
+        <p>Tasks A and B land in a single atomic commit. The refactored component and its tests should be committed together so the commit is self-verifying (tests pass against the new markup immediately).</p>
+        <div class="commit-msg">refactor(hac-status): drop Button wrapper, bare span/button, h-5 icons; add tests</div>
+      </div>
+      <div class="commit-item">
+        <div class="commit-dot dot-amber"></div>
+        <h4>Step 2 — Sidebar placement change</h4>
+        <p>Task C in a separate commit. Moving the call site is a distinct concern from refactoring the component internals, keeping the history readable.</p>
+        <div class="commit-msg">feat(sidebar): move HacStatusIndicator inline with study name, add toolbar spacer</div>
+      </div>
+      <div class="commit-item">
+        <div class="commit-dot dot-green"></div>
+        <h4>Step 3 — Push</h4>
+        <p>After both commits pass all quality gates (<code>npm test</code>, <code>npm run typecheck</code>, <code>npm run lint</code>), push to <code>origin/feat/auto-hac-calculation</code>.</p>
+        <div class="commit-msg">git push origin feat/auto-hac-calculation</div>
+      </div>
+    </div>
+
+    <div class="info-box warn" style="margin-top:20px">
+      <strong>Quality gate order:</strong> Run <code>npx vitest run components/dashboard/__tests__/hac-status-indicator.test.tsx</code> first (fast), then <code>npm run typecheck</code>, then <code>npm run lint</code>, then <code>npm test</code> (full suite). Fix any failures before committing.
+    </div>
+  </section>
+
+</div><!-- /page -->
+
+<footer style="max-width:980px;margin:0 auto;padding:0 24px 32px;">
+  <div style="padding-top:20px;border-top:1px solid var(--border);color:var(--muted);font-size:12px;display:flex;justify-content:space-between;flex-wrap:wrap;gap:8px;">
+    <span>nEXus · feat/auto-hac-calculation · HacStatusIndicator relocation</span>
+    <a href="index.html" style="color:var(--accent)">← Back to index</a>
+  </div>
+</footer>
+
+</body>
+</html>
