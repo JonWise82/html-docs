@@ -1,0 +1,689 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1.0" />
+<title>Plan — Calculation Failure Modal: Root-Cause Filter</title>
+<style>
+/* ── Design tokens ───────────────────────────────────────── */
+:root {
+  --bg:        #0f1117;
+  --surface:   #1a1d27;
+  --surface2:  #20253a;
+  --border:    #2e3352;
+  --accent:    #6c8ef7;
+  --accent2:   #a78bfa;
+  --green:     #34d399;
+  --amber:     #fbbf24;
+  --red:       #f87171;
+  --text:      #e2e8f0;
+  --muted:     #94a3b8;
+  --code-bg:   #11141f;
+  --risk-low:  #14532d;
+  --risk-med:  #78350f;
+  --risk-hi:   #7f1d1d;
+}
+
+/* ── Reset / Base ────────────────────────────────────────── */
+*, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+body {
+  background: var(--bg);
+  color: var(--text);
+  font-family: 'Segoe UI', system-ui, -apple-system, sans-serif;
+  font-size: 14px;
+  line-height: 1.6;
+}
+
+/* ── Layout ──────────────────────────────────────────────── */
+.page { max-width: 900px; margin: 0 auto; padding: 48px 20px 80px; }
+
+/* ── Typography ──────────────────────────────────────────── */
+h1 { font-size: 26px; font-weight: 700; color: var(--accent); margin-bottom: 4px; }
+h2 { font-size: 18px; font-weight: 600; color: var(--text); margin: 40px 0 14px; border-bottom: 1px solid var(--border); padding-bottom: 8px; }
+h3 { font-size: 14px; font-weight: 600; color: var(--accent2); margin: 18px 0 8px; }
+p  { color: var(--muted); margin-bottom: 10px; }
+strong { color: var(--text); }
+a  { color: var(--accent); text-decoration: none; }
+a:hover { text-decoration: underline; }
+
+/* ── Executive summary box ───────────────────────────────── */
+.summary-box {
+  background: var(--surface2);
+  border: 1px solid var(--accent);
+  border-radius: 10px;
+  padding: 20px 22px;
+  margin: 20px 0 30px;
+}
+.summary-box p { color: var(--text); margin: 0; }
+
+/* ── Cards ───────────────────────────────────────────────── */
+.card {
+  background: var(--surface);
+  border: 1px solid var(--border);
+  border-radius: 8px;
+  padding: 16px 18px;
+  margin-bottom: 12px;
+}
+.card-row { display: flex; gap: 10px; flex-wrap: wrap; margin-bottom: 12px; }
+.card-row .card { flex: 1 1 240px; margin-bottom: 0; }
+
+/* ── Badges ──────────────────────────────────────────────── */
+.badge {
+  display: inline-block;
+  font-size: 11px;
+  font-weight: 600;
+  border-radius: 10px;
+  padding: 2px 9px;
+  letter-spacing: .3px;
+}
+.badge-blue   { background: #1e3a5f; color: #93c5fd; }
+.badge-green  { background: #14532d; color: #86efac; }
+.badge-amber  { background: #78350f; color: #fcd34d; }
+.badge-red    { background: #7f1d1d; color: #fca5a5; }
+.badge-purple { background: #3b0764; color: #d8b4fe; }
+.badge-gray   { background: #1f2937; color: #9ca3af; }
+
+/* ── Risk tags ───────────────────────────────────────────── */
+.risk { display: inline-flex; align-items: center; gap: 5px; font-size: 11px; font-weight: 600; border-radius: 6px; padding: 3px 8px; }
+.risk-low  { background: var(--risk-low);  color: #86efac; }
+.risk-med  { background: var(--risk-med);  color: #fcd34d; }
+.risk-hi   { background: var(--risk-hi);   color: #fca5a5; }
+
+/* ── Tables ──────────────────────────────────────────────── */
+.tbl-wrap { overflow-x: auto; margin-bottom: 16px; }
+table { width: 100%; border-collapse: collapse; font-size: 13px; }
+th { background: var(--surface2); color: var(--muted); font-weight: 600; text-align: left; padding: 8px 12px; border-bottom: 1px solid var(--border); white-space: nowrap; }
+td { padding: 8px 12px; border-bottom: 1px solid var(--border); color: var(--text); vertical-align: top; }
+tr:last-child td { border-bottom: none; }
+tr:hover td { background: #1e2235; }
+
+/* ── Code blocks ─────────────────────────────────────────── */
+pre {
+  background: var(--code-bg);
+  border: 1px solid var(--border);
+  border-radius: 6px;
+  padding: 14px 16px;
+  overflow-x: auto;
+  font-size: 12px;
+  line-height: 1.55;
+  margin: 10px 0 14px;
+  color: #c9d1d9;
+}
+code { font-family: 'Cascadia Code', 'Fira Code', Consolas, monospace; }
+.kw  { color: #ff79c6; }
+.fn  { color: #50fa7b; }
+.st  { color: #f1fa8c; }
+.cm  { color: #6272a4; }
+.ty  { color: #8be9fd; }
+.nm  { color: #bd93f9; }
+.op  { color: #ff79c6; }
+
+/* ── Checklist ───────────────────────────────────────────── */
+ul.check { list-style: none; padding: 0; }
+ul.check li { padding: 4px 0 4px 22px; position: relative; color: var(--muted); font-size: 13px; }
+ul.check li::before { content: "☐"; position: absolute; left: 0; color: var(--border); }
+ul.check li.done { color: var(--text); }
+ul.check li.done::before { content: "✓"; color: var(--green); }
+
+/* ── Bullet list ─────────────────────────────────────────── */
+ul.bullets { list-style: none; padding: 0; }
+ul.bullets li { padding: 3px 0 3px 18px; position: relative; color: var(--muted); font-size: 13px; }
+ul.bullets li::before { content: "→"; position: absolute; left: 0; color: var(--accent); font-size: 11px; top: 5px; }
+
+/* ── Phase timeline ──────────────────────────────────────── */
+.phases { display: flex; flex-direction: column; gap: 10px; }
+.phase {
+  background: var(--surface);
+  border: 1px solid var(--border);
+  border-left: 3px solid var(--accent);
+  border-radius: 8px;
+  padding: 14px 18px;
+}
+.phase.parallel { border-left-color: var(--accent2); }
+.phase-title { display: flex; align-items: center; gap: 10px; margin-bottom: 6px; }
+.phase-title strong { font-size: 14px; }
+.phase-sub { font-size: 12px; color: var(--muted); margin-top: 6px; }
+
+/* ── Before/After ────────────────────────────────────────── */
+.before-after { display: flex; gap: 12px; flex-wrap: wrap; margin: 14px 0; }
+.before-after > div { flex: 1 1 300px; border-radius: 8px; padding: 14px 16px; font-size: 13px; }
+.before { background: #1c1010; border: 1px solid #7f1d1d; }
+.after  { background: #0d1f14; border: 1px solid #14532d; }
+.before h4 { color: var(--red); margin-bottom: 8px; font-size: 12px; text-transform: uppercase; letter-spacing: .5px; }
+.after h4  { color: var(--green); margin-bottom: 8px; font-size: 12px; text-transform: uppercase; letter-spacing: .5px; }
+.before-after li { color: var(--muted); font-size: 13px; margin-left: 16px; margin-bottom: 4px; }
+
+/* ── Mermaid wrapper ─────────────────────────────────────── */
+.mermaid-box {
+  background: var(--code-bg);
+  border: 1px solid var(--border);
+  border-radius: 8px;
+  padding: 16px;
+  margin: 14px 0;
+  overflow-x: auto;
+  font-family: 'Cascadia Code', Consolas, monospace;
+  font-size: 12px;
+  color: #c9d1d9;
+  white-space: pre;
+  line-height: 1.5;
+}
+
+/* ── Inline highlight ────────────────────────────────────── */
+.hl { background: #1e3a5f; color: #93c5fd; border-radius: 3px; padding: 1px 5px; font-size: 12px; font-family: 'Cascadia Code', Consolas, monospace; }
+
+/* ── Section note ────────────────────────────────────────── */
+.note {
+  background: var(--surface2);
+  border-left: 3px solid var(--amber);
+  border-radius: 0 6px 6px 0;
+  padding: 10px 14px;
+  font-size: 12px;
+  color: var(--muted);
+  margin: 12px 0;
+}
+.note strong { color: var(--amber); }
+
+/* ── Footer ──────────────────────────────────────────────── */
+footer { margin-top: 60px; color: var(--muted); font-size: 12px; border-top: 1px solid var(--border); padding-top: 20px; }
+</style>
+</head>
+<body>
+<div class="page">
+
+  <!-- ═══════════════════════════════════════════════════════ Header -->
+  <header>
+    <h1>Calculation Failure Modal — Root-Cause Filter</h1>
+    <p style="color:var(--muted);font-size:13px;">Branch: <code class="hl">feat/auto-hac-calculation</code> &nbsp;·&nbsp; 2026-05-28 &nbsp;·&nbsp; nEXus</p>
+  </header>
+
+  <!-- ═══════════════════════════════════════════════════════ Exec Summary -->
+  <div class="summary-box">
+    <p>
+      The calculation failure modal currently lists every item in the study tree with
+      <code>calculationState.status === "failed"</code>, including cascade descendants
+      (items that failed because an ancestor failed) and upstream-dependency items
+      (items waiting for a parent's outputs). This creates noise that buries the actual
+      input errors the user must fix.<br><br>
+      <strong>This change filters <code>failedItems</code> in <code>useAutoCalculation</code>
+      to expose only root-cause failures</strong> — items with genuine missing or invalid
+      inputs — directing the user straight to the form fields that need attention.
+      The badge count, modal description, and indicator state all update to reflect
+      the root-cause count only. When no root-cause failures remain, the indicator
+      shows succeeded even if cascade failures are still present in the tree
+      (they will clear automatically on the next calculation run).
+    </p>
+  </div>
+
+  <!-- ═══════════════════════════════════════════════════════ Decisions -->
+  <h2>Confirmed Design Decisions</h2>
+  <div class="tbl-wrap">
+    <table>
+      <thead><tr><th>#</th><th>Decision</th><th>Choice</th></tr></thead>
+      <tbody>
+        <tr><td>1c</td><td>What to filter</td><td>Hide <strong>both</strong> <code class="hl">dependency-failure</code> cascade descendants AND amber "dependency" error items (upstream waiting). Show only validation failures.</td></tr>
+        <tr><td>2a</td><td>Multiple root causes</td><td>All independent root-cause failures shown simultaneously.</td></tr>
+        <tr><td>3b</td><td>Badge count</td><td>Reflects root-cause count only (not total failures).</td></tr>
+        <tr><td>4a</td><td>Modal description</td><td>Count in description = root-cause items shown; wording unchanged.</td></tr>
+        <tr><td>5b</td><td>Empty filtered list</td><td>Button disabled (rendered as non-clickable <code class="hl">&lt;span&gt;</code>) when filtered list is empty.</td></tr>
+        <tr><td>6a</td><td>Filter location</td><td>Filter lives in <code class="hl">useAutoCalculation</code> hook — modal stays dumb.</td></tr>
+        <tr><td>7a</td><td>Indicator state at root-cause = 0</td><td>Show <strong>succeeded</strong> (green) even if cascade failures remain in the tree.</td></tr>
+      </tbody>
+    </table>
+  </div>
+
+  <!-- ═══════════════════════════════════════════════════════ Affected Files -->
+  <h2>Affected Files</h2>
+  <div class="tbl-wrap">
+    <table>
+      <thead><tr><th>File</th><th>Change type</th><th>Summary</th></tr></thead>
+      <tbody>
+        <tr>
+          <td><code class="hl">components/dashboard/use-auto-calculation.ts</code></td>
+          <td><span class="badge badge-amber">Modify</span></td>
+          <td>Add <code>isRootCauseFailure()</code> helper; apply filter in <code>failedItems</code> useMemo.</td>
+        </tr>
+        <tr>
+          <td><code class="hl">components/dashboard/hac-status-indicator.tsx</code></td>
+          <td><span class="badge badge-amber">Modify</span></td>
+          <td>Remove <code>|| syncStatus === "failed"</code> from the <code>"failed"</code> displayState branch; <code>failedItems.length &gt; 0</code> alone determines the failed state.</td>
+        </tr>
+        <tr>
+          <td><code class="hl">components/dashboard/__tests__/use-auto-calculation.test.tsx</code></td>
+          <td><span class="badge badge-amber">Modify</span></td>
+          <td>Update existing test 10 / 10b; add 4 new cases for the filter.</td>
+        </tr>
+        <tr>
+          <td><code class="hl">components/dashboard/__tests__/hac-status-indicator.test.tsx</code></td>
+          <td><span class="badge badge-amber">Modify</span></td>
+          <td>Update the <em>"syncStatus failed with empty failedItems"</em> test to match new behaviour (no longer renders button).</td>
+        </tr>
+        <tr>
+          <td><code class="hl">components/dashboard/calculation-failure-modal.tsx</code></td>
+          <td><span class="badge badge-gray">No change</span></td>
+          <td><code>sanitizeError</code> and rendering remain untouched; modal is purely display.</td>
+        </tr>
+      </tbody>
+    </table>
+  </div>
+
+  <!-- ═══════════════════════════════════════════════════════ Architecture -->
+  <h2>Architecture &amp; Data-Flow</h2>
+  <h3>Current flow (all failures shown)</h3>
+  <div class="mermaid-box">studyItems (Firestore)
+       │
+       ▼
+markDescendantsFailedForFailedItems()
+       │  sets engineVersion = "dependency-failure" on all descendants
+       ▼
+useAutoCalculation → failedItems useMemo
+       │  DFS, collects EVERY item where status === "failed"
+       │  ● root-cause validation failures     ← should show
+       │  ● dependency-failure cascade items   ← should HIDE
+       │  ● upstream dependency error items    ← should HIDE
+       ▼
+AutoCalculationState.failedItems  (unfiltered array)
+       │
+       ├─▶ HacStatusIndicator badge  (shows total count)
+       └─▶ CalculationFailureModal   (lists all items)
+  </div>
+
+  <h3>Proposed flow (root-cause only)</h3>
+  <div class="mermaid-box">studyItems (Firestore)
+       │
+       ▼
+markDescendantsFailedForFailedItems()
+       │  sets engineVersion = "dependency-failure" on all descendants
+       ▼
+useAutoCalculation → failedItems useMemo
+       │  DFS + isRootCauseFailure() filter
+       │  ● engineVersion === "dependency-failure"     → SKIP
+       │  ● error matches dependency regex patterns    → SKIP
+       │  ● everything else                            → INCLUDE
+       ▼
+AutoCalculationState.failedItems  (root-cause only)
+       │
+       ├─▶ HacStatusIndicator badge  (shows root-cause count)
+       │       ├─ length > 0  → "failed" state, clickable button
+       │       └─ length = 0  → "in-sync" / "out-of-sync" (succeeded UX)
+       └─▶ CalculationFailureModal   (lists root-cause items only)
+  </div>
+
+  <h3>isRootCauseFailure — filter predicate</h3>
+  <p>Module-level helper in <code class="hl">use-auto-calculation.ts</code>. Not exported (internal to the hook file).</p>
+  <pre><code><span class="kw">function</span> <span class="fn">isRootCauseFailure</span>(state: <span class="ty">CalculationState</span>): <span class="ty">boolean</span> {
+  <span class="cm">// Explicit cascade mark set by markDescendantsFailedForFailedItems()</span>
+  <span class="kw">if</span> (state.engineVersion === <span class="st">"dependency-failure"</span>) <span class="kw">return false</span>;
+
+  <span class="kw">const</span> msg = state.error?.message ?? <span class="st">""</span>;
+
+  <span class="cm">// Upstream dependency errors: item waiting for a parent's computed outputs.
+  // These mirror the "dependency" branch in the modal's sanitizeError().</span>
+  <span class="kw">if</span> (<span class="nm">/equipment item outputs are undefined/i</span>.test(msg)) <span class="kw">return false</span>;
+  <span class="kw">if</span> (<span class="nm">/area outputs are undefined/i</span>.test(msg))           <span class="kw">return false</span>;
+  <span class="kw">if</span> (<span class="nm">/airchangerate or effectivevolume is undefined/i</span>.test(msg)) <span class="kw">return false</span>;
+  <span class="kw">if</span> (<span class="nm">/lflvol or molecularweight is undefined/i</span>.test(msg))       <span class="kw">return false</span>;
+
+  <span class="kw">return true</span>;
+}</code></pre>
+
+  <div class="note">
+    <strong>Note:</strong> The regex patterns mirror exactly the four "dependency" branches in
+    <code>sanitizeError()</code> inside <code>calculation-failure-modal.tsx</code>.
+    Both functions must stay in sync if new dependency error messages are added to the engine.
+    A comment cross-referencing them is recommended.
+  </div>
+
+  <!-- ═══════════════════════════════════════════════════════ Before/After -->
+  <h2>Before / After Behaviour</h2>
+
+  <h3>Scenario: Scenario S is missing pressure input</h3>
+  <p style="color:var(--muted);font-size:13px;">Tree: Study → Area A → Equipment E → Scenario S → (no children)</p>
+  <div class="before-after">
+    <div class="before">
+      <h4>Before</h4>
+      <ul>
+        <li>Area A shown — "waiting for parent equipment calculation" (amber)</li>
+        <li>Equipment E shown — "waiting for parent area calculation" (amber) <em>or similar</em></li>
+        <li><strong>Scenario S shown</strong> — "missing required properties" (red) ✓ correct</li>
+        <li>Any zone children of S shown — "not calculated because ancestor S failed" (red)</li>
+        <li>Badge count: 4</li>
+      </ul>
+    </div>
+    <div class="after">
+      <h4>After</h4>
+      <ul>
+        <li>Area A hidden (dependency error → not root cause)</li>
+        <li>Equipment E hidden (dependency error → not root cause)</li>
+        <li><strong>Scenario S shown</strong> — "missing required properties" (red) ✓</li>
+        <li>Zone children hidden (<code>engineVersion === "dependency-failure"</code>)</li>
+        <li>Badge count: 1</li>
+      </ul>
+    </div>
+  </div>
+
+  <h3>Scenario: User fixes Scenario S — cascade failures still in tree, re-calc not yet run</h3>
+  <div class="before-after">
+    <div class="before">
+      <h4>Before (after fix, pre re-calc)</h4>
+      <ul>
+        <li>Modal still showed Area, Equipment, Scenario, zone children</li>
+        <li>Badge count still 4 (confusing — S is "fixed" but badge unchanged)</li>
+      </ul>
+    </div>
+    <div class="after">
+      <h4>After (after fix, pre re-calc)</h4>
+      <ul>
+        <li>Scenario S no longer has a validation failure → filtered list = empty</li>
+        <li>Badge count: 0 → indicator shows green "in-sync" or "out-of-sync"</li>
+        <li>Button not shown (no root-cause items to navigate to)</li>
+        <li>Cascade failures remain in tree but are invisible to the user</li>
+      </ul>
+    </div>
+  </div>
+
+  <h3>Scenario: syncStatus === "failed" with no root-cause failures</h3>
+  <div class="before-after">
+    <div class="before">
+      <h4>Before</h4>
+      <ul>
+        <li>Button rendered with badge "0"</li>
+        <li>Clicking opened an empty modal</li>
+      </ul>
+    </div>
+    <div class="after">
+      <h4>After</h4>
+      <ul>
+        <li><code>|| syncStatus === "failed"</code> removed from displayState logic</li>
+        <li>Non-clickable span rendered (green or clock icon)</li>
+        <li>Empty modal is never reachable</li>
+      </ul>
+    </div>
+  </div>
+
+  <!-- ═══════════════════════════════════════════════════════ Implementation -->
+  <h2>Implementation Phases</h2>
+  <p>Phases 1A and 1B touch <strong>different files</strong> and can be implemented in parallel by separate agents with no merge-conflict risk. Phase 2 tests must follow both Phase 1 tasks.</p>
+
+  <div class="phases">
+
+    <!-- Phase 1A -->
+    <div class="phase">
+      <div class="phase-title">
+        <span class="badge badge-blue">Phase 1A</span>
+        <strong>use-auto-calculation.ts — add isRootCauseFailure filter</strong>
+        <span class="badge badge-green">Can start immediately</span>
+      </div>
+      <ul class="bullets">
+        <li>Open <code class="hl">components/dashboard/use-auto-calculation.ts</code>.</li>
+        <li>Add the <code>isRootCauseFailure(state: CalculationState): boolean</code> helper function immediately before the <code>useAutoCalculation</code> function declaration (module-level, not exported). Use the exact regex patterns shown above.</li>
+        <li>Add a cross-reference comment: <em>"Keep in sync with dependency branch in calculation-failure-modal.tsx sanitizeError()"</em>.</li>
+        <li>In the <code>failedItems</code> useMemo (line 234), after the <code>if (item.calculationState?.status === "failed")</code> guard, add a second guard: <code>if (!isRootCauseFailure(item.calculationState)) continue;</code> — so only root-cause items are pushed to <code>result</code>.</li>
+        <li>No changes to the DFS traversal, breadcrumb logic, or <code>FailedItemInfo</code> shape.</li>
+        <li>TypeScript: <code>CalculationState</code> is already imported from <code>@/app/types/firestore</code> — no new imports needed.</li>
+      </ul>
+      <div class="phase-sub">
+        <strong>Exact insertion point:</strong> line 234 in the current file.
+        Change the single <code>if (item.calculationState?.status === "failed")</code> block to:
+      </div>
+      <pre><code><span class="kw">if</span> (
+  item.calculationState?.status === <span class="st">"failed"</span> <span class="op">&&</span>
+  <span class="fn">isRootCauseFailure</span>(item.calculationState)
+) {
+  <span class="cm">// ... existing breadcrumb + push logic unchanged ...</span>
+}</code></pre>
+    </div>
+
+    <!-- Phase 1B -->
+    <div class="phase parallel">
+      <div class="phase-title">
+        <span class="badge badge-purple">Phase 1B</span>
+        <strong>hac-status-indicator.tsx — remove syncStatus "failed" branch</strong>
+        <span class="badge badge-green">Can start immediately (parallel with 1A)</span>
+      </div>
+      <ul class="bullets">
+        <li>Open <code class="hl">components/dashboard/hac-status-indicator.tsx</code>.</li>
+        <li>Locate the <code>displayState</code> derivation (line 40–50).</li>
+        <li>Change the <code>"failed"</code> branch condition from <code>failedItems.length &gt; 0 || syncStatus === "failed"</code> to <code>failedItems.length &gt; 0</code>.</li>
+        <li>No other changes are needed: badge count, tooltip text, icon, and modal wiring all already use <code>failedItems.length</code> and behave correctly once the filter is active in Phase 1A.</li>
+      </ul>
+      <div class="phase-sub">
+        <strong>Exact change (line 46):</strong>
+      </div>
+      <pre><code><span class="cm">// Before:</span>
+: failedItems.length <span class="op">&gt;</span> <span class="nm">0</span> <span class="op">||</span> syncStatus === <span class="st">"failed"</span>
+? <span class="st">"failed"</span>
+
+<span class="cm">// After:</span>
+: failedItems.length <span class="op">&gt;</span> <span class="nm">0</span>
+? <span class="st">"failed"</span></code></pre>
+      <div class="note">
+        <strong>Why safe:</strong> With Phase 1A active, <code>failedItems.length &gt; 0</code> will be true whenever there are root-cause failures. The <code>syncStatus === "failed"</code> branch was the only path to a button-with-empty-modal, which was confusing UX. The out-of-sync / in-sync paths handle all remaining states.
+      </div>
+    </div>
+
+    <!-- Phase 2 -->
+    <div class="phase">
+      <div class="phase-title">
+        <span class="badge badge-amber">Phase 2</span>
+        <strong>Tests — update &amp; extend (after Phase 1A + 1B)</strong>
+      </div>
+
+      <h3>2A — use-auto-calculation.test.tsx</h3>
+      <p>Depends on Phase 1A.</p>
+      <ul class="bullets">
+        <li><strong>Update test 10</strong> ("failedItems reflects items with failed calculationState"): ensure the error message used (<code>"Missing data"</code>) does not match any dependency regex — it does not, so this test should still pass. Verify explicitly.</li>
+        <li><strong>Update test 10b</strong> ("failedItems are ordered hierarchically"): area-1's error <code>"Area failed"</code> and scenario-1's <code>"Scenario failed"</code> are not dependency-pattern strings, so both should still appear. Verify explicitly that both items pass <code>isRootCauseFailure</code>.</li>
+        <li><strong>Add test: dependency-failure descendants excluded.</strong> Set up a parent item with a validation error and a child item with <code>engineVersion: "dependency-failure"</code>. Assert <code>failedItems</code> contains only the parent.</li>
+        <li><strong>Add test: upstream dependency error items excluded.</strong> Set up an item with <code>status: "failed"</code> and <code>error.message: "Equipment item outputs are undefined"</code> (and no <code>dependency-failure</code> engineVersion). Assert it does not appear in <code>failedItems</code>.</li>
+        <li><strong>Add test: multiple independent root causes both shown.</strong> Two sibling scenarios, each with a genuine validation error message. Assert both appear in <code>failedItems</code>.</li>
+        <li><strong>Add test: empty failedItems when all failures are cascade.</strong> All items in the study have <code>engineVersion: "dependency-failure"</code>. Assert <code>failedItems.length === 0</code>.</li>
+      </ul>
+      <div class="note">
+        <strong>Fixture note:</strong> <code>createScenario</code> / <code>createArea</code> etc. from <code>@/test-utils/study-item-fixtures</code> accept a <code>calculationState</code> override. Use these directly — no new fixtures needed. To set <code>engineVersion</code>, pass it inside the <code>calculationState</code> object.
+      </div>
+
+      <h3>2B — hac-status-indicator.test.tsx</h3>
+      <p>Depends on Phase 1B.</p>
+      <ul class="bullets">
+        <li><strong>Update test:</strong> "shows failed state when syncStatus is 'failed' regardless of failedItems count" — this test currently expects a <code>&lt;button&gt;</code> with <code>"0 calculation failures"</code>. With Phase 1B it should now render a <strong>non-button span</strong> (in-sync or out-of-sync state). Update the test name and assertion accordingly:
+          <ul style="margin-left:16px;margin-top:6px;">
+            <li>New expectation: <code>getByRole("img")</code> (span), not <code>getByRole("button")</code></li>
+            <li>Or: expect the element not to be a button at all</li>
+          </ul>
+        </li>
+        <li>All other tests in this file are unaffected (they use <code>failedItems: [makeFailedItem(...)]</code> which still triggers the "failed" state via <code>failedItems.length &gt; 0</code>).</li>
+      </ul>
+    </div>
+
+  </div>
+
+  <!-- ═══════════════════════════════════════════════════════ Edge Cases -->
+  <h2>Edge Cases &amp; Invariants</h2>
+  <div class="tbl-wrap">
+    <table>
+      <thead><tr><th>Scenario</th><th>Expected behaviour</th><th>Covered by</th></tr></thead>
+      <tbody>
+        <tr>
+          <td>All tree failures are cascade-only (<code>dependency-failure</code>)</td>
+          <td><code>failedItems = []</code> → indicator shows succeeded (green)</td>
+          <td>New test 2A-4</td>
+        </tr>
+        <tr>
+          <td>Root-cause item fixed by user, re-calc not yet fired</td>
+          <td>Root-cause removed from <code>failedItems</code>; cascade still in tree but invisible; indicator green</td>
+          <td>Before/After narrative; implicit in 2A tests</td>
+        </tr>
+        <tr>
+          <td>Multiple independent root-cause failures (sibling scenarios)</td>
+          <td>Both appear in modal; user fixes one → that one removed, other remains</td>
+          <td>New test 2A-3</td>
+        </tr>
+        <tr>
+          <td>Root-cause failure AND a dependency error on the same item</td>
+          <td>Theoretically impossible: if an item has its own validation failure, it fails before it can check parent outputs. <code>isRootCauseFailure</code> returns <code>true</code> since validation error text won't match dependency regexes.</td>
+          <td>N/A — not a real scenario</td>
+        </tr>
+        <tr>
+          <td>Unknown engine error message (no regex match)</td>
+          <td>Falls through to <code>return true</code> — item shown as root cause. Same behaviour as <code>sanitizeError</code> catch-all. Acceptable false-positive.</td>
+          <td>Existing test 10 covers the catch-all path</td>
+        </tr>
+        <tr>
+          <td>Study not loaded (<code>studyIndex === "root"</code>)</td>
+          <td><code>failedItems = []</code> immediately (existing early return untouched)</td>
+          <td>Existing test 5</td>
+        </tr>
+        <tr>
+          <td>syncStatus === "failed" with empty failedItems</td>
+          <td>Non-clickable span (in-sync / out-of-sync state); no empty modal reachable</td>
+          <td>Updated test 2B</td>
+        </tr>
+      </tbody>
+    </table>
+  </div>
+
+  <!-- ═══════════════════════════════════════════════════════ Risks -->
+  <h2>Risks</h2>
+  <div class="card-row">
+    <div class="card">
+      <div style="display:flex;align-items:center;gap:8px;margin-bottom:8px;">
+        <span class="risk risk-low">LOW</span>
+        <strong>Regex drift</strong>
+      </div>
+      <p>If the calculation engine adds new dependency error messages that don't match the four regex patterns, those items will appear as root causes. Mitigated by the cross-reference comment added in Phase 1A. Same risk exists today for <code>sanitizeError</code>.</p>
+    </div>
+    <div class="card">
+      <div style="display:flex;align-items:center;gap:8px;margin-bottom:8px;">
+        <span class="risk risk-low">LOW</span>
+        <strong>syncStatus removal</strong>
+      </div>
+      <p>Removing <code>|| syncStatus === "failed"</code> from <code>displayState</code> changes an existing edge case (empty failedItems + syncStatus failed → button). This was a confusing UX state with no practical path to it in normal usage. One test updated to reflect the change.</p>
+    </div>
+    <div class="card">
+      <div style="display:flex;align-items:center;gap:8px;margin-bottom:8px;">
+        <span class="risk risk-low">LOW</span>
+        <strong>"Green after fix" window</strong>
+      </div>
+      <p>After the user corrects an input but before re-calculation runs, the indicator shows green while cascade failures are still in the tree. This is intentional (decision 7a) — the cascade items are not actionable by the user. The debounce is 1 s so the re-calc fires quickly.</p>
+    </div>
+  </div>
+
+  <!-- ═══════════════════════════════════════════════════════ Test Plan -->
+  <h2>Test Plan &amp; Quality Gates</h2>
+  <h3>Commands to run after each phase</h3>
+  <pre><code><span class="cm"># After Phase 1A (hook change)</span>
+npx vitest run components/dashboard/__tests__/use-auto-calculation.test.tsx
+
+<span class="cm"># After Phase 1B (indicator change)</span>
+npx vitest run components/dashboard/__tests__/hac-status-indicator.test.tsx
+
+<span class="cm"># After Phase 2 (all tests updated)</span>
+npm test                    <span class="cm"># full suite</span>
+npm run typecheck           <span class="cm"># strict TS — no any, correct CalculationState usage</span>
+npm run lint                <span class="cm"># max-warnings: 0</span></code></pre>
+
+  <h3>New test cases (Phase 2A) — use-auto-calculation.test.tsx</h3>
+  <div class="tbl-wrap">
+    <table>
+      <thead><tr><th>Test name</th><th>Setup</th><th>Assertion</th></tr></thead>
+      <tbody>
+        <tr>
+          <td>dependency-failure items excluded from failedItems</td>
+          <td>Parent scenario: <code>status: "failed"</code>, validation error. Child zone: <code>status: "failed"</code>, <code>engineVersion: "dependency-failure"</code>.</td>
+          <td><code>failedItems.length === 1</code>; only parent index present.</td>
+        </tr>
+        <tr>
+          <td>upstream dependency error items excluded from failedItems</td>
+          <td>Area item: <code>status: "failed"</code>, <code>error.message: "Equipment item outputs are undefined"</code>.</td>
+          <td><code>failedItems.length === 0</code>.</td>
+        </tr>
+        <tr>
+          <td>multiple independent root causes both appear</td>
+          <td>Two sibling scenarios under the same equipment, each with <code>status: "failed"</code> and a non-dependency error.</td>
+          <td><code>failedItems.length === 2</code>; both indices present.</td>
+        </tr>
+        <tr>
+          <td>all cascade failures → empty failedItems</td>
+          <td>All items in the study have <code>status: "failed"</code> with <code>engineVersion: "dependency-failure"</code>.</td>
+          <td><code>failedItems.length === 0</code>.</td>
+        </tr>
+      </tbody>
+    </table>
+  </div>
+
+  <h3>Updated test (Phase 2B) — hac-status-indicator.test.tsx</h3>
+  <div class="tbl-wrap">
+    <table>
+      <thead><tr><th>Test name (current)</th><th>Required change</th></tr></thead>
+      <tbody>
+        <tr>
+          <td>"shows failed state when syncStatus is 'failed' regardless of failedItems count"</td>
+          <td>Rename to "shows non-failed state when failedItems is empty even if syncStatus is 'failed'". Change assertion: expect a <code>&lt;span role="img"&gt;</code> (not a button) and <em>no</em> call to open the modal.</td>
+        </tr>
+      </tbody>
+    </table>
+  </div>
+
+  <!-- ═══════════════════════════════════════════════════════ Commit Strategy -->
+  <h2>Commit &amp; Push Strategy</h2>
+  <ul class="bullets">
+    <li><strong>No WIP commits.</strong> Each commit should represent a logically complete, passing state.</li>
+    <li><strong>Commit 1</strong> (after Phase 1A + Phase 1B): <code>feat(hac-status): filter failedItems to root-cause only, show succeeded when none remain</code>. Stage both <code>use-auto-calculation.ts</code> and <code>hac-status-indicator.tsx</code>. Run typecheck + lint before committing.</li>
+    <li><strong>Commit 2</strong> (after Phase 2): <code>test(hac-status): update and extend tests for root-cause filter behaviour</code>. Stage both test files. Full <code>npm test</code> must pass.</li>
+    <li><strong>Push</strong> both commits to <code>origin/feat/auto-hac-calculation</code> after Commit 2 is verified.</li>
+    <li>If agents work in parallel on Phases 1A and 1B, they should merge their changes before running tests (since Phase 2 depends on both). No conflicts expected — different files.</li>
+  </ul>
+
+  <!-- ═══════════════════════════════════════════════════════ Parallelism -->
+  <h2>Parallel Execution Map</h2>
+  <div class="mermaid-box">
+  ┌──────────────────────────────┐   ┌──────────────────────────────┐
+  │  Agent A  (Phase 1A)         │   │  Agent B  (Phase 1B)         │
+  │  use-auto-calculation.ts     │   │  hac-status-indicator.tsx    │
+  │  · add isRootCauseFailure()  │   │  · remove syncStatus branch  │
+  │  · filter in useMemo         │   │                              │
+  └──────────────┬───────────────┘   └──────────────┬───────────────┘
+                 │                                   │
+                 └──────────────┬────────────────────┘
+                                │  merge / both files committed
+                                ▼
+           ┌────────────────────────────────────────┐
+           │  Phase 2  (single agent, sequential)   │
+           │  · update use-auto-calculation tests   │
+           │  · update hac-status-indicator tests   │
+           │  · npm test + typecheck + lint         │
+           │  · push to origin                      │
+           └────────────────────────────────────────┘
+  </div>
+
+  <!-- ═══════════════════════════════════════════════════════ Preserved behaviour -->
+  <h2>Existing Behaviour That Must Be Preserved</h2>
+  <ul class="check">
+    <li>Breadcrumb generation logic in <code>failedItems</code> useMemo — unchanged.</li>
+    <li>DFS traversal order (parents before children) — unchanged.</li>
+    <li>Badge "99+" cap when count &gt; 99 — unaffected (count is now smaller, never exceeds existing cap logic).</li>
+    <li>Modal navigation: clicking an item calls <code>dataProvider.onSelectItems([index])</code> and closes modal — unchanged.</li>
+    <li><code>CalculationFailureModal</code> amber/red error colour-coding via <code>sanitizeError</code> — unchanged (modal untouched).</li>
+    <li>All non-failed <code>displayState</code> paths (pending, calculating, in-sync, out-of-sync, disabled) — unchanged.</li>
+    <li>Firestore write path (<code>setStudy</code>) — unchanged; all failed states are still persisted to Firestore.</li>
+    <li><code>markDescendantsFailedForFailedItems</code> still runs and marks cascade failures in the tree — unchanged. The filter is display-only; it does not alter the underlying data.</li>
+  </ul>
+
+  <!-- ═══════════════════════════════════════════════════════ Open Decisions -->
+  <h2>Open Decisions / Future Considerations</h2>
+  <div class="card">
+    <h3>Shared dependency-error utility</h3>
+    <p>The four dependency regex checks are currently duplicated between <code>isRootCauseFailure()</code> (new, in the hook) and <code>sanitizeError()</code> (existing, in the modal). For now they are kept separate (hook is filtering logic; modal is display logic), with a cross-reference comment to prevent drift. A future refactor could extract a shared <code>lib/calculation-error-category.ts</code> if the list of patterns grows significantly.</p>
+  </div>
+  <div class="card">
+    <h3>Engine-level discrimination</h3>
+    <p>Currently only downstream cascade failures use a dedicated <code>engineVersion</code> field (<code>"dependency-failure"</code>). Upstream dependency errors are distinguished only by error message text. A future improvement could have the engine or helper functions set a distinct <code>engineVersion</code> (e.g., <code>"upstream-dependency"</code>) for upstream errors, removing the need for text matching entirely.</p>
+  </div>
+
+  <footer>
+    Implementation plan · feat/auto-hac-calculation · nEXus · 2026-05-28
+  </footer>
+
+</div>
+</body>
+</html>
