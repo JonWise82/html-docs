@@ -1,0 +1,693 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1.0" />
+<title>Plan — Modal Error Sanitization</title>
+<style>
+  :root {
+    --bg: #0f1117;
+    --surface: #1a1d27;
+    --surface2: #1e2235;
+    --border: #2e3352;
+    --accent: #6c8ef7;
+    --accent2: #a78bfa;
+    --text: #e2e8f0;
+    --muted: #94a3b8;
+    --green: #34d399;
+    --red: #f87171;
+    --amber: #fbbf24;
+    --blue: #60a5fa;
+    --indigo: #818cf8;
+    --low: #1a3a2a;
+    --low-text: #34d399;
+    --low-border: #065f46;
+    --med: #3a2d1a;
+    --med-text: #fbbf24;
+    --med-border: #78350f;
+    --high: #3a1a1a;
+    --high-text: #f87171;
+    --high-border: #7f1d1d;
+  }
+  * { box-sizing: border-box; margin: 0; padding: 0; }
+  body { background: var(--bg); color: var(--text); font-family: 'Segoe UI', system-ui, sans-serif; font-size: 14px; line-height: 1.6; }
+  .page { max-width: 900px; margin: 0 auto; padding: 48px 24px 80px; }
+
+  /* NAV */
+  .back-link { display: inline-flex; align-items: center; gap: 6px; color: var(--muted); text-decoration: none; font-size: 13px; margin-bottom: 32px; }
+  .back-link:hover { color: var(--accent); }
+
+  /* HEADER */
+  .plan-header { border-bottom: 1px solid var(--border); padding-bottom: 28px; margin-bottom: 36px; }
+  .plan-header .meta { display: flex; flex-wrap: wrap; gap: 8px; margin-bottom: 14px; }
+  .badge { display: inline-flex; align-items: center; gap: 5px; font-size: 11px; border-radius: 10px; padding: 3px 10px; font-weight: 600; letter-spacing: 0.03em; }
+  .badge-plan   { background: #1a1f3a; color: var(--indigo); border: 1px solid #3730a3; }
+  .badge-branch { background: #1a2d1a; color: var(--green); border: 1px solid #065f46; }
+  .badge-date   { background: #1e1a2e; color: var(--accent2); border: 1px solid #4c1d95; }
+  .plan-header h1 { font-size: 26px; font-weight: 700; color: var(--accent); margin-bottom: 8px; }
+  .plan-header .subtitle { color: var(--muted); font-size: 14px; max-width: 640px; }
+
+  /* SECTION */
+  section { margin-bottom: 40px; }
+  h2 { font-size: 17px; font-weight: 700; color: var(--text); margin-bottom: 16px; padding-bottom: 8px; border-bottom: 1px solid var(--border); display: flex; align-items: center; gap: 8px; }
+  h2 .icon { font-size: 18px; }
+  h3 { font-size: 14px; font-weight: 600; color: var(--accent2); margin-bottom: 10px; margin-top: 18px; }
+
+  /* CARDS */
+  .card { background: var(--surface); border: 1px solid var(--border); border-radius: 10px; padding: 18px 20px; margin-bottom: 12px; }
+  .card-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 12px; }
+  @media (max-width: 600px) { .card-grid { grid-template-columns: 1fr; } }
+
+  /* SUMMARY CARD */
+  .summary-card { background: var(--surface); border: 1px solid var(--border); border-radius: 10px; padding: 20px 24px; }
+  .summary-card p { color: var(--muted); margin-bottom: 12px; line-height: 1.7; }
+  .goal-list { list-style: none; display: flex; flex-direction: column; gap: 8px; }
+  .goal-list li { display: flex; align-items: flex-start; gap: 10px; color: var(--text); }
+  .goal-list li .check { color: var(--green); font-size: 15px; flex-shrink: 0; margin-top: 1px; }
+
+  /* TABLE */
+  .table-wrap { overflow-x: auto; }
+  table { width: 100%; border-collapse: collapse; font-size: 13px; }
+  thead tr { background: var(--surface2); }
+  th { text-align: left; padding: 10px 14px; color: var(--muted); font-weight: 600; font-size: 12px; text-transform: uppercase; letter-spacing: 0.05em; border-bottom: 1px solid var(--border); }
+  td { padding: 10px 14px; border-bottom: 1px solid var(--border); vertical-align: top; }
+  tr:last-child td { border-bottom: none; }
+  tr:hover td { background: #1b1e2e; }
+  code { font-family: 'Cascadia Code', 'Fira Code', 'Consolas', monospace; font-size: 12px; background: #12151f; border: 1px solid var(--border); border-radius: 4px; padding: 1px 6px; color: var(--accent2); }
+
+  /* CODE BLOCK */
+  pre { background: #0c0f1a; border: 1px solid var(--border); border-radius: 8px; padding: 16px 18px; overflow-x: auto; font-size: 12.5px; line-height: 1.7; font-family: 'Cascadia Code', 'Fira Code', 'Consolas', monospace; color: #c9d1d9; margin-bottom: 12px; }
+  .kw  { color: #ff7b72; }
+  .str { color: #a5d6ff; }
+  .cmt { color: #8b949e; font-style: italic; }
+  .fn  { color: #d2a8ff; }
+  .type{ color: #ffa657; }
+  .const { color: #79c0ff; }
+
+  /* DIFF */
+  .diff { background: #0c0f1a; border: 1px solid var(--border); border-radius: 8px; overflow: hidden; font-size: 12.5px; font-family: 'Cascadia Code', 'Fira Code', monospace; margin-bottom: 12px; }
+  .diff-header { background: #161b22; padding: 8px 14px; color: var(--muted); font-size: 12px; border-bottom: 1px solid var(--border); }
+  .diff-body { padding: 10px 0; }
+  .diff-line { padding: 1px 14px; line-height: 1.7; white-space: pre; }
+  .diff-add { background: #0d2718; color: #56d364; }
+  .diff-add::before { content: '+ '; color: #56d364; }
+  .diff-rem { background: #2d1217; color: #ff7b72; }
+  .diff-rem::before { content: '- '; color: #ff7b72; }
+  .diff-ctx { color: #8b949e; }
+  .diff-ctx::before { content: '  '; }
+
+  /* DATA FLOW */
+  .flow { background: #0c0f1a; border: 1px solid var(--border); border-radius: 8px; padding: 20px 24px; font-family: 'Cascadia Code', 'Fira Code', monospace; font-size: 12.5px; line-height: 2; overflow-x: auto; }
+  .flow-line { white-space: pre; }
+  .flow .highlight { color: var(--green); font-weight: 700; }
+  .flow .dim { color: #4a5568; }
+
+  /* RISK BADGES */
+  .risk-low  { background: var(--low); color: var(--low-text); border: 1px solid var(--low-border); border-radius: 6px; padding: 2px 8px; font-size: 11px; font-weight: 600; }
+  .risk-med  { background: var(--med); color: var(--med-text); border: 1px solid var(--med-border); border-radius: 6px; padding: 2px 8px; font-size: 11px; font-weight: 600; }
+  .risk-high { background: var(--high); color: var(--high-text); border: 1px solid var(--high-border); border-radius: 6px; padding: 2px 8px; font-size: 11px; font-weight: 600; }
+
+  /* BEFORE/AFTER */
+  .ba-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 16px; }
+  @media (max-width: 640px) { .ba-grid { grid-template-columns: 1fr; } }
+  .ba-card { border-radius: 10px; padding: 16px 18px; border: 1px solid; }
+  .ba-before { background: #2d1217; border-color: #7f1d1d; }
+  .ba-after  { background: #0d2718; border-color: #065f46; }
+  .ba-label  { font-size: 11px; font-weight: 700; text-transform: uppercase; letter-spacing: 0.06em; margin-bottom: 10px; }
+  .ba-before .ba-label { color: var(--red); }
+  .ba-after  .ba-label { color: var(--green); }
+  .ba-content { font-size: 12.5px; line-height: 1.7; }
+
+  /* MOCK UI */
+  .mock-card { background: #1e2235; border: 1px solid #2e3352; border-radius: 8px; padding: 12px 14px; margin-bottom: 6px; }
+  .mock-breadcrumb { font-size: 11px; color: #6b7280; margin-bottom: 6px; }
+  .mock-name { font-weight: 600; margin-bottom: 4px; display: flex; align-items: center; gap: 6px; }
+  .mock-badge { font-size: 10px; background: #12151f; color: #94a3b8; border-radius: 4px; padding: 1px 6px; }
+  .mock-error-old { font-size: 11px; color: #f87171; }
+  .mock-error-new { font-size: 11px; color: #f87171; }
+  .mock-hint { font-size: 11px; color: #64748b; margin-top: 2px; }
+
+  /* PHASE TIMELINE */
+  .phase-list { display: flex; flex-direction: column; gap: 0; }
+  .phase-item { display: flex; gap: 0; }
+  .phase-connector { display: flex; flex-direction: column; align-items: center; width: 36px; flex-shrink: 0; }
+  .phase-dot { width: 14px; height: 14px; border-radius: 50%; background: var(--accent); flex-shrink: 0; margin-top: 4px; border: 2px solid var(--accent2); }
+  .phase-line { width: 2px; background: var(--border); flex: 1; min-height: 20px; }
+  .phase-item:last-child .phase-line { display: none; }
+  .phase-body { padding: 0 0 24px 4px; flex: 1; }
+  .phase-title { font-weight: 600; color: var(--text); margin-bottom: 4px; }
+  .phase-desc { color: var(--muted); font-size: 13px; }
+  .phase-parallel { background: #1a2335; border: 1px solid #1e3a5f; border-radius: 6px; padding: 8px 12px; font-size: 12px; color: var(--blue); margin-top: 6px; display: inline-block; }
+
+  /* CHECKLIST */
+  .checklist { list-style: none; display: flex; flex-direction: column; gap: 6px; }
+  .checklist li { display: flex; align-items: flex-start; gap: 8px; font-size: 13px; color: var(--text); }
+  .checklist li .box { width: 16px; height: 16px; border: 1px solid var(--border); border-radius: 3px; flex-shrink: 0; margin-top: 2px; }
+
+  /* PATTERN TABLE highlight */
+  .pat-regex { color: var(--accent2); font-family: monospace; }
+  .pat-label { color: var(--green); }
+  .pat-hint  { color: var(--muted); font-size: 12px; }
+  .fallback-row td { background: #1a1a2e; font-style: italic; }
+
+  /* FOOTER */
+  footer { margin-top: 56px; padding-top: 20px; border-top: 1px solid var(--border); color: var(--muted); font-size: 12px; display: flex; justify-content: space-between; flex-wrap: wrap; gap: 8px; }
+</style>
+</head>
+<body>
+<div class="page">
+
+  <a class="back-link" href="index.html">← Back to Review Docs</a>
+
+  <!-- HEADER -->
+  <div class="plan-header">
+    <div class="meta">
+      <span class="badge badge-plan">📋 Plan</span>
+      <span class="badge badge-branch">⎇ feat/auto-hac-calculation</span>
+      <span class="badge badge-date">📅 2026-05-29</span>
+    </div>
+    <h1>Modal Error Sanitization</h1>
+    <p class="subtitle">Split each error into a short red label + grey action hint, and guarantee no camelCase variable names or internal identifiers ever reach the UI in the Calculation Failure Modal.</p>
+  </div>
+
+  <!-- EXECUTIVE SUMMARY -->
+  <section>
+    <h2><span class="icon">⚡</span> Executive Summary</h2>
+    <div class="summary-card">
+      <p>
+        The <code>CalculationFailureModal</code> currently renders a single red text line per failed item.
+        This line can expose internal camelCase variable names (e.g. <code>sourceAirVelocity</code>, <code>ambientTemperature</code>)
+        from Zod validation errors, and raw exception strings from unhandled paths via a <code>return raw</code> fallback.
+        A previous cleanup commit removed dead dependency-category branches; this plan completes the job by:
+      </p>
+      <ul class="goal-list">
+        <li><span class="check">✓</span> Splitting the single message into a short red <strong>label</strong> + a grey <strong>action hint</strong> on a second line</li>
+        <li><span class="check">✓</span> Stripping all Zod field names, ValidationError messages, and item indices before display</li>
+        <li><span class="check">✓</span> Replacing <code>return raw</code> with a safe generic fallback so nothing unexpected leaks</li>
+        <li><span class="check">✓</span> Removing the dead <code>unsupported*</code> branches (they now fall through to the generic fallback)</li>
+        <li><span class="check">✓</span> Adding a full test file covering all 18 sanitization and UI cases</li>
+      </ul>
+      <p style="margin-top:14px; margin-bottom:0;">All changes are confined to <code>calculation-failure-modal.tsx</code> and its new test file. The API route, calculation engine, and <code>use-auto-calculation.ts</code> are untouched.</p>
+    </div>
+  </section>
+
+  <!-- AFFECTED FILES -->
+  <section>
+    <h2><span class="icon">📁</span> Affected Files</h2>
+    <div class="table-wrap">
+      <table>
+        <thead>
+          <tr><th>File</th><th>Change</th><th>Notes</th></tr>
+        </thead>
+        <tbody>
+          <tr>
+            <td><code>components/dashboard/calculation-failure-modal.tsx</code></td>
+            <td>Modify</td>
+            <td>Update <code>sanitizeError</code> return type and card render template</td>
+          </tr>
+          <tr>
+            <td><code>components/dashboard/__tests__/calculation-failure-modal.test.tsx</code></td>
+            <td>Create (new)</td>
+            <td>18 test cases covering all error patterns, UI structure, and interaction</td>
+          </tr>
+        </tbody>
+      </table>
+    </div>
+
+    <h3>Files Explicitly Not Changed</h3>
+    <div class="table-wrap">
+      <table>
+        <thead><tr><th>File</th><th>Reason</th></tr></thead>
+        <tbody>
+          <tr><td><code>app/api/bs-calculation/batch/route.ts</code></td><td>Error messages kept verbose for server-side logging; sanitized at display time only</td></tr>
+          <tr><td><code>lib/bscalculations/**</code></td><td>Calculation engine unchanged</td></tr>
+          <tr><td><code>components/dashboard/use-auto-calculation.ts</code></td><td>Already correct after root-cause filter work</td></tr>
+        </tbody>
+      </table>
+    </div>
+  </section>
+
+  <!-- DATA FLOW -->
+  <section>
+    <h2><span class="icon">🔀</span> Architecture &amp; Data Flow</h2>
+    <p style="color:var(--muted);font-size:13px;margin-bottom:14px;">The change is isolated to the final display step. No data structures, API contracts, or Firestore schemas change.</p>
+    <div class="flow">
+<span class="flow-line">  BS Calculation API route  (<code>app/api/bs-calculation/batch/route.ts</code>)</span>
+<span class="flow-line">    └─ <span class="dim">formatValidationError()</span>  →  errorMessage stored in Firestore <code>calculationState.error.message</code></span>
+<span class="flow-line">         └─ <span class="dim">useAutoCalculation hook</span>  →  surfaces as <code>FailedItemInfo.errorMessage</code></span>
+<span class="flow-line">              └─ <span class="dim">CalculationFailureModal</span>  receives <code>failedItems: FailedItemInfo[]</code></span>
+<span class="flow-line">                   └─ <span class="highlight">sanitizeError(raw)  →  { label, hint }   ← CHANGE IS HERE</span></span>
+<span class="flow-line">                        └─ <span class="dim">rendered as two &lt;p&gt; lines per card</span></span>
+    </div>
+
+    <h3>Error Origin Paths</h3>
+    <div class="table-wrap">
+      <table>
+        <thead><tr><th>Origin</th><th>Example raw string</th><th>Risk</th></tr></thead>
+        <tbody>
+          <tr>
+            <td>Zod field validation (<code>bs-gas-calculations.ts:86</code>)</td>
+            <td><code>"Missing or invalid inputs: sourceAirVelocity, releaseArea"</code></td>
+            <td><span class="risk-high">HIGH — exposes camelCase vars</span></td>
+          </tr>
+          <tr>
+            <td>Zod truncated (<code>bs-gas-calculations.ts:83</code>)</td>
+            <td><code>"Missing or invalid inputs: field1, field2 and 3 more."</code></td>
+            <td><span class="risk-high">HIGH — exposes camelCase vars</span></td>
+          </tr>
+          <tr>
+            <td><code>formatValidationError</code> wrapping ValidationError</td>
+            <td><code>"Invalid ambientTemperature for item abc123: Temperature must be a finite number"</code></td>
+            <td><span class="risk-high">HIGH — exposes field name + item index</span></td>
+          </tr>
+          <tr>
+            <td>Bare ValidationError message</td>
+            <td><code>"Temperature must be above absolute zero (0 K). Got 0.00 K"</code></td>
+            <td><span class="risk-med">MED — SI units, no var names but technical</span></td>
+          </tr>
+          <tr>
+            <td>Missing area/scenario props</td>
+            <td><code>"One or more required area HAC properties are undefined."</code></td>
+            <td><span class="risk-low">LOW — already handled</span></td>
+          </tr>
+          <tr>
+            <td>HTTP error</td>
+            <td><code>"HTTP 500"</code></td>
+            <td><span class="risk-low">LOW — already handled, wrong hint</span></td>
+          </tr>
+          <tr>
+            <td>Unsupported hacType / ventilationDirection</td>
+            <td><code>"Unsupported hacType: BS EN 60079-10-1 - Pressurised gas"</code></td>
+            <td><span class="risk-low">LOW — dead branches to remove</span></td>
+          </tr>
+          <tr>
+            <td>Unknown / future errors</td>
+            <td><em>any unmatched string</em></td>
+            <td><span class="risk-high">HIGH — <code>return raw</code> fallback currently leaks anything</span></td>
+          </tr>
+        </tbody>
+      </table>
+    </div>
+  </section>
+
+  <!-- BEFORE / AFTER -->
+  <section>
+    <h2><span class="icon">↔️</span> Before / After Behaviour</h2>
+
+    <h3>UI: Single failed item card</h3>
+    <div class="ba-grid">
+      <div class="ba-card ba-before">
+        <div class="ba-label">Before</div>
+        <div class="ba-content">
+          <div class="mock-card">
+            <div class="mock-breadcrumb">Study › Area 1 › Equipment A</div>
+            <div class="mock-name">Gas Release Scenario 1 <span class="mock-badge">Scenario</span></div>
+            <div class="mock-error-old">Missing or invalid inputs: sourceAirVelocity, releaseArea, dischargeCoefficient</div>
+          </div>
+          <div style="color:var(--red);font-size:12px;margin-top:8px;">⚠ Raw camelCase variable names visible to user</div>
+        </div>
+      </div>
+      <div class="ba-card ba-after">
+        <div class="ba-label">After</div>
+        <div class="ba-content">
+          <div class="mock-card">
+            <div class="mock-breadcrumb">Study › Area 1 › Equipment A</div>
+            <div class="mock-name">Gas Release Scenario 1 <span class="mock-badge">Scenario</span></div>
+            <div class="mock-error-new">Some required fields are incomplete</div>
+            <div class="mock-hint">Click to open and review the inputs.</div>
+          </div>
+          <div style="color:var(--green);font-size:12px;margin-top:8px;">✓ Clean label + actionable hint, no internals exposed</div>
+        </div>
+      </div>
+    </div>
+
+    <h3 style="margin-top:20px;">UI: ValidationError (out of range)</h3>
+    <div class="ba-grid">
+      <div class="ba-card ba-before">
+        <div class="ba-label">Before</div>
+        <div class="ba-content">
+          <div class="mock-card">
+            <div class="mock-name">Area 1 <span class="mock-badge">Area</span></div>
+            <div class="mock-error-old">Invalid ambientTemperature for item abc-123: Temperature must be above absolute zero (0 K). Got 0.00 K</div>
+          </div>
+          <div style="color:var(--red);font-size:12px;margin-top:8px;">⚠ Internal item index, camelCase field, and SI value visible</div>
+        </div>
+      </div>
+      <div class="ba-card ba-after">
+        <div class="ba-label">After</div>
+        <div class="ba-content">
+          <div class="mock-card">
+            <div class="mock-name">Area 1 <span class="mock-badge">Area</span></div>
+            <div class="mock-error-new">A field value is out of valid range</div>
+            <div class="mock-hint">Click to open and review the inputs.</div>
+          </div>
+          <div style="color:var(--green);font-size:12px;margin-top:8px;">✓ Clean, no internals</div>
+        </div>
+      </div>
+    </div>
+
+    <h3 style="margin-top:20px;">UI: Unknown / future error</h3>
+    <div class="ba-grid">
+      <div class="ba-card ba-before">
+        <div class="ba-label">Before</div>
+        <div class="ba-content">
+          <div class="mock-card">
+            <div class="mock-name">Scenario X <span class="mock-badge">Scenario</span></div>
+            <div class="mock-error-old">some completely unknown internal string from the engine</div>
+          </div>
+          <div style="color:var(--red);font-size:12px;margin-top:8px;">⚠ <code>return raw</code> — any future exception message leaks</div>
+        </div>
+      </div>
+      <div class="ba-card ba-after">
+        <div class="ba-label">After</div>
+        <div class="ba-content">
+          <div class="mock-card">
+            <div class="mock-name">Scenario X <span class="mock-badge">Scenario</span></div>
+            <div class="mock-error-new">An unexpected error occurred</div>
+            <div class="mock-hint">Try re-running or check inputs.</div>
+          </div>
+          <div style="color:var(--green);font-size:12px;margin-top:8px;">✓ Safe fallback always fires</div>
+        </div>
+      </div>
+    </div>
+  </section>
+
+  <!-- IMPLEMENTATION PHASES -->
+  <section>
+    <h2><span class="icon">🏗️</span> Implementation Phases</h2>
+
+    <div class="phase-list">
+      <div class="phase-item">
+        <div class="phase-connector"><div class="phase-dot"></div><div class="phase-line"></div></div>
+        <div class="phase-body">
+          <div class="phase-title">Step 1 — Update <code>sanitizeError</code> signature &amp; pattern table</div>
+          <div class="phase-desc">
+            File: <code>components/dashboard/calculation-failure-modal.tsx</code><br>
+            Change return type from <code>string</code> to <code>{ label: string; hint: string }</code>.
+            Define hint constants and rewrite the pattern table (see Pattern Table section below).
+          </div>
+        </div>
+      </div>
+      <div class="phase-item">
+        <div class="phase-connector"><div class="phase-dot"></div><div class="phase-line"></div></div>
+        <div class="phase-body">
+          <div class="phase-title">Step 2 — Update card rendering</div>
+          <div class="phase-desc">
+            File: <code>components/dashboard/calculation-failure-modal.tsx</code><br>
+            Destructure <code>{ label, hint }</code> from <code>sanitizeError</code>.
+            Render label in <code>text-destructive text-xs</code> and hint in <code>text-muted-foreground text-xs mt-0.5</code> below it.
+          </div>
+        </div>
+      </div>
+      <div class="phase-item">
+        <div class="phase-connector"><div class="phase-dot"></div><div class="phase-line"></div></div>
+        <div class="phase-body">
+          <div class="phase-title">Step 3 — Write test file</div>
+          <div class="phase-desc">
+            File: <code>components/dashboard/__tests__/calculation-failure-modal.test.tsx</code> (new)<br>
+            18 test cases using <code>vitest</code> + <code>@testing-library/react</code>.
+            Must wait for Steps 1–2 to complete (imports the updated component).
+          </div>
+          <span class="phase-parallel">⚠ Sequential — depends on Steps 1+2 completing first</span>
+        </div>
+      </div>
+      <div class="phase-item">
+        <div class="phase-connector"><div class="phase-dot"></div><div class="phase-line"></div></div>
+        <div class="phase-body">
+          <div class="phase-title">Step 4 — Quality gates &amp; commit</div>
+          <div class="phase-desc">
+            Run <code>npx vitest run …/calculation-failure-modal.test.tsx</code>, then <code>npm run typecheck</code>, <code>npm run lint</code>, and <code>npm test</code>.
+            Single commit once all pass. Push to origin.
+          </div>
+        </div>
+      </div>
+    </div>
+  </section>
+
+  <!-- PATTERN TABLE -->
+  <section>
+    <h2><span class="icon">🗺️</span> New <code>sanitizeError</code> Pattern Table</h2>
+    <p style="color:var(--muted);font-size:13px;margin-bottom:14px;">Patterns are evaluated top-to-bottom; first match wins. All hint constants are defined once at the top of the function.</p>
+
+    <div class="card" style="margin-bottom:14px; padding:14px 18px;">
+      <div style="font-size:12px;color:var(--muted);margin-bottom:8px;">Hint constants</div>
+      <pre style="margin:0;padding:0;background:none;border:none;"><span class="const">STANDARD_HINT</span> = <span class="str">"Click to open and review the inputs."</span>
+<span class="const">SERVER_HINT</span>   = <span class="str">"Try re-running the calculation."</span>
+<span class="const">GENERIC_HINT</span>  = <span class="str">"Try re-running or check inputs."</span></pre>
+    </div>
+
+    <div class="table-wrap">
+      <table>
+        <thead>
+          <tr><th>#</th><th>Regex</th><th>Label</th><th>Hint</th></tr>
+        </thead>
+        <tbody>
+          <tr>
+            <td>1</td>
+            <td class="pat-regex"><code>/missing or invalid inputs:/i</code></td>
+            <td class="pat-label">Some required fields are incomplete</td>
+            <td class="pat-hint">STANDARD_HINT</td>
+          </tr>
+          <tr>
+            <td>2</td>
+            <td class="pat-regex"><code>/invalid .+ for item .+:/i</code></td>
+            <td class="pat-label">A field value is out of valid range</td>
+            <td class="pat-hint">STANDARD_HINT</td>
+          </tr>
+          <tr>
+            <td>3</td>
+            <td class="pat-regex"><code>/(temperature|pressure|density|length) must/i</code></td>
+            <td class="pat-label">A field value is out of valid range</td>
+            <td class="pat-hint">STANDARD_HINT</td>
+          </tr>
+          <tr>
+            <td>4</td>
+            <td class="pat-regex"><code>/one or more required area hac properties/i</code></td>
+            <td class="pat-label">Missing required area properties</td>
+            <td class="pat-hint">STANDARD_HINT</td>
+          </tr>
+          <tr>
+            <td>5</td>
+            <td class="pat-regex"><code>/one or more required scenario hac properties/i</code></td>
+            <td class="pat-label">Missing required scenario properties</td>
+            <td class="pat-hint">STANDARD_HINT</td>
+          </tr>
+          <tr>
+            <td>6</td>
+            <td class="pat-regex"><code>/scenario hac data is undefined/i</code></td>
+            <td class="pat-label">Scenario not configured</td>
+            <td class="pat-hint">STANDARD_HINT</td>
+          </tr>
+          <tr>
+            <td>7</td>
+            <td class="pat-regex"><code>/ventilation inefficiency and xcrit required/i</code></td>
+            <td class="pat-label">Missing indoor ventilation inputs</td>
+            <td class="pat-hint">STANDARD_HINT</td>
+          </tr>
+          <tr>
+            <td>8</td>
+            <td class="pat-regex"><code>/validation failed/i</code></td>
+            <td class="pat-label">Some required fields are incomplete</td>
+            <td class="pat-hint">STANDARD_HINT</td>
+          </tr>
+          <tr>
+            <td>9</td>
+            <td class="pat-regex"><code>/^http \d+$/i</code></td>
+            <td class="pat-label">Server error</td>
+            <td class="pat-hint">SERVER_HINT</td>
+          </tr>
+          <tr class="fallback-row">
+            <td>–</td>
+            <td><em>(fallback — no match)</em></td>
+            <td class="pat-label">An unexpected error occurred</td>
+            <td class="pat-hint">GENERIC_HINT</td>
+          </tr>
+        </tbody>
+      </table>
+    </div>
+
+    <div class="card" style="margin-top:14px;">
+      <div style="font-size:12px;color:var(--amber);margin-bottom:4px;">⚠ Removed branches</div>
+      <div style="font-size:13px;color:var(--muted);">
+        The <code>unsupported hactype</code> and <code>unsupported ventilationdirection</code> branches previously mapped to "please contact support" — this wording was confirmed undesirable and both now fall through to the generic fallback row.
+      </div>
+    </div>
+  </section>
+
+  <!-- CODE DIFF -->
+  <section>
+    <h2><span class="icon">📝</span> Key Code Changes</h2>
+
+    <h3>1. Updated <code>sanitizeError</code></h3>
+    <div class="diff">
+      <div class="diff-header">components/dashboard/calculation-failure-modal.tsx — sanitizeError</div>
+      <div class="diff-body">
+        <div class="diff-rem diff-line">function sanitizeError(raw: string): string {</div>
+        <div class="diff-add diff-line">function sanitizeError(raw: string): { label: string; hint: string } {</div>
+        <div class="diff-add diff-line">  const STANDARD_HINT = "Click to open and review the inputs.";</div>
+        <div class="diff-add diff-line">  const SERVER_HINT   = "Try re-running the calculation.";</div>
+        <div class="diff-add diff-line">  const GENERIC_HINT  = "Try re-running or check inputs.";</div>
+        <div class="diff-ctx diff-line"> </div>
+        <div class="diff-add diff-line">  if (/missing or invalid inputs:/i.test(raw))</div>
+        <div class="diff-add diff-line">    return { label: "Some required fields are incomplete", hint: STANDARD_HINT };</div>
+        <div class="diff-add diff-line">  if (/invalid .+ for item .+:/i.test(raw))</div>
+        <div class="diff-add diff-line">    return { label: "A field value is out of valid range", hint: STANDARD_HINT };</div>
+        <div class="diff-add diff-line">  if (/(temperature|pressure|density|length) must/i.test(raw))</div>
+        <div class="diff-add diff-line">    return { label: "A field value is out of valid range", hint: STANDARD_HINT };</div>
+        <div class="diff-ctx diff-line">  if (/one or more required area hac properties/i.test(raw))</div>
+        <div class="diff-rem diff-line">    return "One or more required area properties are missing — check area inputs.";</div>
+        <div class="diff-add diff-line">    return { label: "Missing required area properties", hint: STANDARD_HINT };</div>
+        <div class="diff-ctx diff-line">  // ... (all patterns updated to return { label, hint })</div>
+        <div class="diff-rem diff-line">  if (/unsupported hactype/i.test(raw))</div>
+        <div class="diff-rem diff-line">    return "Unsupported calculation type — please contact support.";</div>
+        <div class="diff-rem diff-line">  if (/unsupported ventilationdirection/i.test(raw))</div>
+        <div class="diff-rem diff-line">    return "Unsupported ventilation direction — please contact support.";</div>
+        <div class="diff-rem diff-line">  return raw;</div>
+        <div class="diff-add diff-line">  return { label: "An unexpected error occurred", hint: GENERIC_HINT };</div>
+        <div class="diff-ctx diff-line">}</div>
+      </div>
+    </div>
+
+    <h3>2. Updated card render</h3>
+    <div class="diff">
+      <div class="diff-header">components/dashboard/calculation-failure-modal.tsx — card render</div>
+      <div class="diff-body">
+        <div class="diff-rem diff-line">            const message = sanitizeError(item.errorMessage);</div>
+        <div class="diff-add diff-line">            const { label, hint } = sanitizeError(item.errorMessage);</div>
+        <div class="diff-ctx diff-line">            // ...</div>
+        <div class="diff-rem diff-line">                &lt;p className="text-destructive text-xs"&gt;{message}&lt;/p&gt;</div>
+        <div class="diff-add diff-line">                &lt;p className="text-destructive text-xs"&gt;{label}&lt;/p&gt;</div>
+        <div class="diff-add diff-line">                &lt;p className="text-muted-foreground text-xs mt-0.5"&gt;{hint}&lt;/p&gt;</div>
+      </div>
+    </div>
+  </section>
+
+  <!-- TEST PLAN -->
+  <section>
+    <h2><span class="icon">🧪</span> Test Plan</h2>
+    <p style="color:var(--muted);font-size:13px;margin-bottom:16px;">
+      New file: <code>components/dashboard/__tests__/calculation-failure-modal.test.tsx</code><br>
+      Library: <code>vitest</code> + <code>@testing-library/react</code> — consistent with existing test files in this directory.
+    </p>
+
+    <div class="table-wrap">
+      <table>
+        <thead>
+          <tr><th>#</th><th>Test description</th><th>Input <code>errorMessage</code></th><th>Expected</th></tr>
+        </thead>
+        <tbody>
+          <tr><td>1</td><td>Zod missing fields — label</td><td><code>"Missing or invalid inputs: sourceAirVelocity, releaseArea"</code></td><td>label = "Some required fields are incomplete"</td></tr>
+          <tr><td>2</td><td>Zod missing fields — no camelCase leaks</td><td><code>"Missing or invalid inputs: sourceAirVelocity"</code></td><td>does NOT contain "sourceAirVelocity"</td></tr>
+          <tr><td>3</td><td>Zod missing fields — hint</td><td><code>"Missing or invalid inputs: sourceAirVelocity"</code></td><td>hint = "Click to open and review the inputs."</td></tr>
+          <tr><td>4</td><td>formatValidationError wrap — label</td><td><code>"Invalid ambientTemperature for item abc123: Temperature must be a finite number"</code></td><td>label = "A field value is out of valid range"</td></tr>
+          <tr><td>5</td><td>Bare ValidationError range — label</td><td><code>"Temperature must be above absolute zero (0 K). Got 0.00 K"</code></td><td>label = "A field value is out of valid range"</td></tr>
+          <tr><td>6</td><td>Missing area HAC props</td><td><code>"One or more required area HAC properties are undefined."</code></td><td>label = "Missing required area properties"</td></tr>
+          <tr><td>7</td><td>Missing scenario HAC props</td><td><code>"One or more required scenario HAC properties are undefined."</code></td><td>label = "Missing required scenario properties"</td></tr>
+          <tr><td>8</td><td>Scenario not configured</td><td><code>"Scenario HAC data is undefined."</code></td><td>label = "Scenario not configured"</td></tr>
+          <tr><td>9</td><td>Indoor ventilation missing</td><td><code>"Ventilation inefficiency and Xcrit required for indoor calculation."</code></td><td>label = "Missing indoor ventilation inputs"</td></tr>
+          <tr><td>10</td><td>Validation failed generic</td><td><code>"Validation failed: Invalid input data"</code></td><td>label = "Some required fields are incomplete"</td></tr>
+          <tr><td>11</td><td>HTTP server error — label</td><td><code>"HTTP 500"</code></td><td>label = "Server error"</td></tr>
+          <tr><td>12</td><td>HTTP server error — hint</td><td><code>"HTTP 500"</code></td><td>hint = "Try re-running the calculation."</td></tr>
+          <tr><td>13</td><td>Unsupported hacType → fallback</td><td><code>"Unsupported hacType: BS EN 60079-10-1 - Pressurised gas"</code></td><td>label = "An unexpected error occurred"</td></tr>
+          <tr><td>14</td><td>Unsupported ventDir → fallback</td><td><code>"Unsupported ventilationDirection: Sideways"</code></td><td>label = "An unexpected error occurred"</td></tr>
+          <tr><td>15</td><td>Unknown string → fallback</td><td><code>"some completely unknown internal string"</code></td><td>label = "An unexpected error occurred", hint = "Try re-running or check inputs."</td></tr>
+          <tr><td>16</td><td>Navigation click</td><td>any</td><td><code>onNavigateToItem</code> called with correct index</td></tr>
+          <tr><td>17</td><td>Plural item count</td><td>2 items</td><td>"2 items failed to calculate"</td></tr>
+          <tr><td>18</td><td>Singular item count</td><td>1 item</td><td>"1 item failed to calculate"</td></tr>
+        </tbody>
+      </table>
+    </div>
+
+    <h3>Verification Commands</h3>
+    <pre><span class="cmt"># Run new tests only</span>
+npx vitest run components/dashboard/__tests__/calculation-failure-modal.test.tsx
+
+<span class="cmt"># Type check</span>
+npm run typecheck
+
+<span class="cmt"># Lint (must be clean)</span>
+npm run lint
+
+<span class="cmt"># Full suite (pre-push gate)</span>
+npm test</pre>
+
+    <div class="card">
+      <div style="font-size:12px;color:var(--muted);margin-bottom:6px;">Manual verification</div>
+      <div style="font-size:13px;color:var(--text);">Open a study with a scenario missing required inputs. The failure modal should show a short red label on line 1 and a grey hint on line 2. No camelCase variable names should be visible in any card.</div>
+    </div>
+  </section>
+
+  <!-- RISKS & EDGE CASES -->
+  <section>
+    <h2><span class="icon">⚠️</span> Risks &amp; Edge Cases</h2>
+
+    <div class="card-grid">
+      <div class="card">
+        <div style="display:flex;align-items:center;gap:8px;margin-bottom:8px;"><span class="risk-low">LOW</span><strong>Fallback for future errors</strong></div>
+        <div style="font-size:13px;color:var(--muted);">Any new error thrown by the calculation engine that isn't matched will show the generic fallback. This is intentional and safe — no internals leak. New patterns can be added to <code>sanitizeError</code> as needed.</div>
+      </div>
+      <div class="card">
+        <div style="display:flex;align-items:center;gap:8px;margin-bottom:8px;"><span class="risk-low">LOW</span><strong>Truncated Zod field lists</strong></div>
+        <div style="font-size:13px;color:var(--muted);">Messages like <code>"Missing or invalid inputs: f1, f2 and 3 more."</code> still match pattern #1 since the regex checks only the prefix. Works correctly.</div>
+      </div>
+      <div class="card">
+        <div style="display:flex;align-items:center;gap:8px;margin-bottom:8px;"><span class="risk-low">LOW</span><strong>run-hac-helpers.ts path</strong></div>
+        <div style="font-size:13px;color:var(--muted);">Confirmed to write into the same <code>calculationState.error.message</code> field as the batch API route. Same sanitization path applies.</div>
+      </div>
+      <div class="card">
+        <div style="display:flex;align-items:center;gap:8px;margin-bottom:8px;"><span class="risk-low">LOW</span><strong>No schema / Firestore migration</strong></div>
+        <div style="font-size:13px;color:var(--muted);">The raw error strings remain stored in Firestore unchanged. Only the display layer changes. Items recalculate naturally; no migration needed.</div>
+      </div>
+      <div class="card">
+        <div style="display:flex;align-items:center;gap:8px;margin-bottom:8px;"><span class="risk-low">LOW</span><strong>Pattern ordering</strong></div>
+        <div style="font-size:13px;color:var(--muted);">Patterns 1 and 2 are the broadest new additions; placing them first avoids any ambiguity with later patterns. No known overlap with existing patterns.</div>
+      </div>
+      <div class="card">
+        <div style="display:flex;align-items:center;gap:8px;margin-bottom:8px;"><span class="risk-low">LOW</span><strong>No backwards compatibility concerns</strong></div>
+        <div style="font-size:13px;color:var(--muted);"><code>sanitizeError</code> is a private, non-exported function. Its return type change has no external consumers.</div>
+      </div>
+    </div>
+  </section>
+
+  <!-- OPEN DECISIONS -->
+  <section>
+    <h2><span class="icon">✅</span> Open Decisions — All Resolved</h2>
+    <div class="table-wrap">
+      <table>
+        <thead><tr><th>Decision</th><th>Resolution</th></tr></thead>
+        <tbody>
+          <tr><td>Show or strip Zod field names?</td><td>Strip entirely — "Some required fields are incomplete"</td></tr>
+          <tr><td>Map ValidationError to display labels?</td><td>No — generic "A field value is out of valid range"</td></tr>
+          <tr><td>Fallback for unknown errors?</td><td>Fixed safe string — "An unexpected error occurred"</td></tr>
+          <tr><td>Unsupported hacType/ventDir?</td><td>Remove branches — fall through to generic fallback</td></tr>
+          <tr><td>Hint wording?</td><td>"Click to open and review the inputs." universally; "Try re-running the calculation." for server errors</td></tr>
+          <tr><td>Sanitize at API or at display?</td><td>Display only (modal) — API messages kept verbose for server-side logging</td></tr>
+        </tbody>
+      </table>
+    </div>
+  </section>
+
+  <!-- COMMIT -->
+  <section>
+    <h2><span class="icon">🚀</span> Commit Strategy</h2>
+    <div class="card">
+      <div style="font-size:12px;color:var(--muted);margin-bottom:8px;">Single commit after all quality gates pass</div>
+      <pre style="margin:0;background:#0c0f1a;padding:14px 16px;border-radius:6px;border:1px solid var(--border);"><span class="str">fix(modal): split error into label+hint, sanitize all internal strings</span>
+
+- sanitizeError now returns { label, hint } instead of a plain string
+- camelCase field names from Zod/ValidationError are never shown
+- unsupported-* branches removed; fall through to generic fallback
+- return-raw fallback replaced with safe generic message
+- new test file covering all 18 cases</pre>
+      <div style="margin-top:12px;font-size:13px;color:var(--muted);">Do not push until <code>npm test</code>, <code>npm run typecheck</code>, and <code>npm run lint</code> all pass. No WIP commits needed — the change is self-contained.</div>
+    </div>
+  </section>
+
+  <footer>
+    <span>Plan generated 2026-05-29 · feat/auto-hac-calculation</span>
+    <a href="index.html" style="color:var(--accent)">← Back to index</a>
+  </footer>
+
+</div>
+</body>
+</html>
