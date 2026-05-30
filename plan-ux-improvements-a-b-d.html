@@ -1,0 +1,971 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8"/>
+<meta name="viewport" content="width=device-width, initial-scale=1.0"/>
+<title>Plan: UX Improvements A, B & D — nEXus</title>
+<style>
+  :root {
+    --bg: #0f1117;
+    --surface: #1a1d27;
+    --surface2: #1e2235;
+    --border: #2e3352;
+    --accent: #6c8ef7;
+    --accent2: #a78bfa;
+    --green: #34d399;
+    --amber: #fbbf24;
+    --red: #f87171;
+    --blue: #60a5fa;
+    --text: #e2e8f0;
+    --muted: #94a3b8;
+    --code-bg: #141720;
+    --risk-low: #134e3a;
+    --risk-low-text: #34d399;
+    --risk-med: #451a03;
+    --risk-med-text: #fbbf24;
+    --risk-high: #450a0a;
+    --risk-high-text: #f87171;
+  }
+  * { box-sizing: border-box; margin: 0; padding: 0; }
+  body { background: var(--bg); color: var(--text); font-family: 'Segoe UI', system-ui, sans-serif; font-size: 14px; line-height: 1.6; }
+  .page { max-width: 960px; margin: 0 auto; padding: 40px 20px 80px; }
+
+  /* Typography */
+  h1 { font-size: 28px; font-weight: 700; color: var(--accent); margin-bottom: 6px; }
+  h2 { font-size: 18px; font-weight: 700; color: var(--text); margin: 36px 0 14px; border-bottom: 1px solid var(--border); padding-bottom: 8px; }
+  h3 { font-size: 15px; font-weight: 600; color: var(--accent2); margin: 20px 0 8px; }
+  h4 { font-size: 13px; font-weight: 600; color: var(--muted); margin: 14px 0 6px; text-transform: uppercase; letter-spacing: .05em; }
+  p { color: var(--muted); margin-bottom: 10px; }
+  strong { color: var(--text); }
+  code { background: var(--code-bg); color: var(--blue); padding: 2px 6px; border-radius: 4px; font-family: 'Cascadia Code', 'Fira Code', monospace; font-size: 12px; border: 1px solid var(--border); }
+  pre { background: var(--code-bg); border: 1px solid var(--border); border-radius: 8px; padding: 16px; overflow-x: auto; margin: 10px 0; }
+  pre code { background: none; border: none; padding: 0; font-size: 12px; color: var(--text); line-height: 1.7; }
+  a { color: var(--accent); text-decoration: none; }
+  a:hover { text-decoration: underline; }
+
+  /* Layout */
+  .meta { color: var(--muted); font-size: 12px; margin-bottom: 32px; }
+  .meta span { margin-right: 18px; }
+  .tag { display: inline-block; font-size: 11px; border-radius: 10px; padding: 2px 8px; font-weight: 600; }
+  .tag-plan { background: #1a2a4a; color: var(--accent); }
+  .tag-feature { background: #1a3a1a; color: var(--green); }
+  .tag-test { background: #2a1a3a; color: var(--accent2); }
+
+  /* Cards */
+  .card { background: var(--surface); border: 1px solid var(--border); border-radius: 10px; padding: 18px 20px; margin-bottom: 14px; }
+  .card-grid { display: grid; grid-template-columns: repeat(auto-fit, minmax(280px, 1fr)); gap: 14px; margin-bottom: 14px; }
+  .card-title { font-weight: 700; font-size: 14px; margin-bottom: 6px; display: flex; align-items: center; gap: 8px; }
+  .card-icon { font-size: 20px; }
+
+  /* Feature headers */
+  .feature-header { display: flex; align-items: flex-start; gap: 14px; margin-bottom: 12px; }
+  .feature-badge { font-size: 22px; flex-shrink: 0; margin-top: 2px; }
+
+  /* Tables */
+  table { width: 100%; border-collapse: collapse; margin: 10px 0; font-size: 13px; }
+  th { background: var(--surface2); color: var(--muted); padding: 8px 12px; text-align: left; font-weight: 600; border-bottom: 1px solid var(--border); }
+  td { padding: 8px 12px; border-bottom: 1px solid #1e2235; vertical-align: top; }
+  tr:last-child td { border-bottom: none; }
+  tr:hover td { background: #1c1f2e; }
+
+  /* Risk badges */
+  .risk { display: inline-block; font-size: 11px; padding: 2px 8px; border-radius: 6px; font-weight: 700; }
+  .risk-low { background: var(--risk-low); color: var(--risk-low-text); }
+  .risk-med { background: var(--risk-med); color: var(--risk-med-text); }
+  .risk-high { background: var(--risk-high); color: var(--risk-high-text); }
+
+  /* Checklist */
+  .checklist { list-style: none; display: flex; flex-direction: column; gap: 6px; }
+  .checklist li { display: flex; gap: 10px; align-items: flex-start; color: var(--muted); }
+  .checklist li::before { content: "☐"; color: var(--border); flex-shrink: 0; margin-top: 1px; }
+  .checklist li.done::before { content: "✓"; color: var(--green); }
+
+  /* Phase/step blocks */
+  .phase { border-left: 3px solid var(--accent); padding-left: 16px; margin-bottom: 24px; }
+  .phase-title { font-size: 15px; font-weight: 700; color: var(--accent); margin-bottom: 4px; }
+  .phase-desc { color: var(--muted); font-size: 13px; margin-bottom: 12px; }
+
+  .step { background: var(--surface); border: 1px solid var(--border); border-radius: 8px; padding: 14px 16px; margin-bottom: 10px; }
+  .step-title { font-weight: 600; font-size: 13px; color: var(--text); margin-bottom: 6px; }
+  .step-file { font-family: monospace; font-size: 11px; color: var(--accent2); margin-bottom: 8px; }
+
+  /* Parallel badge */
+  .parallel-badge { display: inline-block; font-size: 10px; padding: 1px 7px; border-radius: 8px; background: #1a3a2a; color: var(--green); font-weight: 700; margin-left: 8px; vertical-align: middle; }
+  .seq-badge { display: inline-block; font-size: 10px; padding: 1px 7px; border-radius: 8px; background: #1a2a4a; color: var(--accent); font-weight: 700; margin-left: 8px; vertical-align: middle; }
+
+  /* Diff blocks */
+  .diff { background: var(--code-bg); border: 1px solid var(--border); border-radius: 8px; overflow: hidden; margin: 10px 0; }
+  .diff-header { background: #1a1d30; color: var(--muted); font-size: 11px; font-family: monospace; padding: 6px 14px; border-bottom: 1px solid var(--border); }
+  .diff-body { padding: 12px 14px; font-family: 'Cascadia Code', monospace; font-size: 12px; line-height: 1.7; white-space: pre; overflow-x: auto; }
+  .diff-add { color: #86efac; }
+  .diff-rem { color: #fca5a5; }
+  .diff-ctx { color: #64748b; }
+
+  /* Flow diagram */
+  .flow { background: var(--code-bg); border: 1px solid var(--border); border-radius: 8px; padding: 20px; text-align: center; margin: 14px 0; font-family: monospace; font-size: 12px; }
+  .flow-node { display: inline-block; background: var(--surface2); border: 1px solid var(--border); border-radius: 6px; padding: 8px 16px; color: var(--text); margin: 4px; }
+  .flow-node.accent { border-color: var(--accent); color: var(--accent); }
+  .flow-node.green { border-color: var(--green); color: var(--green); }
+  .flow-node.amber { border-color: var(--amber); color: var(--amber); }
+  .flow-node.red { border-color: var(--red); color: var(--red); }
+  .flow-row { display: flex; flex-wrap: wrap; justify-content: center; align-items: center; gap: 6px; margin: 6px 0; }
+  .flow-arrow { color: var(--muted); font-size: 18px; padding: 0 4px; }
+
+  /* Affected files table */
+  .file-path { font-family: monospace; font-size: 12px; color: var(--blue); }
+  .file-change { font-size: 12px; color: var(--muted); }
+
+  /* Note box */
+  .note { background: #1a2035; border: 1px solid #2a3a5a; border-radius: 8px; padding: 12px 16px; margin: 10px 0; }
+  .note-title { font-size: 12px; font-weight: 700; color: var(--accent); margin-bottom: 4px; }
+  .warn { background: #2a1a0a; border-color: #4a3010; }
+  .warn .note-title { color: var(--amber); }
+  .danger { background: #2a0a0a; border-color: #4a1010; }
+  .danger .note-title { color: var(--red); }
+
+  /* Before/after */
+  .ba-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 12px; margin: 10px 0; }
+  .ba-box { background: var(--code-bg); border: 1px solid var(--border); border-radius: 8px; padding: 14px; }
+  .ba-label { font-size: 11px; font-weight: 700; text-transform: uppercase; letter-spacing: .05em; margin-bottom: 8px; }
+  .ba-before .ba-label { color: var(--red); }
+  .ba-after .ba-label { color: var(--green); }
+  .ba-text { font-size: 12px; color: var(--muted); line-height: 1.6; }
+
+  /* Summary pills */
+  .pill-row { display: flex; flex-wrap: wrap; gap: 8px; margin: 10px 0; }
+  .pill { display: inline-flex; align-items: center; gap: 6px; font-size: 12px; padding: 4px 10px; border-radius: 20px; background: var(--surface2); border: 1px solid var(--border); color: var(--text); }
+
+  @media (max-width: 640px) {
+    .ba-grid { grid-template-columns: 1fr; }
+    .card-grid { grid-template-columns: 1fr; }
+    h1 { font-size: 22px; }
+    h2 { font-size: 16px; }
+  }
+</style>
+</head>
+<body>
+<div class="page">
+
+  <!-- Header -->
+  <h1>UX Improvements: A, B &amp; D</h1>
+  <div class="meta">
+    <span><strong>Branch:</strong> feat/auto-hac-calculation</span>
+    <span><strong>Date:</strong> 2026-05-30</span>
+    <span><span class="tag tag-plan">Plan</span></span>
+    <span><span class="tag tag-feature">3 features</span></span>
+    <span><span class="tag tag-test">7 files affected</span></span>
+  </div>
+
+  <!-- Executive Summary -->
+  <h2>Executive Summary</h2>
+  <div class="card">
+    <p>This plan covers three UX improvements to the auto-HAC calculation system introduced in <code>feat/auto-hac-calculation</code>. All three are additive — they do not change existing calculation logic, data schemas, or Firestore persistence.</p>
+    <div class="card-grid" style="margin-top:14px">
+      <div class="card">
+        <div class="card-title"><span class="card-icon">🕐</span> A — Last Calculated Timestamp</div>
+        <p>When the status indicator is in-sync, expand the tooltip to show a live relative timestamp ("last calculated: 2 min ago") derived from the most-recent <code>completedAt</code> across all succeeded calculable items. Updates every 60 s.</p>
+      </div>
+      <div class="card">
+        <div class="card-title"><span class="card-icon">🔁</span> B — Retry Button</div>
+        <p>Add a "Retry all" button to the <code>CalculationFailureModal</code> footer. Triggers a full-study recalculation (same as load trigger). Modal stays open with live updates; auto-closes when all failures resolve. Also adds an explicit "Close" button.</p>
+      </div>
+      <div class="card">
+        <div class="card-title"><span class="card-icon">🌫️</span> D — Scroll Fade</div>
+        <p>Apply a CSS <code>mask-image</code> bottom-fade to the failure modal's scrollable list so users can discover there is more content below. Pure CSS — always visible, no JS overhead.</p>
+      </div>
+    </div>
+  </div>
+
+  <!-- Decisions Recorded -->
+  <h2>Decisions Recorded</h2>
+  <table>
+    <thead><tr><th>Q</th><th>Decision</th><th>Rationale</th></tr></thead>
+    <tbody>
+      <tr><td>A1</td><td>Timestamp in tooltip only (not sidebar header)</td><td>Keeps header compact; tooltip is sufficient for the use-case</td></tr>
+      <tr><td>A2</td><td>Show timestamp only in <strong>in-sync</strong> state</td><td>Other states have more urgent primary information</td></tr>
+      <tr><td>A3</td><td>Most-recent <code>completedAt</code> across all succeeded calculable items</td><td>Matches intuition of "when did something last run"</td></tr>
+      <tr><td>A4</td><td>Relative time with 60 s interval ticker; keep relative for all durations</td><td>Most informative; native JS, no dependency needed</td></tr>
+      <tr><td>B1</td><td>Full-study retry (same as load trigger, <code>runCalculation(true)</code>)</td><td>Simple; no new plan logic; input-error items will re-fail visibly</td></tr>
+      <tr><td>B2</td><td>Modal stays open; list updates live; auto-closes when empty</td><td>Gives clear feedback on resolution progress</td></tr>
+      <tr><td>B3</td><td>Retry button in modal footer; also adds explicit Close button</td><td>Discoverable; addresses missing Close button (earlier review finding)</td></tr>
+      <tr><td>B4</td><td>Button label: "Retry all"</td><td>Clear scope</td></tr>
+      <tr><td>B5</td><td>No change to per-item hint text</td><td>Existing hints are already accurate; over-engineering</td></tr>
+      <tr><td>D1</td><td>Always-on CSS bottom fade</td><td>Zero JS; cosmetically fine for short lists</td></tr>
+      <tr><td>D2</td><td>Bottom fade only</td><td>Top fade adds scroll-event complexity for minimal gain</td></tr>
+      <tr><td>E1</td><td>Auto-close modal when failedItems drains to zero</td><td>Clean; green ✓ indicator signals resolution</td></tr>
+      <tr><td>E2</td><td>Add <code>useRef</code> concurrency guard in <code>runCalculation</code></td><td>Belt-and-braces; cheap; prevents edge-case double-call</td></tr>
+      <tr><td>E3a</td><td>Hide timestamp line when no <code>completedAt</code> exists</td><td>No misleading "never" text; out-of-sync state already covers this</td></tr>
+      <tr><td>E3b</td><td>Keep relative format for all durations (no threshold to absolute)</td><td>Simpler; "3 hours ago" is perfectly readable</td></tr>
+      <tr><td>E4</td><td>Two <code>&lt;p&gt;</code> tags in tooltip JSX; plain string for <code>aria-label</code></td><td>Clear visual hierarchy; screen readers get full label</td></tr>
+    </tbody>
+  </table>
+
+  <!-- Affected Files -->
+  <h2>Affected Files</h2>
+  <table>
+    <thead><tr><th>File</th><th>Change type</th><th>Feature(s)</th></tr></thead>
+    <tbody>
+      <tr>
+        <td><span class="file-path">lib/utils.ts</span></td>
+        <td><span class="file-change">Add utility function</span></td>
+        <td><span class="tag tag-feature">A</span></td>
+      </tr>
+      <tr>
+        <td><span class="file-path">components/dashboard/use-auto-calculation.ts</span></td>
+        <td><span class="file-change">Add <code>retryAll</code>, concurrency guard, update interface</span></td>
+        <td><span class="tag tag-feature">B</span></td>
+      </tr>
+      <tr>
+        <td><span class="file-path">components/dashboard/calculation-failure-modal.tsx</span></td>
+        <td><span class="file-change">Add footer, auto-close effect, scroll fade, new props</span></td>
+        <td><span class="tag tag-feature">B</span> <span class="tag tag-feature">D</span></td>
+      </tr>
+      <tr>
+        <td><span class="file-path">components/dashboard/hac-status-indicator.tsx</span></td>
+        <td><span class="file-change">Timestamp useMemo + ticker, JSX tooltip split, pass retry props</span></td>
+        <td><span class="tag tag-feature">A</span> <span class="tag tag-feature">B</span></td>
+      </tr>
+      <tr>
+        <td><span class="file-path">components/dashboard/__tests__/hac-status-indicator.test.tsx</span></td>
+        <td><span class="file-change">Fix broken pending-tooltip test, add timestamp + retry tests</span></td>
+        <td><span class="tag tag-test">Tests</span></td>
+      </tr>
+      <tr>
+        <td><span class="file-path">components/dashboard/__tests__/calculation-failure-modal.test.tsx</span></td>
+        <td><span class="file-change">Add retry button, auto-close, scroll-fade tests</span></td>
+        <td><span class="tag tag-test">Tests</span></td>
+      </tr>
+      <tr>
+        <td><span class="file-path">components/dashboard/__tests__/use-auto-calculation.test.tsx</span></td>
+        <td><span class="file-change">Add <code>retryAll</code> and concurrency guard tests</span></td>
+        <td><span class="tag tag-test">Tests</span></td>
+      </tr>
+    </tbody>
+  </table>
+
+  <div class="note warn">
+    <div class="note-title">⚠ Pre-existing broken test</div>
+    <p>Fix #6 (committed earlier in this branch) changed the pending-state tooltip from <code>"Calculating…"</code> to <code>"Changes detected — recalculating soon…"</code>. The test in <code>hac-status-indicator.test.tsx</code> at the <em>pending state</em> case still expects <code>"Calculating…"</code> and will fail on <code>npm test</code>. This must be corrected as part of the test commit for feature A.</p>
+  </div>
+
+  <!-- Architecture & Data Flow -->
+  <h2>Architecture &amp; Data Flow</h2>
+
+  <h3>Current data flow (relevant paths)</h3>
+  <div class="flow">
+    <div class="flow-row">
+      <span class="flow-node accent">useAutoCalculation</span>
+      <span class="flow-arrow">→</span>
+      <span class="flow-node">AutoCalculationState<br><small>{ isPending, isCalculating, failedItems }</small></span>
+    </div>
+    <div class="flow-row">
+      <span class="flow-arrow">↓ passed to</span>
+    </div>
+    <div class="flow-row">
+      <span class="flow-node">HacStatusIndicator</span>
+      <span class="flow-arrow">→ opens</span>
+      <span class="flow-node red">CalculationFailureModal<br><small>{ open, onClose, failedItems, onNavigateToItem }</small></span>
+    </div>
+    <div class="flow-row">
+      <span style="color:var(--muted);font-size:12px">completedAt lives on individual studyItems — no study-level rollup</span>
+    </div>
+  </div>
+
+  <h3>After this plan</h3>
+  <div class="flow">
+    <div class="flow-row">
+      <span class="flow-node accent">useAutoCalculation</span>
+      <span class="flow-arrow">→</span>
+      <span class="flow-node green">AutoCalculationState<br><small>{ isPending, isCalculating, failedItems, <strong>retryAll</strong> }</small></span>
+    </div>
+    <div class="flow-row">
+      <span class="flow-arrow">↓ passed to</span>
+    </div>
+    <div class="flow-row">
+      <span class="flow-node green">HacStatusIndicator<br><small>+ timestamp useMemo<br>+ 60s ticker</small></span>
+      <span class="flow-arrow">→ opens</span>
+      <span class="flow-node green">CalculationFailureModal<br><small>{ …existing…, <strong>onRetry</strong>, <strong>isRetrying</strong> }<br>+ scroll fade<br>+ Close + Retry all footer<br>+ auto-close effect</small></span>
+    </div>
+    <div class="flow-row">
+      <span class="flow-arrow">↑ reads</span>
+    </div>
+    <div class="flow-row">
+      <span class="flow-node amber">studyItems[*].calculationState.completedAt<br><small>max across succeeded items → formatRelativeTime()</small></span>
+    </div>
+  </div>
+
+  <!-- Before / After -->
+  <h2>Before &amp; After Behaviour</h2>
+
+  <h3>A — Timestamp</h3>
+  <div class="ba-grid">
+    <div class="ba-box ba-before">
+      <div class="ba-label">Before</div>
+      <div class="ba-text">In-sync tooltip: <code>"All results up to date"</code> (single line, no time context)</div>
+    </div>
+    <div class="ba-box ba-after">
+      <div class="ba-label">After</div>
+      <div class="ba-text">In-sync tooltip:<br><strong>All results up to date</strong><br><small style="color:#94a3b8">Last calculated: 2 min ago</small><br><br>aria-label: <code>"All results up to date, last calculated 2 min ago"</code><br>Updates every 60 s. Hidden if no calculation has ever succeeded.</div>
+    </div>
+  </div>
+
+  <h3>B — Retry</h3>
+  <div class="ba-grid">
+    <div class="ba-box ba-before">
+      <div class="ba-label">Before</div>
+      <div class="ba-text">CalculationFailureModal has no footer. Closing requires the X button. If items failed due to a transient network error, user must edit-then-undo a field to trigger a recalculation.</div>
+    </div>
+    <div class="ba-box ba-after">
+      <div class="ba-label">After</div>
+      <div class="ba-text">Modal footer: <strong>[Close]&nbsp;&nbsp;[Retry all]</strong>. Retry fires full-study recalc immediately. Items disappear from the list as they resolve. When list empties, modal auto-closes. Retry button shows spinner + "Retrying…" while active.</div>
+    </div>
+  </div>
+
+  <h3>D — Scroll Fade</h3>
+  <div class="ba-grid">
+    <div class="ba-box ba-before">
+      <div class="ba-label">Before</div>
+      <div class="ba-text">Scrollable list abruptly cuts off at <code>max-h-96</code>. No affordance that more items are below.</div>
+    </div>
+    <div class="ba-box ba-after">
+      <div class="ba-label">After</div>
+      <div class="ba-text">Bottom of list fades to transparent via CSS <code>mask-image</code>. Always visible (cosmetically acceptable for short lists). Pure CSS, no JS overhead.</div>
+    </div>
+  </div>
+
+  <!-- Implementation Plan -->
+  <h2>Implementation Plan</h2>
+
+  <div class="note">
+    <div class="note-title">Parallelism strategy</div>
+    <p><strong>Batch 1</strong> (fully independent — different files): <code>lib/utils.ts</code> + <code>use-auto-calculation.ts</code>. These can be implemented and committed in parallel by separate subagents.<br>
+    <strong>Batch 2</strong> (after Batch 1 commits land): <code>calculation-failure-modal.tsx</code> + <code>hac-status-indicator.tsx</code>. These are also independent of each other (different files) and can run in parallel, but both depend on the <code>AutoCalculationState</code> interface change and <code>formatRelativeTime</code> from Batch 1.<br>
+    <strong>Batch 3</strong> (after Batch 2): Test files. Can be done in parallel (3 different test files, all different from source files).</p>
+  </div>
+
+  <!-- Phase 1 -->
+  <div class="phase">
+    <div class="phase-title">Phase 1 — Foundation <span class="parallel-badge">PARALLEL</span></div>
+    <div class="phase-desc">Two independent additions. Commit separately. Can run in parallel.</div>
+
+    <div class="step">
+      <div class="step-title">Step 1A — Add <code>formatRelativeTime</code> to lib/utils.ts <span class="parallel-badge">PARALLEL</span></div>
+      <div class="step-file">lib/utils.ts</div>
+      <p>Append a new exported utility function after the existing <code>formatDateTime</code>. Takes a <code>timestampMs: number</code> and an optional <code>now = Date.now()</code> (the <code>now</code> parameter makes it fully testable without mocking <code>Date.now()</code>).</p>
+      <pre><code class="diff-add">export function formatRelativeTime(timestampMs: number, now = Date.now()): string {
+  const diffMs = Math.max(0, now - timestampMs);
+  const mins = Math.floor(diffMs / 60_000);
+  if (mins &lt; 1) return "just now";
+  if (mins === 1) return "1 minute ago";
+  if (mins &lt; 60) return `${mins} minutes ago`;
+  const hours = Math.floor(mins / 60);
+  if (hours === 1) return "1 hour ago";
+  if (hours &lt; 24) return `${hours} hours ago`;
+  const days = Math.floor(hours / 24);
+  return days === 1 ? "yesterday" : `${days} days ago`;
+}</code></pre>
+      <p><strong>Commit message:</strong> <code>feat(utils): add formatRelativeTime helper for live timestamps</code></p>
+    </div>
+
+    <div class="step">
+      <div class="step-title">Step 1B — Expose <code>retryAll</code> and add concurrency guard <span class="parallel-badge">PARALLEL</span></div>
+      <div class="step-file">components/dashboard/use-auto-calculation.ts</div>
+      <p><strong>1. Update <code>AutoCalculationState</code> interface</strong> — add <code>retryAll: () =&gt; void</code>:</p>
+      <pre><code>export interface AutoCalculationState {
+  isPending: boolean;
+  isCalculating: boolean;
+  failedItems: FailedItemInfo[];
+<span class="diff-add">  retryAll: () =&gt; void;</span>
+}</code></pre>
+      <p><strong>2. Add <code>isRunningRef</code> to <code>useAutoCalculation</code></strong> (alongside existing refs, near line 63):</p>
+      <pre><code><span class="diff-add">const isRunningRef = useRef(false);</span></code></pre>
+      <p><strong>3. Guard entry in <code>runCalculation</code></strong> (first lines of the <code>useCallback</code> body):</p>
+      <pre><code>const runCalculation = useCallback(async (isLoadTrigger: boolean) =&gt; {
+<span class="diff-add">  if (isRunningRef.current) return;</span>
+<span class="diff-add">  isRunningRef.current = true;</span>
+  const provider = dataProviderRef.current;
+  // ... existing logic ...
+  <span class="diff-ctx">// existing finally block — append:</span>
+  } finally {
+    setIsCalculating(false);
+<span class="diff-add">    isRunningRef.current = false;</span>
+  }
+}, []);</code></pre>
+      <p><strong>4. Add <code>retryAll</code> useCallback</strong> (after <code>runCalculation</code> definition):</p>
+      <pre><code><span class="diff-add">const retryAll = useCallback(() => {
+  // Clear any pending debounce so retry fires immediately
+  if (debounceTimerRef.current) {
+    clearTimeout(debounceTimerRef.current);
+    debounceTimerRef.current = null;
+    setIsPending(false);
+  }
+  void runCalculation(true);
+}, [runCalculation]);</span></code></pre>
+      <p><strong>5. Return <code>retryAll</code> from the hook</strong> (last line):</p>
+      <pre><code>return { isPending, isCalculating, failedItems<span class="diff-add">, retryAll</span> };</code></pre>
+      <p><strong>Commit message:</strong> <code>feat(auto-calc): expose retryAll and add isRunningRef concurrency guard</code></p>
+    </div>
+  </div>
+
+  <!-- Phase 2 -->
+  <div class="phase">
+    <div class="phase-title">Phase 2 — Component Changes <span class="parallel-badge">PARALLEL</span></div>
+    <div class="phase-desc">After both Phase 1 commits land. Two independent files — run in parallel.</div>
+
+    <div class="step">
+      <div class="step-title">Step 2A — Update CalculationFailureModal <span class="parallel-badge">PARALLEL</span></div>
+      <div class="step-file">components/dashboard/calculation-failure-modal.tsx</div>
+
+      <h4>2A-1: Extend props interface</h4>
+      <pre><code>interface Props {
+  open: boolean;
+  onClose: () =&gt; void;
+  failedItems: FailedItemInfo[];
+  onNavigateToItem: (index: string) =&gt; void;
+<span class="diff-add">  onRetry?: () =&gt; void;
+  isRetrying?: boolean;</span>
+}</code></pre>
+
+      <h4>2A-2: Update function signature</h4>
+      <pre><code>export function CalculationFailureModal({
+  open, onClose, failedItems, onNavigateToItem<span class="diff-add">, onRetry, isRetrying</span>
+}: Props) {</code></pre>
+
+      <h4>2A-3: Add auto-close effect</h4>
+      <p>Insert immediately after the function opens its body (before the return statement):</p>
+      <pre><code><span class="diff-add">useEffect(() =&gt; {
+  if (open &amp;&amp; failedItems.length === 0) {
+    onClose();
+  }
+}, [open, failedItems.length, onClose]);</span></code></pre>
+      <p>Add <code>useEffect</code> to the React import.</p>
+
+      <h4>2A-4: Add scroll fade to the list container</h4>
+      <p>Change the <code>className</code> on the scrollable <code>&lt;div&gt;</code> (currently <code>"flex flex-col gap-2 max-h-96 overflow-y-auto"</code>):</p>
+      <pre><code><span class="diff-rem">className="flex flex-col gap-2 max-h-96 overflow-y-auto"</span>
+<span class="diff-add">className="flex flex-col gap-2 max-h-96 overflow-y-auto [mask-image:linear-gradient(to_bottom,black_80%,transparent)]"</span></code></pre>
+
+      <h4>2A-5: Add DialogFooter</h4>
+      <p>Add imports: <code>DialogFooter</code> from <code>"@/components/ui/dialog"</code>, <code>Button</code> from <code>"@/components/ui/button"</code>, <code>Loader2</code> from <code>"lucide-react"</code>. Insert footer after the scrollable list, inside <code>&lt;DialogContent&gt;</code>:</p>
+      <pre><code><span class="diff-add">&lt;DialogFooter className="gap-2 pt-2"&gt;
+  &lt;Button variant="outline" size="sm" onClick={onClose}&gt;
+    Close
+  &lt;/Button&gt;
+  {onRetry &amp;&amp; (
+    &lt;Button
+      variant="outline"
+      size="sm"
+      onClick={onRetry}
+      disabled={isRetrying}
+    &gt;
+      {isRetrying ? (
+        &lt;&gt;
+          &lt;Loader2 className="h-3.5 w-3.5 animate-spin mr-1.5" aria-hidden="true" /&gt;
+          Retrying…
+        &lt;/&gt;
+      ) : (
+        "Retry all"
+      )}
+    &lt;/Button&gt;
+  )}
+&lt;/DialogFooter&gt;</span></code></pre>
+
+      <p><strong>Commit message:</strong> <code>feat(failure-modal): add Close/Retry footer, scroll fade, and auto-close on resolution</code></p>
+    </div>
+
+    <div class="step">
+      <div class="step-title">Step 2B — Update HacStatusIndicator <span class="parallel-badge">PARALLEL</span></div>
+      <div class="step-file">components/dashboard/hac-status-indicator.tsx</div>
+
+      <h4>2B-1: Update imports</h4>
+      <p>Add to imports from React: <code>useState, useEffect</code> (already has <code>useMemo, useState</code>). Add from lucide-react: nothing new needed. Add from <code>@/lib/utils</code>: <code>formatRelativeTime</code>. Add from <code>@/lib/calculation-versioning</code>: <code>isCalculableItemType</code>.</p>
+
+      <h4>2B-2: Add 60-second ticker</h4>
+      <p>Insert after the existing <code>useState</code> calls:</p>
+      <pre><code><span class="diff-add">const [now, setNow] = useState&lt;number&gt;(() =&gt; Date.now());
+useEffect(() =&gt; {
+  const timer = setInterval(() =&gt; setNow(Date.now()), 60_000);
+  return () =&gt; clearInterval(timer);
+}, []);</span></code></pre>
+
+      <h4>2B-3: Compute most-recent completedAt</h4>
+      <p>Insert after the existing <code>syncStatus</code> useMemo:</p>
+      <pre><code><span class="diff-add">const lastCalculatedMs = useMemo(() =&gt; {
+  if (displayState !== "in-sync") return null;
+  let mostRecent: number | null = null;
+  for (const item of Object.values(studyItems)) {
+    if (!isCalculableItemType(item.type)) continue;
+    const cs = item.calculationState;
+    if (cs?.status !== "succeeded" || !cs.completedAt) continue;
+    const t = new Date(cs.completedAt).getTime();
+    if (mostRecent === null || t &gt; mostRecent) mostRecent = t;
+  }
+  return mostRecent;
+}, [displayState, studyItems]);</span></code></pre>
+      <div class="note warn">
+        <div class="note-title">⚠ Dependency order</div>
+        <p><code>lastCalculatedMs</code> depends on <code>displayState</code>, which is computed just above it in the file. Ensure this <code>useMemo</code> is placed <em>after</em> the <code>displayState</code> constant declaration.</p>
+      </div>
+
+      <h4>2B-4: Split tooltip for in-sync state</h4>
+      <p>The current <code>tooltipText</code> is a plain string used for both <code>aria-label</code> and <code>&lt;TooltipContent&gt;</code>. For the in-sync state with a timestamp, we need a separate <code>aria-label</code> string and JSX content for the tooltip. Introduce a new <code>tooltipContent</code> variable alongside <code>tooltipText</code>:</p>
+      <pre><code><span class="diff-ctx">// Keep existing tooltipText — but update the in-sync branch:</span>
+const relativeTime = lastCalculatedMs !== null
+  ? formatRelativeTime(lastCalculatedMs, now)
+  : null;
+
+const tooltipText =
+  displayState === "disabled" ? "No study loaded"
+  : displayState === "pending" ? "Changes detected — recalculating soon…"
+  : displayState === "calculating" ? "Calculating…"
+  : displayState === "in-sync"
+<span class="diff-rem">    ? "All results up to date"</span>
+<span class="diff-add">    ? relativeTime
+        ? `All results up to date, last calculated ${relativeTime}`
+        : "All results up to date"</span>
+  : displayState === "failed"
+    ? `${failedItems.length} calculation failure${failedItems.length === 1 ? "" : "s"} — click for details`
+  : "Results out of date — calculating automatically";
+
+<span class="diff-add">// JSX content for in-sync tooltip (two-line layout)
+const inSyncTooltipContent = displayState === "in-sync" &amp;&amp; relativeTime ? (
+  &lt;div&gt;
+    &lt;p&gt;All results up to date&lt;/p&gt;
+    &lt;p className="text-xs text-muted-foreground mt-0.5"&gt;Last calculated: {relativeTime}&lt;/p&gt;
+  &lt;/div&gt;
+) : null;</span></code></pre>
+
+      <h4>2B-5: Use JSX tooltip content for in-sync state</h4>
+      <p>Change the <code>&lt;TooltipContent&gt;</code> to use <code>inSyncTooltipContent</code> when available:</p>
+      <pre><code><span class="diff-rem">&lt;TooltipContent side="bottom" className="max-w-xs"&gt;{tooltipText}&lt;/TooltipContent&gt;</span>
+<span class="diff-add">&lt;TooltipContent side="bottom" className="max-w-xs"&gt;
+  {inSyncTooltipContent ?? tooltipText}
+&lt;/TooltipContent&gt;</span></code></pre>
+
+      <h4>2B-6: Pass retry props to CalculationFailureModal</h4>
+      <p>Inside the <code>&lt;CalculationFailureModal&gt;</code> usage (near end of component):</p>
+      <pre><code>&lt;CalculationFailureModal
+  open={isModalOpen}
+  onClose={() =&gt; setIsModalOpen(false)}
+  failedItems={failedItems}
+  onNavigateToItem={(index) =&gt; {
+    dataProvider.onSelectItems([index]);
+    setRequestedFormTab("hac");
+    setIsModalOpen(false);
+  }}
+<span class="diff-add">  onRetry={autoCalcState.retryAll}
+  isRetrying={autoCalcState.isCalculating || autoCalcState.isPending}</span>
+/&gt;</code></pre>
+
+      <p><strong>Commit message:</strong> <code>feat(hac-status): show last-calculated timestamp in in-sync tooltip and wire retry</code></p>
+    </div>
+  </div>
+
+  <!-- Phase 3 -->
+  <div class="phase">
+    <div class="phase-title">Phase 3 — Tests <span class="parallel-badge">PARALLEL</span></div>
+    <div class="phase-desc">After Phase 2 commits land. Three test files — all independent — can run in parallel.</div>
+
+    <div class="step">
+      <div class="step-title">Step 3A — hac-status-indicator.test.tsx <span class="parallel-badge">PARALLEL</span></div>
+      <div class="step-file">components/dashboard/__tests__/hac-status-indicator.test.tsx</div>
+
+      <h4>3A-1: Fix broken pending-state test (from fix #6)</h4>
+      <pre><code><span class="diff-rem">const trigger = screen.getByRole("img", { name: "Calculating…" });</span>
+<span class="diff-add">const trigger = screen.getByRole("img", { name: "Changes detected — recalculating soon…" });</span></code></pre>
+
+      <h4>3A-2: Update <code>makeCalcState</code> helper to include <code>retryAll</code></h4>
+      <pre><code>function makeCalcState(overrides: Partial&lt;AutoCalculationState&gt; = {}): AutoCalculationState {
+  return {
+    isPending: false,
+    isCalculating: false,
+    failedItems: [],
+<span class="diff-add">    retryAll: vi.fn(),</span>
+    ...overrides,
+  };
+}</code></pre>
+
+      <h4>3A-3: Add new test — timestamp shown when <code>completedAt</code> present (in-sync)</h4>
+      <pre><code>it("shows timestamp line in tooltip when in-sync and completedAt exists", () =&gt; {
+  getSyncStatusLabelMock.mockReturnValue("in-sync");
+  const fiveMinAgo = new Date(Date.now() - 5 * 60_000).toISOString();
+  const provider = {
+    getStudyIndex: () =&gt; "study-1",
+    studyItems: {
+      "study-1": {
+        index: "study-1", information: { name: "S" }, children: ["sc-1"],
+      },
+      "sc-1": {
+        index: "sc-1", type: "scenario",
+        calculationState: { status: "succeeded", completedAt: fiveMinAgo },
+        children: [],
+      },
+    },
+    onSelectItems: vi.fn(),
+  } as unknown as StudyTreeDataProvider;
+
+  render(&lt;HacStatusIndicator dataProvider={provider} autoCalcState={makeCalcState()} /&gt;);
+  // aria-label should contain the relative time
+  const span = screen.getByRole("img");
+  expect(span.getAttribute("aria-label")).toContain("last calculated");
+});</code></pre>
+
+      <h4>3A-4: Add new test — no timestamp line when no <code>completedAt</code></h4>
+      <pre><code>it("aria-label has no timestamp when no succeeded items have completedAt", () =&gt; {
+  getSyncStatusLabelMock.mockReturnValue("in-sync");
+  // makeProvider produces items with no calculationState
+  const provider = makeProvider("study-1");
+  render(&lt;HacStatusIndicator dataProvider={provider} autoCalcState={makeCalcState()} /&gt;);
+  const span = screen.getByRole("img", { name: "All results up to date" });
+  expect(span.getAttribute("aria-label")).toBe("All results up to date");
+});</code></pre>
+
+      <p><strong>Commit message:</strong> <code>test(hac-status): fix pending tooltip assertion, add timestamp tests, update retryAll in helper</code></p>
+    </div>
+
+    <div class="step">
+      <div class="step-title">Step 3B — calculation-failure-modal.test.tsx <span class="parallel-badge">PARALLEL</span></div>
+      <div class="step-file">components/dashboard/__tests__/calculation-failure-modal.test.tsx</div>
+
+      <h4>3B-1: Update <code>renderModal</code> helper to accept new props</h4>
+      <pre><code>function renderModal(
+  items: FailedItemInfo[],
+  onNavigateToItem = vi.fn(),
+<span class="diff-add">  onRetry?: () =&gt; void,
+  isRetrying = false,</span>
+) {
+  render(
+    &lt;CalculationFailureModal
+      open={true}
+      onClose={vi.fn()}
+      failedItems={items}
+      onNavigateToItem={onNavigateToItem}
+<span class="diff-add">      onRetry={onRetry}
+      isRetrying={isRetrying}</span>
+    /&gt;
+  );
+}</code></pre>
+
+      <h4>3B-2: New tests</h4>
+      <pre><code>it("case 19: 'Close' button is always rendered", () =&gt; {
+  renderModal([makeItem()]);
+  expect(screen.getByRole("button", { name: /close/i })).toBeDefined();
+});
+
+it("case 20: 'Retry all' button rendered when onRetry provided", () =&gt; {
+  const onRetry = vi.fn();
+  renderModal([makeItem()], vi.fn(), onRetry);
+  expect(screen.getByRole("button", { name: /retry all/i })).toBeDefined();
+});
+
+it("case 21: 'Retry all' not rendered when onRetry not provided", () =&gt; {
+  renderModal([makeItem()]);
+  expect(screen.queryByRole("button", { name: /retry all/i })).toBeNull();
+});
+
+it("case 22: 'Retry all' is disabled when isRetrying=true", () =&gt; {
+  renderModal([makeItem()], vi.fn(), vi.fn(), true);
+  const btn = screen.getByRole("button", { name: /retry/i });
+  expect(btn.hasAttribute("disabled") || btn.getAttribute("aria-disabled") === "true").toBe(true);
+});
+
+it("case 23: clicking 'Retry all' calls onRetry", () =&gt; {
+  const onRetry = vi.fn();
+  renderModal([makeItem()], vi.fn(), onRetry);
+  fireEvent.click(screen.getByRole("button", { name: /retry all/i }));
+  expect(onRetry).toHaveBeenCalledOnce();
+});
+
+it("case 24: scroll container has mask-image class", () =&gt; {
+  renderModal([makeItem(), makeItem({ index: "sc-2", name: "B" })]);
+  // Find the scrollable div by its overflow class
+  const scrollDiv = document.querySelector(".overflow-y-auto");
+  expect(scrollDiv?.className).toContain("[mask-image:");
+});</code></pre>
+
+      <h4>3B-3: Auto-close test — requires <code>render</code> with mutable props</h4>
+      <pre><code>it("case 25: auto-closes when failedItems drains to zero", () =&gt; {
+  const onClose = vi.fn();
+  const { rerender } = render(
+    &lt;CalculationFailureModal
+      open={true}
+      onClose={onClose}
+      failedItems={[makeItem()]}
+      onNavigateToItem={vi.fn()}
+    /&gt;
+  );
+  expect(onClose).not.toHaveBeenCalled();
+  rerender(
+    &lt;CalculationFailureModal
+      open={true}
+      onClose={onClose}
+      failedItems={[]}
+      onNavigateToItem={vi.fn()}
+    /&gt;
+  );
+  expect(onClose).toHaveBeenCalledOnce();
+});</code></pre>
+
+      <p><strong>Commit message:</strong> <code>test(failure-modal): add retry, auto-close, scroll-fade, and close-button tests</code></p>
+    </div>
+
+    <div class="step">
+      <div class="step-title">Step 3C — use-auto-calculation.test.tsx <span class="parallel-badge">PARALLEL</span></div>
+      <div class="step-file">components/dashboard/__tests__/use-auto-calculation.test.tsx</div>
+
+      <h4>3C-1: Update MockDataProvider type to include <code>setInheritanceCascadeCallback</code></h4>
+      <p>The existing type (line 52–58) does not include <code>setInheritanceCascadeCallback</code> which was added in fix #9. This will cause a TypeScript error if not present.</p>
+      <pre><code>type MockDataProvider = {
+  studyItems: StudyItems;
+  selectedItem: StudyItem;
+  getStudyIndex: () =&gt; string;
+  setTreeItems: (items: StudyItems) =&gt; void;
+  setHacRelevantChangeCallback: (cb: (() =&gt; void) | undefined) =&gt; void;
+<span class="diff-add">  setInheritanceCascadeCallback: (cb: ((count: number) =&gt; void) | undefined) =&gt; void;</span>
+};</code></pre>
+      <p>Also update <code>buildProvider</code> to include a no-op implementation of <code>setInheritanceCascadeCallback</code>.</p>
+
+      <h4>3C-2: New test — <code>retryAll</code> triggers full-study plan</h4>
+      <pre><code>it("retryAll triggers runCalculation with study-root anchor (isLoadTrigger=true)", async () =&gt; {
+  canExportSafelySpy.mockReturnValue({ canExport: true });
+  buildPlanSpy.mockReturnValue([]);
+  const db = {} as Firestore;
+  const provider = buildProvider();
+
+  const { result } = renderHook(() =&gt;
+    useAutoCalculation(provider as unknown as StudyTreeDataProvider, db)
+  );
+
+  buildPlanSpy.mockClear();
+  buildPlanSpy.mockReturnValue(["study-1", "sc-1"]);
+  global.fetch = vi.fn().mockResolvedValue(
+    createFetchResponse({ success: true, updatedItems: {}, calculationStates: {} })
+  );
+
+  await act(async () =&gt; {
+    result.current.retryAll();
+  });
+
+  // Should have been called with study root, not selected item
+  expect(buildPlanSpy).toHaveBeenCalledWith(
+    "study-1",  // studyIndex — not the selectedItem
+    expect.any(Object)
+  );
+});</code></pre>
+
+      <h4>3C-3: New test — concurrency guard prevents double execution</h4>
+      <pre><code>it("concurrent retryAll calls: second call is ignored while first is running", async () =&gt; {
+  canExportSafelySpy.mockReturnValue({ canExport: true });
+  buildPlanSpy.mockReturnValue([]);
+  const db = {} as Firestore;
+  const provider = buildProvider();
+
+  const { result } = renderHook(() =&gt;
+    useAutoCalculation(provider as unknown as StudyTreeDataProvider, db)
+  );
+
+  buildPlanSpy.mockReturnValue(["study-1"]);
+  let resolveFirst: () =&gt; void;
+  global.fetch = vi.fn().mockReturnValueOnce(
+    new Promise(resolve =&gt; { resolveFirst = () =&gt; resolve(createFetchResponse({ success: true, updatedItems: {}, calculationStates: {} })); })
+  );
+
+  act(() =&gt; { result.current.retryAll(); });
+  act(() =&gt; { result.current.retryAll(); }); // second call while first is in flight
+
+  await act(async () =&gt; { resolveFirst!(); });
+
+  // fetch should only have been called once
+  expect(global.fetch).toHaveBeenCalledTimes(1);
+});</code></pre>
+
+      <p><strong>Commit message:</strong> <code>test(auto-calc): add retryAll and concurrency guard tests, fix MockDataProvider type</code></p>
+    </div>
+  </div>
+
+  <!-- Edge Cases -->
+  <h2>Edge Cases &amp; Risks</h2>
+
+  <div class="card-grid">
+    <div class="card">
+      <div class="card-title"><span class="risk risk-med">MED</span> Auto-close race with navigation</div>
+      <p>If the user clicks a failed item to navigate while retry is also running, the item resolves during navigation. The auto-close effect fires after <code>failedItems.length</code> drains. Since the modal is already "effectively dismissed" (the navigation closed it via <code>onNavigateToItem → setIsModalOpen(false)</code>), the auto-close effect calling <code>onClose</code> again is a no-op. <strong>Safe.</strong></p>
+    </div>
+    <div class="card">
+      <div class="card-title"><span class="risk risk-med">MED</span> Timestamp with future completedAt</div>
+      <p><code>formatRelativeTime</code> uses <code>Math.max(0, now - timestampMs)</code> to guard against clock skew yielding a negative diff. Negative diff would show "just now" rather than a confusing negative string.</p>
+    </div>
+    <div class="card">
+      <div class="card-title"><span class="risk risk-low">LOW</span> Ticker memory leak</div>
+      <p>The <code>setInterval</code> in <code>HacStatusIndicator</code> is cleared in the <code>useEffect</code> cleanup. No leak risk.</p>
+    </div>
+    <div class="card">
+      <div class="card-title"><span class="risk risk-low">LOW</span> Scroll fade on very short lists</div>
+      <p>The CSS mask is always visible, even when the modal list doesn't overflow. The fade covers ~20% of the list height. Cosmetically acceptable; no functional impact.</p>
+    </div>
+    <div class="card">
+      <div class="card-title"><span class="risk risk-low">LOW</span> isCalculableItemType scope</div>
+      <p><code>isCalculableItemType</code> returns <code>true</code> for <code>facility | area | equipmentItem | scenario | zone | ignitionSource</code>. Facilities are rollup containers — they may have a <code>completedAt</code> in older data but it would be valid to include. The <code>status === "succeeded"</code> check filters out any invalid states.</p>
+    </div>
+    <div class="card">
+      <div class="card-title"><span class="risk risk-low">LOW</span> Study switch during ticker</div>
+      <p>When the user switches studies, <code>studyItems</code> changes, triggering <code>lastCalculatedMs</code> recomputation. The ticker itself is unconditional (doesn't depend on the study), so it keeps ticking — correct behaviour.</p>
+    </div>
+    <div class="card">
+      <div class="card-title"><span class="risk risk-low">LOW</span> Retry on input-error items</div>
+      <p>If all failures are input-validation errors, clicking "Retry all" will immediately re-fail them. The list updates back to the same state; the modal stays open. The per-item hints ("Click to open and review the inputs") guide the user. Acceptable.</p>
+    </div>
+    <div class="card">
+      <div class="card-title"><span class="risk risk-low">LOW</span> mask-image dark/light mode</div>
+      <p><code>mask-image</code> uses alpha channels (black = opaque, transparent = transparent) — not colour values. Works identically in light and dark themes. No theme-specific logic needed.</p>
+    </div>
+  </div>
+
+  <!-- Existing Behaviour to Preserve -->
+  <h2>Existing Behaviour to Preserve</h2>
+  <ul class="checklist">
+    <li>Clicking a failed item in the modal navigates to the item, opens the HAC tab, and closes the modal — unchanged</li>
+    <li>The <code>isModalOpen</code> state in <code>HacStatusIndicator</code> is only set to <code>true</code> from the failed-state button click — unchanged</li>
+    <li>All non-in-sync tooltip text strings — unchanged (pending, calculating, failed, out-of-sync, disabled)</li>
+    <li><code>runCalculation</code> debounce and load-trigger logic — unchanged; only a guard added at entry</li>
+    <li>Firestore persistence after calculation — unchanged</li>
+    <li>The <code>failedItems</code> derivation (root-cause filter, breadcrumb building) — unchanged</li>
+    <li>All 18 existing <code>CalculationFailureModal</code> test cases — unchanged (new props are optional, so existing <code>renderModal</code> calls still work)</li>
+    <li>All existing <code>HacStatusIndicator</code> test cases (except pending-tooltip fix) — preserved</li>
+  </ul>
+
+  <!-- Reused Functions & Modules -->
+  <h2>Functions &amp; Modules to Reuse</h2>
+  <table>
+    <thead><tr><th>Function / Module</th><th>Location</th><th>Usage</th></tr></thead>
+    <tbody>
+      <tr>
+        <td><code>isCalculableItemType(type)</code></td>
+        <td><code>lib/calculation-versioning.ts:155</code></td>
+        <td>Filter studyItems to calculable types when scanning for <code>completedAt</code></td>
+      </tr>
+      <tr>
+        <td><code>buildCalculationPlan(anchor, studyItems)</code></td>
+        <td><code>lib/bscalculations/build-calculation-plan.ts:32</code></td>
+        <td>Called by <code>runCalculation(true)</code> with <code>studyIndex</code> as anchor — unchanged; retryAll reuses this path</td>
+      </tr>
+      <tr>
+        <td><code>DialogFooter, Button</code></td>
+        <td><code>components/ui/dialog.tsx</code>, <code>components/ui/button.tsx</code></td>
+        <td>Footer container and action buttons in the modal</td>
+      </tr>
+      <tr>
+        <td><code>Loader2</code> (lucide-react)</td>
+        <td>already imported in <code>hac-status-indicator.tsx</code></td>
+        <td>Spinner icon for "Retrying…" state in modal footer button — needs adding to modal imports</td>
+      </tr>
+      <tr>
+        <td><code>canExportSafely</code></td>
+        <td><code>lib/calculation-versioning.ts:854</code></td>
+        <td>Already used in load trigger — no change needed</td>
+      </tr>
+      <tr>
+        <td><code>formatDateTime</code></td>
+        <td><code>lib/utils.ts:21</code></td>
+        <td>Existing pattern for date formatting — new <code>formatRelativeTime</code> follows same file location</td>
+      </tr>
+    </tbody>
+  </table>
+
+  <!-- Test Plan -->
+  <h2>Test &amp; Verification Plan</h2>
+  <h3>Automated</h3>
+  <ul class="checklist">
+    <li>Run <code>npm run typecheck</code> after each commit batch — must pass with zero errors</li>
+    <li>Run <code>npm run lint</code> after each commit batch — zero warnings (CI gate)</li>
+    <li>Run <code>npx vitest run components/dashboard/__tests__/hac-status-indicator.test.tsx</code> — all tests pass including updated pending tooltip test</li>
+    <li>Run <code>npx vitest run components/dashboard/__tests__/calculation-failure-modal.test.tsx</code> — all 25 cases pass</li>
+    <li>Run <code>npx vitest run components/dashboard/__tests__/use-auto-calculation.test.tsx</code> — all tests pass including new retryAll and concurrency tests</li>
+    <li>Run <code>npm test</code> (full suite) — zero failures</li>
+  </ul>
+
+  <h3>Manual smoke tests (in dev server)</h3>
+  <ul class="checklist">
+    <li><strong>Timestamp (A)</strong>: Open a study that has been calculated. Hover the green ✓ indicator — tooltip shows two lines: "All results up to date" and "Last calculated: X ago"</li>
+    <li><strong>Timestamp freshness</strong>: Edit a field (triggers auto-calc). After indicator returns to green, the timestamp should reset to "just now" or "1 minute ago"</li>
+    <li><strong>Timestamp absent</strong>: Open a newly-created study that has never been calculated — indicator is not in-sync, so timestamp line never appears</li>
+    <li><strong>Retry button (B)</strong>: Force failures by entering invalid inputs. Open the failure modal. Click "Retry all" — button shows spinner + "Retrying…", items disappear as they resolve</li>
+    <li><strong>Retry auto-close</strong>: After all failures resolve during retry, modal closes automatically and indicator shows green ✓</li>
+    <li><strong>Close button</strong>: Click Close — modal dismisses without triggering retry</li>
+    <li><strong>Retry disabled during calc</strong>: Click Retry all while it's running — button is disabled/spinner</li>
+    <li><strong>Scroll fade (D)</strong>: Trigger enough failures to overflow the modal list. Verify bottom fade is visible and list is scrollable</li>
+    <li><strong>Scroll fade — short list</strong>: With 1–2 failures, verify fade appears but does not obscure the single item (20% fade at bottom is aesthetically acceptable)</li>
+  </ul>
+
+  <!-- Commit Strategy -->
+  <h2>Commit &amp; Push Strategy</h2>
+  <table>
+    <thead><tr><th>#</th><th>Commit message</th><th>Files</th><th>After</th></tr></thead>
+    <tbody>
+      <tr>
+        <td>1</td>
+        <td><code>feat(utils): add formatRelativeTime helper for live timestamps</code></td>
+        <td><code>lib/utils.ts</code></td>
+        <td>Batch 1 ✓</td>
+      </tr>
+      <tr>
+        <td>2</td>
+        <td><code>feat(auto-calc): expose retryAll and add isRunningRef concurrency guard</code></td>
+        <td><code>use-auto-calculation.ts</code></td>
+        <td>Batch 1 ✓</td>
+      </tr>
+      <tr>
+        <td>3</td>
+        <td><code>feat(failure-modal): add Close/Retry footer, scroll fade, and auto-close on resolution</code></td>
+        <td><code>calculation-failure-modal.tsx</code></td>
+        <td>Batch 2 ✓</td>
+      </tr>
+      <tr>
+        <td>4</td>
+        <td><code>feat(hac-status): show last-calculated timestamp in in-sync tooltip and wire retry</code></td>
+        <td><code>hac-status-indicator.tsx</code></td>
+        <td>Batch 2 ✓</td>
+      </tr>
+      <tr>
+        <td>5</td>
+        <td><code>test(hac-status): fix pending tooltip assertion, add timestamp tests, update retryAll helper</code></td>
+        <td><code>hac-status-indicator.test.tsx</code></td>
+        <td>Batch 3 ✓</td>
+      </tr>
+      <tr>
+        <td>6</td>
+        <td><code>test(failure-modal): add retry, auto-close, scroll-fade, and close-button tests</code></td>
+        <td><code>calculation-failure-modal.test.tsx</code></td>
+        <td>Batch 3 ✓</td>
+      </tr>
+      <tr>
+        <td>7</td>
+        <td><code>test(auto-calc): add retryAll and concurrency guard tests, fix MockDataProvider type</code></td>
+        <td><code>use-auto-calculation.test.tsx</code></td>
+        <td>Batch 3 ✓</td>
+      </tr>
+      <tr>
+        <td>—</td>
+        <td colspan="3"><strong>Push to origin</strong> after all 7 commits pass <code>npm test</code> locally</td>
+      </tr>
+    </tbody>
+  </table>
+
+  <div class="note warn">
+    <div class="note-title">⚠ Run npm test before pushing</div>
+    <p>The pre-push hook runs the full test suite. The broken pending-tooltip test in <code>hac-status-indicator.test.tsx</code> (from fix #6) must be corrected in Batch 3 before pushing. Run <code>npm test</code> locally to confirm zero failures before the push.</p>
+  </div>
+
+  <!-- Open Decisions -->
+  <h2>Open Decisions</h2>
+  <p>None. All clarifying questions have been answered. Implementation can proceed directly.</p>
+
+  <footer style="margin-top:60px; padding-top:20px; border-top:1px solid var(--border); color:var(--muted); font-size:12px; display:flex; justify-content:space-between; flex-wrap:wrap; gap:8px;">
+    <span>Branch: <code>feat/auto-hac-calculation</code></span>
+    <span>Generated by Claude Code · 2026-05-30</span>
+    <span><a href="index.html">← Back to Review Docs</a></span>
+  </footer>
+
+</div>
+</body>
+</html>
