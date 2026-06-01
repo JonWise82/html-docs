@@ -1,0 +1,1201 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1.0" />
+<title>Plan: HAC Result Card — Zone Type &amp; Hazard Distance Promotion</title>
+<style>
+  :root {
+    --bg: #0f1117;
+    --surface: #1a1d27;
+    --surface2: #1e2235;
+    --border: #2e3352;
+    --accent: #6c8ef7;
+    --accent2: #a78bfa;
+    --text: #e2e8f0;
+    --muted: #94a3b8;
+    --green: #34d399;
+    --amber: #fbbf24;
+    --red: #f87171;
+    --zone0: #ff0000;
+    --zone1: #0000ff;
+    --zone2: #00cc00;
+    --neutral: #6b7280;
+    --risk-low: #34d399;
+    --risk-med: #fbbf24;
+    --risk-high: #f87171;
+  }
+  *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+  body {
+    background: var(--bg);
+    color: var(--text);
+    font-family: 'Segoe UI', system-ui, -apple-system, sans-serif;
+    font-size: 14px;
+    line-height: 1.6;
+  }
+  a { color: var(--accent); text-decoration: none; }
+  a:hover { text-decoration: underline; }
+
+  /* Layout */
+  .page { max-width: 960px; margin: 0 auto; padding: 40px 20px 80px; }
+
+  /* Hero */
+  .hero {
+    background: linear-gradient(135deg, #1a1d27 0%, #1e2240 100%);
+    border: 1px solid var(--border);
+    border-radius: 12px;
+    padding: 36px 32px;
+    margin-bottom: 36px;
+    position: relative;
+    overflow: hidden;
+  }
+  .hero::before {
+    content: '';
+    position: absolute;
+    top: 0; left: 0; right: 0; height: 3px;
+    background: linear-gradient(90deg, var(--accent), var(--accent2));
+  }
+  .hero-label {
+    font-size: 11px;
+    font-weight: 600;
+    letter-spacing: 0.1em;
+    text-transform: uppercase;
+    color: var(--accent);
+    margin-bottom: 8px;
+  }
+  .hero h1 { font-size: 24px; font-weight: 700; color: var(--text); margin-bottom: 10px; }
+  .hero-meta {
+    display: flex; flex-wrap: wrap; gap: 16px;
+    color: var(--muted); font-size: 12px; margin-top: 14px;
+  }
+  .hero-meta span { display: flex; align-items: center; gap: 5px; }
+
+  /* Exec summary */
+  .exec-summary {
+    background: var(--surface);
+    border: 1px solid var(--border);
+    border-left: 4px solid var(--accent);
+    border-radius: 8px;
+    padding: 20px 24px;
+    margin-bottom: 32px;
+    font-size: 14px;
+    color: var(--text);
+    line-height: 1.7;
+  }
+
+  /* Section titles */
+  .section-title {
+    font-size: 18px;
+    font-weight: 700;
+    color: var(--text);
+    margin: 36px 0 14px;
+    padding-bottom: 8px;
+    border-bottom: 1px solid var(--border);
+    display: flex;
+    align-items: center;
+    gap: 10px;
+  }
+  .section-title .num {
+    background: var(--accent);
+    color: #fff;
+    font-size: 12px;
+    font-weight: 700;
+    width: 22px; height: 22px;
+    border-radius: 50%;
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    flex-shrink: 0;
+  }
+
+  /* Cards grid */
+  .cards { display: grid; grid-template-columns: repeat(auto-fill, minmax(260px, 1fr)); gap: 14px; margin-bottom: 24px; }
+  .card {
+    background: var(--surface);
+    border: 1px solid var(--border);
+    border-radius: 8px;
+    padding: 16px 18px;
+  }
+  .card-title { font-size: 12px; font-weight: 600; color: var(--muted); text-transform: uppercase; letter-spacing: 0.06em; margin-bottom: 6px; }
+  .card-value { font-size: 20px; font-weight: 700; color: var(--text); }
+  .card-desc { font-size: 12px; color: var(--muted); margin-top: 4px; }
+
+  /* Tables */
+  .tbl-wrap { overflow-x: auto; margin-bottom: 24px; }
+  table { width: 100%; border-collapse: collapse; font-size: 13px; }
+  th {
+    background: var(--surface2);
+    color: var(--muted);
+    font-weight: 600;
+    text-align: left;
+    padding: 10px 14px;
+    border-bottom: 1px solid var(--border);
+    white-space: nowrap;
+  }
+  td { padding: 9px 14px; border-bottom: 1px solid #1e2030; vertical-align: top; }
+  tr:last-child td { border-bottom: none; }
+  tr:hover td { background: #1c1f30; }
+  .mono { font-family: 'Cascadia Code', 'Fira Code', Consolas, monospace; font-size: 12px; color: var(--accent2); }
+
+  /* Badges */
+  .badge {
+    display: inline-flex; align-items: center;
+    padding: 2px 8px;
+    border-radius: 10px;
+    font-size: 11px;
+    font-weight: 600;
+  }
+  .badge-new { background: #1a3a2a; color: var(--green); }
+  .badge-mod { background: #2a2a1a; color: var(--amber); }
+  .badge-read { background: #1a2a3a; color: var(--accent); }
+  .badge-risk-low { background: #1a3a2a; color: var(--risk-low); }
+  .badge-risk-med { background: #3a2a1a; color: var(--risk-med); }
+  .badge-risk-high { background: #3a1a1a; color: var(--risk-high); }
+
+  /* Code blocks */
+  pre {
+    background: #13151f;
+    border: 1px solid var(--border);
+    border-radius: 8px;
+    padding: 16px 18px;
+    overflow-x: auto;
+    font-family: 'Cascadia Code', 'Fira Code', Consolas, monospace;
+    font-size: 12px;
+    color: #c9d1d9;
+    margin-bottom: 16px;
+    line-height: 1.6;
+  }
+  code { font-family: 'Cascadia Code', 'Fira Code', Consolas, monospace; font-size: 12px; color: var(--accent2); background: #1e2235; padding: 1px 5px; border-radius: 3px; }
+
+  /* Phase blocks */
+  .phase {
+    background: var(--surface);
+    border: 1px solid var(--border);
+    border-radius: 8px;
+    margin-bottom: 14px;
+    overflow: hidden;
+  }
+  .phase-header {
+    display: flex;
+    align-items: center;
+    gap: 12px;
+    padding: 14px 18px;
+    background: var(--surface2);
+    border-bottom: 1px solid var(--border);
+  }
+  .phase-num {
+    background: var(--accent);
+    color: #fff;
+    width: 28px; height: 28px;
+    border-radius: 50%;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    font-size: 12px;
+    font-weight: 700;
+    flex-shrink: 0;
+  }
+  .phase-title { font-weight: 700; font-size: 15px; color: var(--text); }
+  .phase-subtitle { font-size: 12px; color: var(--muted); margin-top: 1px; }
+  .phase-parallel {
+    font-size: 11px;
+    background: #1a2a3a;
+    color: var(--accent);
+    border-radius: 10px;
+    padding: 2px 8px;
+    margin-left: auto;
+    flex-shrink: 0;
+  }
+  .phase-body { padding: 14px 18px; }
+
+  /* Task list */
+  .task-list { list-style: none; display: flex; flex-direction: column; gap: 8px; }
+  .task-list li {
+    display: flex;
+    align-items: flex-start;
+    gap: 10px;
+    padding: 10px 14px;
+    background: #13151f;
+    border-radius: 6px;
+    border: 1px solid var(--border);
+    font-size: 13px;
+  }
+  .task-list li .task-id {
+    font-size: 11px;
+    font-weight: 700;
+    color: var(--accent2);
+    white-space: nowrap;
+    margin-top: 1px;
+  }
+  .task-list li .task-body { flex: 1; }
+  .task-list li .task-title { font-weight: 600; color: var(--text); margin-bottom: 2px; }
+  .task-list li .task-detail { color: var(--muted); font-size: 12px; }
+
+  /* Mermaid-style diagram (ASCII art approach) */
+  .flow-diagram {
+    background: #13151f;
+    border: 1px solid var(--border);
+    border-radius: 8px;
+    padding: 20px 24px;
+    margin-bottom: 24px;
+    overflow-x: auto;
+  }
+  .flow-diagram pre {
+    background: transparent;
+    border: none;
+    padding: 0;
+    margin: 0;
+    color: var(--muted);
+    font-size: 12px;
+  }
+  /* Mermaid */
+  .mermaid-box {
+    background: #13151f;
+    border: 1px solid var(--border);
+    border-radius: 8px;
+    padding: 20px;
+    margin-bottom: 24px;
+    font-family: 'Cascadia Code', Consolas, monospace;
+    font-size: 12px;
+    color: var(--muted);
+    white-space: pre;
+    overflow-x: auto;
+  }
+
+  /* Zone preview */
+  .zone-preview {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 10px;
+    margin: 16px 0;
+  }
+  .zone-card-preview {
+    border: 1px solid var(--border);
+    border-radius: 8px;
+    overflow: hidden;
+    width: 200px;
+    font-size: 12px;
+  }
+  .zone-card-header {
+    padding: 8px 12px;
+    font-size: 11px;
+    font-weight: 600;
+    letter-spacing: 0.05em;
+  }
+  .zone-card-body {
+    background: var(--surface);
+    padding: 12px;
+  }
+  .zone-pill {
+    display: inline-block;
+    padding: 3px 10px;
+    border-radius: 12px;
+    font-size: 11px;
+    font-weight: 700;
+    margin-bottom: 8px;
+  }
+  .zone-dist { font-size: 13px; color: var(--text); font-weight: 600; }
+  .zone-dist-label { font-size: 11px; color: var(--muted); margin-bottom: 2px; }
+  .zone-basis { font-size: 10px; color: var(--muted); margin-top: 3px; }
+
+  /* Alert box */
+  .alert {
+    background: var(--surface);
+    border: 1px solid var(--border);
+    border-radius: 8px;
+    padding: 14px 18px;
+    margin-bottom: 16px;
+    font-size: 13px;
+  }
+  .alert-warn { border-left: 4px solid var(--amber); }
+  .alert-info { border-left: 4px solid var(--accent); }
+  .alert-title { font-weight: 700; margin-bottom: 4px; }
+  .alert-warn .alert-title { color: var(--amber); }
+  .alert-info .alert-title { color: var(--accent); }
+
+  /* Checklist */
+  .checklist { list-style: none; display: flex; flex-direction: column; gap: 6px; }
+  .checklist li { display: flex; align-items: flex-start; gap: 8px; font-size: 13px; }
+  .checklist li::before { content: '□'; color: var(--accent); font-size: 14px; flex-shrink: 0; margin-top: 1px; }
+
+  /* Before/after */
+  .ba-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 14px; margin-bottom: 24px; }
+  .ba-box { background: var(--surface); border: 1px solid var(--border); border-radius: 8px; overflow: hidden; }
+  .ba-label { padding: 8px 14px; font-size: 11px; font-weight: 700; text-transform: uppercase; letter-spacing: 0.08em; }
+  .ba-before .ba-label { background: #2a1a1a; color: var(--red); border-bottom: 1px solid var(--border); }
+  .ba-after .ba-label { background: #1a2a1a; color: var(--green); border-bottom: 1px solid var(--border); }
+  .ba-content { padding: 14px; font-size: 12px; color: var(--muted); }
+  .ba-row { display: flex; justify-content: space-between; padding: 4px 0; border-bottom: 1px solid #1e2030; }
+  .ba-row:last-child { border-bottom: none; }
+  .ba-key { color: var(--muted); }
+  .ba-val { color: var(--text); font-weight: 600; }
+
+  /* Divider */
+  .divider { border: none; border-top: 1px solid var(--border); margin: 32px 0; }
+
+  /* Commit strip */
+  .commit-strip { display: flex; flex-direction: column; gap: 10px; margin-bottom: 24px; }
+  .commit-item {
+    display: flex;
+    align-items: flex-start;
+    gap: 14px;
+    background: var(--surface);
+    border: 1px solid var(--border);
+    border-radius: 8px;
+    padding: 12px 16px;
+    font-size: 13px;
+  }
+  .commit-step {
+    background: var(--accent);
+    color: #fff;
+    font-size: 11px;
+    font-weight: 700;
+    padding: 2px 8px;
+    border-radius: 4px;
+    flex-shrink: 0;
+    margin-top: 1px;
+  }
+  .commit-msg { font-family: 'Cascadia Code', Consolas, monospace; font-size: 12px; color: var(--green); }
+  .commit-desc { color: var(--muted); font-size: 12px; margin-top: 3px; }
+
+  @media (max-width: 600px) {
+    .page { padding: 20px 14px 60px; }
+    .hero { padding: 22px 18px; }
+    .hero h1 { font-size: 18px; }
+    .ba-grid { grid-template-columns: 1fr; }
+    .cards { grid-template-columns: 1fr; }
+    .zone-preview { flex-direction: column; }
+  }
+</style>
+</head>
+<body>
+<div class="page">
+
+  <!-- HERO -->
+  <div class="hero">
+    <div class="hero-label">Implementation Plan · nEXus UX Improvements</div>
+    <h1>HAC Result Card — Zone Type &amp; Hazard Distance Promotion</h1>
+    <p style="color: var(--muted); font-size: 13px; margin-top: 8px;">
+      Promote Zone Type and Hazard Distance from buried flat rows to a prominent visual card at the top of Scenario and Zone HAC report panels.
+    </p>
+    <div class="hero-meta">
+      <span>📅 2026-06-01</span>
+      <span>🌿 ux-improvements</span>
+      <span>📁 6 files changed</span>
+      <span>✨ 2 new files</span>
+      <span>🔧 4 modified</span>
+    </div>
+  </div>
+
+  <!-- EXEC SUMMARY -->
+  <div class="exec-summary">
+    <strong style="color: var(--accent);">Executive Summary</strong><br><br>
+    Zone Type and Hazard Distance are the engineering conclusion of the entire BS EN 60079-10 calculation pipeline. Currently they appear as plain label-value rows buried after intermediate outputs (dilution velocities, release characteristics, background concentrations). This plan promotes them to a visually distinct result card that sits at the <em>top</em> of the HAC output section — before any intermediate values — in both Scenario and Zone report panels.
+    <br><br>
+    The card uses a coloured header band and zone-type badge pill(s) matching the existing zone colour scheme (Zone 0 = red, Zone 1 = blue, Zone 2 = green) already used in the HAC Summary Table and 2D/3D geometry plots. Zone colours are simultaneously refactored from three hardcoded copies to a single shared constant. A new <code>HacResultCard</code> component is shared between both report panels. The DOCX export pipeline is unaffected.
+  </div>
+
+  <!-- STATS -->
+  <div class="cards">
+    <div class="card">
+      <div class="card-title">New Files</div>
+      <div class="card-value" style="color: var(--green);">2</div>
+      <div class="card-desc">lib/zone-colours.ts · hac-result-card.tsx</div>
+    </div>
+    <div class="card">
+      <div class="card-title">Modified Files</div>
+      <div class="card-value" style="color: var(--amber);">4</div>
+      <div class="card-desc">scenario-reports · zone-reports · hac-summary-table · plot-2d-canvas</div>
+    </div>
+    <div class="card">
+      <div class="card-title">Parallel Phases</div>
+      <div class="card-value" style="color: var(--accent);">2</div>
+      <div class="card-desc">Phases 2 and 3 each allow parallel subagents</div>
+    </div>
+    <div class="card">
+      <div class="card-title">Test Impact</div>
+      <div class="card-value" style="color: var(--green);">None</div>
+      <div class="card-desc">No existing tests reference report components</div>
+    </div>
+  </div>
+
+  <!-- AFFECTED FILES -->
+  <div class="section-title"><span class="num">1</span> Affected Files</div>
+  <div class="tbl-wrap">
+    <table>
+      <thead>
+        <tr>
+          <th>File</th>
+          <th>Action</th>
+          <th>Change Summary</th>
+          <th>Phase</th>
+        </tr>
+      </thead>
+      <tbody>
+        <tr>
+          <td><span class="mono">lib/zone-colours.ts</span></td>
+          <td><span class="badge badge-new">NEW</span></td>
+          <td>Export <code>ZONE_COLOURS</code> constant: zone0 #ff0000, zone1 #0000ff, zone2 #00ff00</td>
+          <td>1</td>
+        </tr>
+        <tr>
+          <td><span class="mono">components/dashboard/reports/hac-result-card.tsx</span></td>
+          <td><span class="badge badge-new">NEW</span></td>
+          <td>Shared <code>HacResultCard</code> component — coloured card header, badge pills, extrapolation tooltips</td>
+          <td>2</td>
+        </tr>
+        <tr>
+          <td><span class="mono">components/dashboard/reports/hac-summary-table.tsx</span></td>
+          <td><span class="badge badge-mod">MOD</span></td>
+          <td>Lines 142–144: replace local colour consts with import from <code>zone-colours.ts</code></td>
+          <td>2</td>
+        </tr>
+        <tr>
+          <td><span class="mono">components/dashboard/geometry-plot/plot-2d-canvas.tsx</span></td>
+          <td><span class="badge badge-mod">MOD</span></td>
+          <td>Lines 1910–1913: replace inline hex ternary with <code>ZONE_COLOURS</code> import</td>
+          <td>2</td>
+        </tr>
+        <tr>
+          <td><span class="mono">components/dashboard/reports/scenario-reports.tsx</span></td>
+          <td><span class="badge badge-mod">MOD</span></td>
+          <td>Add <code>HacResultCard</code> at top of BS EN and Phast branches; remove Zone Type row (line 500) + 3 distance rows (lines 526–546)</td>
+          <td>3</td>
+        </tr>
+        <tr>
+          <td><span class="mono">components/dashboard/reports/zone-reports.tsx</span></td>
+          <td><span class="badge badge-mod">MOD</span></td>
+          <td>Add <code>HacResultCard</code> at top of all hacType branches (Phast/User-defined, Interior, BS EN main + missing-dispersion case); remove Zone Type + Hazard Distance rows</td>
+          <td>3</td>
+        </tr>
+      </tbody>
+    </table>
+  </div>
+
+  <!-- ARCHITECTURE -->
+  <div class="section-title"><span class="num">2</span> Architecture &amp; Data Flow</div>
+
+  <div class="flow-diagram">
+    <pre>
+FIRESTORE DATA FLOW
+═══════════════════════════════════════════════════════════════
+
+  Scenario.outputs                          Zone.outputs
+  ─────────────────                         ────────────────────
+  zoneType: BSZoneType          ←──────     zoneType: ZoneType
+  jetHazardDistance: number?               hazardDistance: number?
+  heavyGasHazardDistance: ?                hazardDistanceUnit: string?
+  diffusiveHazardDistance: ?               hazardDistanceBasis: string?
+  is*Extrapolated: boolean?
+  is*Clamped: boolean?
+  hazardDistance: number?   (Phast)
+  hazardDistanceUnit: string?
+
+         │                                         │
+         ▼                                         ▼
+  ScenarioHacReport()                     ZoneHacReport()
+         │                                         │
+         ├─── [NEW] HacResultCard ◄────────────────┘
+         │         (shared component)
+         │
+         ├─── intermediate flat rows (unchanged)
+         │
+         └─── HACSummaryTable (unchanged)
+
+ZONE COLOURS (after refactor)
+═══════════════════════════════════════════════════════════════
+
+  lib/zone-colours.ts          (NEW — single source of truth)
+         │
+         ├──► hac-summary-table.tsx     (was: local const zone0Color)
+         ├──► plot-2d-canvas.tsx        (was: inline "#ff0000" ternary)
+         └──► hac-result-card.tsx       (NEW consumer)
+    </pre>
+  </div>
+
+  <!-- VISUAL PREVIEW -->
+  <div class="section-title"><span class="num">3</span> Visual Design Preview</div>
+
+  <p style="color: var(--muted); font-size: 13px; margin-bottom: 16px;">
+    How the result card will appear for the main zone types. The coloured strip is the header band; badges and distances sit side-by-side in the card body.
+  </p>
+
+  <div class="zone-preview">
+
+    <div class="zone-card-preview">
+      <div class="zone-card-header" style="background: #ff0000; color: #fff;">HAC Result</div>
+      <div class="zone-card-body">
+        <div><span class="zone-pill" style="background:#ff0000; color:#fff;">Zone 0</span></div>
+        <div style="border-top: 1px solid #2e3352; padding-top: 8px;">
+          <div class="zone-dist-label">Jet Hazard Distance</div>
+          <div class="zone-dist">3.45 m</div>
+          <div class="zone-dist-label" style="margin-top:6px">Heavy Gas</div>
+          <div class="zone-dist">1.23 m</div>
+          <div class="zone-dist-label" style="margin-top:6px">Diffusive</div>
+          <div class="zone-dist">0.87 m</div>
+        </div>
+      </div>
+    </div>
+
+    <div class="zone-card-preview">
+      <div class="zone-card-header" style="background: #0000ff; color: #fff;">HAC Result</div>
+      <div class="zone-card-body">
+        <div><span class="zone-pill" style="background:#0000ff; color:#fff;">Zone 1</span></div>
+        <div style="border-top: 1px solid #2e3352; padding-top: 8px;">
+          <div class="zone-dist-label">Hazard Distance</div>
+          <div class="zone-dist">2.10 m</div>
+          <div class="zone-basis">BS EN 60079-10-1 (Jet)</div>
+        </div>
+      </div>
+    </div>
+
+    <div class="zone-card-preview">
+      <div class="zone-card-header" style="background: #00aa00; color: #fff;">HAC Result</div>
+      <div class="zone-card-body">
+        <div><span class="zone-pill" style="background:#00cc00; color:#000;">Zone 2</span></div>
+        <div style="border-top: 1px solid #2e3352; padding-top: 8px;">
+          <div class="zone-dist-label">Hazard Distance</div>
+          <div class="zone-dist">Interior</div>
+        </div>
+      </div>
+    </div>
+
+    <div class="zone-card-preview">
+      <div class="zone-card-header" style="background: #ff0000; color: #fff;">HAC Result</div>
+      <div class="zone-card-body">
+        <div style="display:flex; align-items:center; gap:4px; flex-wrap:wrap;">
+          <span class="zone-pill" style="background:#ff0000; color:#fff;">Zone 0</span>
+          <span style="color:#94a3b8; font-size:12px;">+</span>
+          <span class="zone-pill" style="background:#00cc00; color:#000;">Zone 2</span>
+        </div>
+        <div style="border-top: 1px solid #2e3352; padding-top: 8px; margin-top: 8px;">
+          <div class="zone-dist-label">Jet Hazard Distance</div>
+          <div class="zone-dist">4.22 m ⚠️</div>
+        </div>
+      </div>
+    </div>
+
+    <div class="zone-card-preview">
+      <div class="zone-card-header" style="background: #6b7280; color: #fff;">HAC Result</div>
+      <div class="zone-card-body">
+        <div><span class="zone-pill" style="background:#6b7280; color:#fff;">No zone</span></div>
+        <div style="border-top: 1px solid #2e3352; padding-top: 8px;">
+          <div style="font-size: 11px; color: var(--muted);">(no distances applicable)</div>
+        </div>
+      </div>
+    </div>
+
+  </div>
+
+  <div class="alert alert-info" style="margin-top: 8px;">
+    <div class="alert-title">Badge text contrast note</div>
+    Zone 2 (#00ff00) is too bright for white text — the badge text colour must be <code>#000000</code> (dark) for Zone 2 only. All other zone colours and grey use <code>#ffffff</code>.
+  </div>
+
+  <!-- BADGE COLOUR MAPPING TABLE -->
+  <div class="section-title"><span class="num">4</span> Zone Type → Badge Colour Mapping</div>
+
+  <div class="tbl-wrap">
+    <table>
+      <thead>
+        <tr>
+          <th>BSZoneType value</th>
+          <th>Behaviour</th>
+          <th>Badge(s)</th>
+          <th>Header colour</th>
+          <th>Text</th>
+        </tr>
+      </thead>
+      <tbody>
+        <tr>
+          <td><code>"Zone 0"</code></td>
+          <td>Single pill</td>
+          <td><span class="zone-pill" style="background:#ff0000;color:#fff;font-size:10px;">Zone 0</span></td>
+          <td>#ff0000</td>
+          <td>#ffffff</td>
+        </tr>
+        <tr>
+          <td><code>"Zone 1"</code></td>
+          <td>Single pill</td>
+          <td><span class="zone-pill" style="background:#0000ff;color:#fff;font-size:10px;">Zone 1</span></td>
+          <td>#0000ff</td>
+          <td>#ffffff</td>
+        </tr>
+        <tr>
+          <td><code>"Zone 2"</code></td>
+          <td>Single pill</td>
+          <td><span class="zone-pill" style="background:#00cc00;color:#000;font-size:10px;">Zone 2</span></td>
+          <td>#00ff00</td>
+          <td>#000000</td>
+        </tr>
+        <tr>
+          <td><code>"Zone 0 + Zone 2"</code></td>
+          <td>Two adjacent pills</td>
+          <td>
+            <span class="zone-pill" style="background:#ff0000;color:#fff;font-size:10px;">Zone 0</span>
+            <span style="color:#94a3b8;font-size:11px;margin:0 3px;">+</span>
+            <span class="zone-pill" style="background:#00cc00;color:#000;font-size:10px;">Zone 2</span>
+          </td>
+          <td>#ff0000 (highest severity)</td>
+          <td>per pill</td>
+        </tr>
+        <tr>
+          <td><code>"Zone 1 + Zone 2"</code></td>
+          <td>Two adjacent pills</td>
+          <td>
+            <span class="zone-pill" style="background:#0000ff;color:#fff;font-size:10px;">Zone 1</span>
+            <span style="color:#94a3b8;font-size:11px;margin:0 3px;">+</span>
+            <span class="zone-pill" style="background:#00cc00;color:#000;font-size:10px;">Zone 2</span>
+          </td>
+          <td>#0000ff</td>
+          <td>per pill</td>
+        </tr>
+        <tr>
+          <td><code>"Zone 0 + Zone 1"</code></td>
+          <td>Two adjacent pills</td>
+          <td>
+            <span class="zone-pill" style="background:#ff0000;color:#fff;font-size:10px;">Zone 0</span>
+            <span style="color:#94a3b8;font-size:11px;margin:0 3px;">+</span>
+            <span class="zone-pill" style="background:#0000ff;color:#fff;font-size:10px;">Zone 1</span>
+          </td>
+          <td>#ff0000</td>
+          <td>per pill</td>
+        </tr>
+        <tr>
+          <td><code>"Zone 1 or Zone 0"</code></td>
+          <td>Two adjacent pills</td>
+          <td>
+            <span class="zone-pill" style="background:#0000ff;color:#fff;font-size:10px;">Zone 1</span>
+            <span style="color:#94a3b8;font-size:11px;margin:0 3px;">or</span>
+            <span class="zone-pill" style="background:#ff0000;color:#fff;font-size:10px;">Zone 0</span>
+          </td>
+          <td>#ff0000 (highest)</td>
+          <td>per pill</td>
+        </tr>
+        <tr>
+          <td><code>"Zone 1 and even Zone 0"</code></td>
+          <td>Two adjacent pills</td>
+          <td>
+            <span class="zone-pill" style="background:#0000ff;color:#fff;font-size:10px;">Zone 1</span>
+            <span style="color:#94a3b8;font-size:11px;margin:0 3px;">and even</span>
+            <span class="zone-pill" style="background:#ff0000;color:#fff;font-size:10px;">Zone 0</span>
+          </td>
+          <td>#ff0000</td>
+          <td>per pill</td>
+        </tr>
+        <tr>
+          <td><code>"Zone 2 (Zone 0 NE)"</code></td>
+          <td>Single pill — primary colour (I1a)</td>
+          <td><span class="zone-pill" style="background:#00cc00;color:#000;font-size:10px;">Zone 2 (Zone 0 NE)</span></td>
+          <td>#00ff00</td>
+          <td>#000000</td>
+        </tr>
+        <tr>
+          <td><code>"Zone 2 (Zone 1 NE)"</code></td>
+          <td>Single pill — primary colour</td>
+          <td><span class="zone-pill" style="background:#00cc00;color:#000;font-size:10px;">Zone 2 (Zone 1 NE)</span></td>
+          <td>#00ff00</td>
+          <td>#000000</td>
+        </tr>
+        <tr>
+          <td><code>"Zone 1 (Zone 0 NE)"</code></td>
+          <td>Single pill — primary colour</td>
+          <td><span class="zone-pill" style="background:#0000ff;color:#fff;font-size:10px;">Zone 1 (Zone 0 NE)</span></td>
+          <td>#0000ff</td>
+          <td>#ffffff</td>
+        </tr>
+        <tr>
+          <td><code>"No zone"</code></td>
+          <td>Grey neutral pill (C2a)</td>
+          <td><span class="zone-pill" style="background:#6b7280;color:#fff;font-size:10px;">No zone</span></td>
+          <td>#6b7280</td>
+          <td>#ffffff</td>
+        </tr>
+        <tr>
+          <td><code>"Non-hazardous (Zone * NE)"</code></td>
+          <td>Grey neutral pill</td>
+          <td><span class="zone-pill" style="background:#6b7280;color:#fff;font-size:10px;">Non-hazardous (Zone 0 NE)</span></td>
+          <td>#6b7280</td>
+          <td>#ffffff</td>
+        </tr>
+        <tr>
+          <td><code>undefined</code></td>
+          <td>No badge rendered</td>
+          <td>—</td>
+          <td>—</td>
+          <td>—</td>
+        </tr>
+      </tbody>
+    </table>
+  </div>
+
+  <!-- COMPONENT API -->
+  <div class="section-title"><span class="num">5</span> New Component: <code>HacResultCard</code></div>
+
+  <p style="color:var(--muted); font-size:13px; margin-bottom: 12px;">
+    Location: <code>components/dashboard/reports/hac-result-card.tsx</code> — "use client" directive required (uses Radix Tooltip).
+  </p>
+
+  <pre>// Types
+export type HazardDistanceEntry = {
+  label: string;
+  value: number | undefined;
+  displayText?: string;     // e.g. "Interior" — shown when value is undefined
+  unit: string;
+  isExtrapolated?: boolean;
+  isClamped?: boolean;
+  basis?: string;           // sub-label beneath value (zone panels only, J1b)
+};
+
+export type HacResultCardProps = {
+  zoneType?: string;        // BSZoneType or ZoneType; omit → no badge
+  distances: HazardDistanceEntry[]; // empty → badge-only card
+};
+
+// Internal helpers
+function getHeaderColour(zoneType: string | undefined): string
+// Priority: contains "Zone 0" → #ff0000, "Zone 1" → #0000ff, "Zone 2" → #00ff00
+// "No zone" / "Non-hazardous" / undefined → #6b7280
+
+function getBadgeTextColour(hexBg: string): string
+// #00ff00 → "#000000" (Zone 2 only), all others → "#ffffff"
+
+function parseZonePills(zoneType: string): Array&lt;{ label: string; colour: string; connector?: string }&gt;
+// "Zone 0 + Zone 2" → [{label:"Zone 0", colour:"#ff0000"}, {label:"Zone 2", colour:"#00ff00"}]
+// "Zone 1 or Zone 0" → [{label:"Zone 1", colour:"#0000ff", connector:"or"}, {label:"Zone 0", colour:"#ff0000"}]
+// "Zone 1 and even Zone 0" → connector = "and even"
+// Single/NE/No-zone/Non-hazardous → [{label: zoneType, colour: ...}]
+
+// Extrapolation/clamping — reuse same Tooltip pattern as ExtrapolatedReportField
+// (AlertTriangle orange for extrapolated; Info blue for clamped)</pre>
+
+  <!-- BEFORE / AFTER -->
+  <div class="section-title"><span class="num">6</span> Before / After Behaviour</div>
+
+  <p style="color:var(--muted); font-size:13px; margin-bottom: 14px;">Scenario HAC Report — BS EN 60079-10-1</p>
+  <div class="ba-grid">
+    <div class="ba-box ba-before">
+      <div class="ba-label">Before</div>
+      <div class="ba-content">
+        <div class="ba-row"><span class="ba-key">HAC Type</span><span class="ba-val">BS EN…</span></div>
+        <div class="ba-row"><span class="ba-key">Process Pressure</span><span class="ba-val">5.0 bar(a)</span></div>
+        <div class="ba-row"><span class="ba-key">Gas Mass Release Rate</span><span class="ba-val">0.123 kg/s</span></div>
+        <div class="ba-row"><span class="ba-key">Volumetric Release Rate</span><span class="ba-val">0.045 m³/s</span></div>
+        <div class="ba-row"><span class="ba-key">Release Characteristic</span><span class="ba-val">0.032 m³/s</span></div>
+        <div class="ba-row"><span class="ba-key">High Dilution Velocity</span><span class="ba-val">0.5 m/s</span></div>
+        <div class="ba-row"><span class="ba-key">Medium Dilution Velocity</span><span class="ba-val">0.25 m/s</span></div>
+        <div class="ba-row"><span class="ba-key">Dilution Level</span><span class="ba-val">Medium</span></div>
+        <div class="ba-row" style="background:#3a1a1a;"><span class="ba-key">Zone Type ← buried</span><span class="ba-val">Zone 1</span></div>
+        <div class="ba-row" style="background:#3a1a1a;"><span class="ba-key">Jet Hazard Distance ← buried</span><span class="ba-val">3.45 m</span></div>
+        <div class="ba-row" style="background:#3a1a1a;"><span class="ba-key">Heavy Gas Hazard Distance ← buried</span><span class="ba-val">1.23 m</span></div>
+        <div class="ba-row" style="background:#3a1a1a;"><span class="ba-key">Diffusive Hazard Distance ← buried</span><span class="ba-val">0.87 m</span></div>
+      </div>
+    </div>
+    <div class="ba-box ba-after">
+      <div class="ba-label">After</div>
+      <div class="ba-content">
+        <div style="background:#0000ff; border-radius:6px 6px 0 0; padding:6px 10px; font-size:10px; font-weight:700; color:#fff; letter-spacing:0.05em;">HAC RESULT</div>
+        <div style="background:#1a1d27; border:1px solid #0000ff; border-top:none; border-radius:0 0 6px 6px; padding:10px; margin-bottom:10px; display:flex; align-items:center; gap:14px;">
+          <span class="zone-pill" style="background:#0000ff;color:#fff;font-size:11px;flex-shrink:0;">Zone 1</span>
+          <div>
+            <div style="font-size:11px;color:#94a3b8;">Jet: <strong style="color:#e2e8f0;">3.45 m</strong></div>
+            <div style="font-size:11px;color:#94a3b8;">Heavy Gas: <strong style="color:#e2e8f0;">1.23 m</strong></div>
+            <div style="font-size:11px;color:#94a3b8;">Diffusive: <strong style="color:#e2e8f0;">0.87 m</strong></div>
+          </div>
+        </div>
+        <div class="ba-row"><span class="ba-key">Process Pressure</span><span class="ba-val">5.0 bar(a)</span></div>
+        <div class="ba-row"><span class="ba-key">Gas Mass Release Rate</span><span class="ba-val">0.123 kg/s</span></div>
+        <div class="ba-row"><span class="ba-key">Volumetric Release Rate</span><span class="ba-val">0.045 m³/s</span></div>
+        <div class="ba-row"><span class="ba-key">Release Characteristic</span><span class="ba-val">0.032 m³/s</span></div>
+        <div class="ba-row"><span class="ba-key">High Dilution Velocity</span><span class="ba-val">0.5 m/s</span></div>
+        <div class="ba-row"><span class="ba-key">Medium Dilution Velocity</span><span class="ba-val">0.25 m/s</span></div>
+        <div class="ba-row"><span class="ba-key">Dilution Level</span><span class="ba-val">Medium</span></div>
+      </div>
+    </div>
+  </div>
+
+  <p style="color:var(--muted); font-size:13px; margin-bottom: 14px;">Zone HAC Report — BS EN (outdoor)</p>
+  <div class="ba-grid">
+    <div class="ba-box ba-before">
+      <div class="ba-label">Before</div>
+      <div class="ba-content">
+        <div class="ba-row" style="background:#3a1a1a;"><span class="ba-key">Hazard Distance Basis ← separate row</span><span class="ba-val">BS EN (Jet)</span></div>
+        <div class="ba-row" style="background:#3a1a1a;"><span class="ba-key">Zone Type ← plain row</span><span class="ba-val">Zone 2</span></div>
+        <div class="ba-row" style="background:#3a1a1a;"><span class="ba-key">Hazard Distance ← plain row</span><span class="ba-val">2.10 m</span></div>
+        <div class="ba-row"><span class="ba-key">Extend to Grade</span><span class="ba-val">Yes</span></div>
+        <div class="ba-row"><span class="ba-key">Geometry</span><span class="ba-val">Sphere...</span></div>
+      </div>
+    </div>
+    <div class="ba-box ba-after">
+      <div class="ba-label">After</div>
+      <div class="ba-content">
+        <div style="background:#00aa00; border-radius:6px 6px 0 0; padding:6px 10px; font-size:10px; font-weight:700; color:#fff; letter-spacing:0.05em;">HAC RESULT</div>
+        <div style="background:#1a1d27; border:1px solid #00aa00; border-top:none; border-radius:0 0 6px 6px; padding:10px; margin-bottom:10px; display:flex; align-items:center; gap:14px;">
+          <span class="zone-pill" style="background:#00cc00;color:#000;font-size:11px;flex-shrink:0;">Zone 2</span>
+          <div>
+            <div style="font-size:11px;color:#94a3b8;">Hazard Distance</div>
+            <div style="font-size:14px;font-weight:700;color:#e2e8f0;">2.10 m</div>
+            <div style="font-size:10px;color:#94a3b8;">BS EN 60079-10-1 (Jet)</div>
+          </div>
+        </div>
+        <div class="ba-row"><span class="ba-key">Extend to Grade</span><span class="ba-val">Yes</span></div>
+        <div class="ba-row"><span class="ba-key">Geometry</span><span class="ba-val">Sphere...</span></div>
+      </div>
+    </div>
+  </div>
+
+  <!-- IMPLEMENTATION PHASES -->
+  <div class="section-title"><span class="num">7</span> Implementation Phases</div>
+
+  <!-- Phase 1 -->
+  <div class="phase">
+    <div class="phase-header">
+      <div class="phase-num">1</div>
+      <div>
+        <div class="phase-title">Extract Shared Zone Colour Constants</div>
+        <div class="phase-subtitle">Zero-risk refactor — no logic changes</div>
+      </div>
+    </div>
+    <div class="phase-body">
+      <ul class="task-list">
+        <li>
+          <span class="task-id">1A</span>
+          <div class="task-body">
+            <div class="task-title">Create <code>lib/zone-colours.ts</code></div>
+            <div class="task-detail">Export <code>ZONE_COLOURS</code> const with zone0: "#ff0000", zone1: "#0000ff", zone2: "#00ff00". Use <code>as const</code> for type narrowing.</div>
+          </div>
+          <span class="badge badge-new">NEW</span>
+        </li>
+      </ul>
+      <p style="color:var(--muted); font-size:12px; margin-top:10px;">Commit after this phase: <code>refactor: extract zone colours to shared constant</code></p>
+    </div>
+  </div>
+
+  <!-- Phase 2 -->
+  <div class="phase">
+    <div class="phase-header">
+      <div class="phase-num">2</div>
+      <div>
+        <div class="phase-title">Update Consumers + Create HacResultCard</div>
+        <div class="phase-subtitle">Depends on Phase 1. All three tasks can run in parallel.</div>
+      </div>
+      <span class="phase-parallel">⚡ Parallel</span>
+    </div>
+    <div class="phase-body">
+      <ul class="task-list">
+        <li>
+          <span class="task-id">2A</span>
+          <div class="task-body">
+            <div class="task-title">Update <code>hac-summary-table.tsx</code></div>
+            <div class="task-detail">
+              Add <code>import &#123; ZONE_COLOURS &#125; from "@/lib/zone-colours"</code>.<br>
+              Lines 142–144: replace <code>const zone0Color = "#ff0000"</code> etc. with <code>const zone0Color = ZONE_COLOURS.zone0</code>.
+            </div>
+          </div>
+          <span class="badge badge-mod">MOD</span>
+        </li>
+        <li>
+          <span class="task-id">2B</span>
+          <div class="task-body">
+            <div class="task-title">Update <code>plot-2d-canvas.tsx</code></div>
+            <div class="task-detail">
+              Add <code>import &#123; ZONE_COLOURS &#125; from "@/lib/zone-colours"</code>.<br>
+              Lines 1910–1913: replace inline <code>"#ff0000"</code> / <code>"#0000ff"</code> / <code>"#00ff00"</code> in the colour ternary with <code>ZONE_COLOURS.zone0</code> etc.
+            </div>
+          </div>
+          <span class="badge badge-mod">MOD</span>
+        </li>
+        <li>
+          <span class="task-id">2C</span>
+          <div class="task-body">
+            <div class="task-title">Create <code>components/dashboard/reports/hac-result-card.tsx</code></div>
+            <div class="task-detail">
+              "use client" directive. Imports: <code>ZONE_COLOURS</code>, Radix <code>Tooltip</code>/<code>TooltipTrigger</code>/<code>TooltipContent</code>/<code>TooltipProvider</code>, <code>Card</code>/<code>CardContent</code> from <code>@/components/ui/card</code>, <code>roundToSignificantFigures</code> from <code>@/lib/utils</code>, <code>Info</code>/<code>AlertTriangle</code> from <code>lucide-react</code>.<br><br>
+              Internal helpers: <code>getHeaderColour()</code>, <code>getBadgeTextColour()</code>, <code>parseZonePills()</code>.<br><br>
+              Card layout: full-width colour strip div (h-2.5, rounded-t-md) at very top of Card, then CardContent with flex row: badge section (left) + distance section (right, stacked). If distances is empty, render badge section only. If zoneType is undefined and distances is empty, return null.
+            </div>
+          </div>
+          <span class="badge badge-new">NEW</span>
+        </li>
+      </ul>
+      <p style="color:var(--muted); font-size:12px; margin-top:10px;">Commit after this phase: <code>feat: add HacResultCard component for zone type and hazard distance</code></p>
+    </div>
+  </div>
+
+  <!-- Phase 3 -->
+  <div class="phase">
+    <div class="phase-header">
+      <div class="phase-num">3</div>
+      <div>
+        <div class="phase-title">Integrate HacResultCard into Report Components</div>
+        <div class="phase-subtitle">Depends on Phase 2C. Tasks 3A and 3B edit different files — safe to parallelise.</div>
+      </div>
+      <span class="phase-parallel">⚡ Parallel</span>
+    </div>
+    <div class="phase-body">
+      <ul class="task-list">
+        <li>
+          <span class="task-id">3A</span>
+          <div class="task-body">
+            <div class="task-title">Integrate into <code>scenario-reports.tsx</code></div>
+            <div class="task-detail">
+              <strong>BS EN main return (line 432+):</strong> Add <code>&lt;HacResultCard /&gt;</code> before the <code>&lt;div className="flex flex-1 flex-col"&gt;</code>. Build <code>scenarioDistances</code> array: when <code>isHazardDistanceSuppressed</code> → empty; otherwise filter the three distance entries to those with <code>value !== undefined</code>. Remove <code>ReportRowField</code> for Zone Type (line 500) and all three <code>ExtrapolatedReportField</code> distance rows (lines 526–546).<br><br>
+              <strong>Phast early-return (line 234):</strong> Add <code>&lt;HacResultCard /&gt;</code> before the flat-row div. distances = single hazardDistance entry if defined, else []. Remove <code>ReportRowField</code> for Hazard Distance (lines 287–293).
+            </div>
+          </div>
+          <span class="badge badge-mod">MOD</span>
+        </li>
+        <li>
+          <span class="task-id">3B</span>
+          <div class="task-body">
+            <div class="task-title">Integrate into <code>zone-reports.tsx</code></div>
+            <div class="task-detail">
+              <strong>Phast / User-defined branch (line 126):</strong> Card props: <code>zoneType</code> + single distance entry with <code>basis={hazardDistanceBasis}</code>. Remove Zone Type row, Hazard Distance row, and Hazard Distance Basis row (now inside card).<br><br>
+              <strong>Interior branch (line 184):</strong> Card props: <code>zoneType</code> + single entry with <code>value=undefined</code>, <code>displayText="Interior"</code>, <code>basis={hazardDistanceBasis}</code>. Remove Zone Type row.<br><br>
+              <strong>BS EN — isMissingDispersionType case (line 246):</strong> Card props: <code>zoneType</code> + empty distances []. Remove Zone Type row. Existing amber alert stays below card.<br><br>
+              <strong>BS EN — main return (line 304):</strong> Place ONE card instance before all three sub-branches (outdoor / indoor-Xb&lt;Xcrit / indoor-Xb≥Xcrit). Props: <code>zoneType</code> + single distance entry (value=hazardDistance, basis=hazardDistanceBasis) if defined. Remove Zone Type + Hazard Distance rows from all three sub-branches. Remove Hazard Distance Basis rows from all three sub-branches (now in card).
+            </div>
+          </div>
+          <span class="badge badge-mod">MOD</span>
+        </li>
+      </ul>
+      <p style="color:var(--muted); font-size:12px; margin-top:10px;">Commit after this phase: <code>feat: promote zone type and hazard distance to result card in HAC reports</code></p>
+    </div>
+  </div>
+
+  <!-- Phase 4 -->
+  <div class="phase">
+    <div class="phase-header">
+      <div class="phase-num">4</div>
+      <div>
+        <div class="phase-title">Verification</div>
+        <div class="phase-subtitle">Run quality gates, then push to origin</div>
+      </div>
+    </div>
+    <div class="phase-body">
+      <ul class="checklist">
+        <li><code>npm run typecheck</code> — zero errors (strict mode; no <code>any</code>)</li>
+        <li><code>npm run lint</code> — zero warnings (CI blocks on max-warnings: 0)</li>
+        <li><code>npm test</code> — all existing tests pass (no tests reference scenario-reports or zone-reports)</li>
+        <li>Manual smoke: BS EN scenario — card at top, 3 distances, zone badge, intermediate rows below</li>
+        <li>Manual smoke: Phast scenario — card at top, single distance, badge if zoneType defined</li>
+        <li>Manual smoke: Zone (Outdoor BS EN) — card with badge + single distance + basis sub-label</li>
+        <li>Manual smoke: Zone (Interior) — card with badge + "Interior" text</li>
+        <li>Manual smoke: Scenario with Xb ≥ Xcrit — card with badge only; existing Xb alert still visible</li>
+        <li>Manual smoke: BS EN zone with missing dispersion type — badge only; existing amber warning visible</li>
+        <li>Manual smoke: Dark mode — card surface uses Tailwind dark: variants; colours consistent</li>
+        <li>Manual smoke: Compound zone type ("Zone 0 + Zone 2") — two adjacent pills; red header</li>
+        <li>Git push — pre-push hook runs full test suite</li>
+      </ul>
+    </div>
+  </div>
+
+  <!-- PARALLEL DEPENDENCY DIAGRAM -->
+  <div class="section-title"><span class="num">8</span> Task Dependency Diagram</div>
+  <div class="mermaid-box">
+Phase 1 ─── 1A: Create lib/zone-colours.ts
+                    │
+         ┌──────────┼──────────┐
+         ▼          ▼          ▼
+Phase 2  2A          2B         2C
+  hac-summary   plot-2d     HacResultCard
+  -table.tsx    -canvas.tsx   (new)
+  (import)      (import)
+         │          │          │
+         └──────────┴────┬─────┘
+                         ▼
+Phase 3          ┌───────┴───────┐
+                 ▼               ▼
+                3A               3B
+          scenario-reports   zone-reports
+          .tsx integration   .tsx integration
+                 │               │
+                 └───────┬───────┘
+                         ▼
+Phase 4         Verify + Push
+  </div>
+
+  <div class="alert alert-info">
+    <div class="alert-title">Parallelisation recommendation</div>
+    Phase 2 tasks (2A, 2B, 2C) and Phase 3 tasks (3A, 3B) can each be handed to separate subagents simultaneously. Each task operates on a distinct file with no risk of merge conflicts within a phase.
+  </div>
+
+  <!-- EDGE CASES -->
+  <div class="section-title"><span class="num">9</span> Edge Cases &amp; Preserved Behaviour</div>
+
+  <div class="tbl-wrap">
+    <table>
+      <thead>
+        <tr>
+          <th>Scenario</th>
+          <th>Expected behaviour</th>
+          <th>Risk</th>
+        </tr>
+      </thead>
+      <tbody>
+        <tr>
+          <td><code>zoneType === undefined</code> AND <code>distances = []</code></td>
+          <td>Return null — card not rendered. Avoids empty card in edge states.</td>
+          <td><span class="badge badge-risk-low">LOW</span></td>
+        </tr>
+        <tr>
+          <td><code>isHazardDistanceSuppressed</code> (Xb ≥ Xcrit indoor)</td>
+          <td>Card shows zone type badge only (distances=[]). Existing Xb/Xcrit <code>Alert</code> remains below unchanged.</td>
+          <td><span class="badge badge-risk-low">LOW</span></td>
+        </tr>
+        <tr>
+          <td>BS EN Zone — <code>isMissingDispersionType</code></td>
+          <td>Card shows badge only. Existing amber "Distance Basis not selected" alert remains below.</td>
+          <td><span class="badge badge-risk-low">LOW</span></td>
+        </tr>
+        <tr>
+          <td>Interior zone — no numeric distance</td>
+          <td>Card shows badge + "Interior" via <code>displayText</code> on entry. No number needed.</td>
+          <td><span class="badge badge-risk-low">LOW</span></td>
+        </tr>
+        <tr>
+          <td>Zone 2 badge on bright green (#00ff00)</td>
+          <td>Badge text colour must be <code>#000000</code>. Utility <code>getBadgeTextColour()</code> handles this.</td>
+          <td><span class="badge badge-risk-med">MED</span></td>
+        </tr>
+        <tr>
+          <td>Compound zone "Zone 1 or Zone 0" — connector word</td>
+          <td>parseZonePills detects " or " separator; renders "or" as a small plain-text connector between pills.</td>
+          <td><span class="badge badge-risk-low">LOW</span></td>
+        </tr>
+        <tr>
+          <td>"Zone 1 and even Zone 0" — 3-word connector</td>
+          <td>parseZonePills detects " and even " separator; connector shown as "and even".</td>
+          <td><span class="badge badge-risk-low">LOW</span></td>
+        </tr>
+        <tr>
+          <td>Phast scenario — <code>zoneType</code> undefined in outputs</td>
+          <td>Card renders without badge (P1b). Still shows single hazardDistance if defined.</td>
+          <td><span class="badge badge-risk-low">LOW</span></td>
+        </tr>
+        <tr>
+          <td>Extrapolated hazard distance</td>
+          <td>Same Tooltip/AlertTriangle pattern as existing <code>ExtrapolatedReportField</code> — orange icon with tooltip.</td>
+          <td><span class="badge badge-risk-low">LOW</span></td>
+        </tr>
+        <tr>
+          <td>Clamped hazard distance</td>
+          <td>Blue Info icon with tooltip — same as existing component.</td>
+          <td><span class="badge badge-risk-low">LOW</span></td>
+        </tr>
+        <tr>
+          <td>DOCX export</td>
+          <td>Unaffected. Export reads Firestore data directly — does not render React components.</td>
+          <td><span class="badge badge-risk-low">LOW</span></td>
+        </tr>
+        <tr>
+          <td>HACSummaryTable zone colour swatches</td>
+          <td>Refactored to import from zone-colours.ts. SVG hex values unchanged — visual output identical.</td>
+          <td><span class="badge badge-risk-low">LOW</span></td>
+        </tr>
+        <tr>
+          <td>2D geometry plot zone colours</td>
+          <td>Refactored to import ZONE_COLOURS. Same hex values — visual output identical.</td>
+          <td><span class="badge badge-risk-low">LOW</span></td>
+        </tr>
+        <tr>
+          <td>extendToGrade flag</td>
+          <td>Remains as flat ReportRowField below the card (J2b). Not absorbed into card.</td>
+          <td><span class="badge badge-risk-low">LOW</span></td>
+        </tr>
+        <tr>
+          <td>Indoor amber alert (apply distances carefully)</td>
+          <td>Alert JSX stays in its current position in all sub-branches. Card does not swallow it.</td>
+          <td><span class="badge badge-risk-low">LOW</span></td>
+        </tr>
+      </tbody>
+    </table>
+  </div>
+
+  <!-- COMMIT STRATEGY -->
+  <div class="section-title"><span class="num">10</span> Commit &amp; Push Strategy</div>
+  <div class="commit-strip">
+    <div class="commit-item">
+      <span class="commit-step">C1</span>
+      <div>
+        <div class="commit-msg">refactor: extract zone colours to shared constant</div>
+        <div class="commit-desc">After Phase 1 (zone-colours.ts) + Phase 2A &amp; 2B (consumer updates). Zero functional change — safe to commit early.</div>
+      </div>
+    </div>
+    <div class="commit-item">
+      <span class="commit-step">C2</span>
+      <div>
+        <div class="commit-msg">feat: add HacResultCard component for zone type and hazard distance</div>
+        <div class="commit-desc">After Phase 2C. New component is not yet consumed — no visible UI change. Allows review of component in isolation.</div>
+      </div>
+    </div>
+    <div class="commit-item">
+      <span class="commit-step">C3</span>
+      <div>
+        <div class="commit-msg">feat: promote zone type and hazard distance to result card in HAC reports</div>
+        <div class="commit-desc">After Phase 3 (3A + 3B). Integrates card into both scenario and zone report panels.</div>
+      </div>
+    </div>
+    <div class="commit-item" style="border-color: var(--green);">
+      <span class="commit-step" style="background: var(--green); color: #000;">PUSH</span>
+      <div>
+        <div class="commit-msg" style="color: var(--green);">git push origin ux-improvements</div>
+        <div class="commit-desc">After Phase 4 verification (typecheck + lint + test pass). Pre-push hook runs full test suite automatically.</div>
+      </div>
+    </div>
+  </div>
+
+  <!-- IMPORTANT REUSE NOTES -->
+  <div class="section-title"><span class="num">11</span> Reuse &amp; Don't Rebuild</div>
+  <div class="tbl-wrap">
+    <table>
+      <thead>
+        <tr><th>Item to reuse</th><th>Location</th><th>How</th></tr>
+      </thead>
+      <tbody>
+        <tr>
+          <td>Extrapolation/clamping tooltip pattern</td>
+          <td><code>scenario-reports.tsx:52–88</code> (ExtrapolatedReportField)</td>
+          <td>Copy the Tooltip/AlertTriangle/Info icon pattern into HacResultCard distance entry rendering. Do not re-export ExtrapolatedReportField — it's a local function.</td>
+        </tr>
+        <tr>
+          <td><code>roundToSignificantFigures</code></td>
+          <td><code>lib/utils.ts</code></td>
+          <td>Import and call for all numeric distance values (3 sig figs).</td>
+        </tr>
+        <tr>
+          <td><code>Card</code>, <code>CardContent</code></td>
+          <td><code>components/ui/card.tsx</code></td>
+          <td>Use as outer wrapper. Note: Card has <code>min-h-[100px] min-w-[100px]</code> — may want to override min-height for compact zones.</td>
+        </tr>
+        <tr>
+          <td><code>Tooltip</code>, <code>TooltipProvider</code>, etc.</td>
+          <td><code>components/ui/tooltip.tsx</code></td>
+          <td>Import for extrapolation/clamping hover indicators.</td>
+        </tr>
+        <tr>
+          <td>Zone colour logic in <code>createZonePatternSVG</code></td>
+          <td><code>hac-summary-table.tsx:136–139</code></td>
+          <td>Reference for zone detection logic (<code>includes("Zone 0")</code>, priority ordering). Do not import this function — replicate the logic in <code>getHeaderColour()</code>.</td>
+        </tr>
+      </tbody>
+    </table>
+  </div>
+
+  <!-- OPEN DECISIONS -->
+  <div class="section-title"><span class="num">12</span> Open Decisions (None)</div>
+  <div class="alert alert-info">
+    <div class="alert-title">All decisions resolved</div>
+    All 25 clarifying questions (A1 through Q1) have been answered in full before this plan was written. No open decisions remain. The implementer should not need to make any design judgements — this plan is self-contained.
+  </div>
+
+  <hr class="divider">
+
+  <footer style="color: var(--muted); font-size: 12px; display: flex; justify-content: space-between; flex-wrap: wrap; gap: 8px;">
+    <span>Plan: HAC Result Card · nEXus ux-improvements branch</span>
+    <span>Generated 2026-06-01 · Claude Sonnet 4.6</span>
+  </footer>
+
+</div>
+</body>
+</html>
