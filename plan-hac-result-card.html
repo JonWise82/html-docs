@@ -3,7 +3,7 @@
 <head>
 <meta charset="UTF-8" />
 <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-<title>Plan: HAC Result Card — Zone Type &amp; Hazard Distance Promotion</title>
+<title>Plan: HAC Result Card - Zone Type &amp; Hazard Distance Promotion</title>
 <style>
   :root {
     --bg: #0f1117;
@@ -373,39 +373,39 @@
 
   <!-- HERO -->
   <div class="hero">
-    <div class="hero-label">Implementation Plan · nEXus UX Improvements</div>
-    <h1>HAC Result Card — Zone Type &amp; Hazard Distance Promotion</h1>
+    <div class="hero-label">Implementation Plan - nEXus UX Improvements</div>
+    <h1>HAC Result Card - Zone Type &amp; Hazard Distance Promotion</h1>
     <p style="color: var(--muted); font-size: 13px; margin-top: 8px;">
       Promote Zone Type and Hazard Distance from buried flat rows to a prominent visual card at the top of Scenario and Zone HAC report panels.
     </p>
     <div class="hero-meta">
-      <span>📅 2026-06-01</span>
-      <span>🌿 ux-improvements</span>
-      <span>📁 6 files changed</span>
-      <span>✨ 2 new files</span>
-      <span>🔧 4 modified</span>
+      <span>Date: 2026-06-01</span>
+      <span>Branch: ux-improvements</span>
+      <span>Files: 9 changed</span>
+      <span>New: 3 files</span>
+      <span>Modified: 6 files</span>
     </div>
   </div>
 
   <!-- EXEC SUMMARY -->
   <div class="exec-summary">
     <strong style="color: var(--accent);">Executive Summary</strong><br><br>
-    Zone Type and Hazard Distance are the engineering conclusion of the entire BS EN 60079-10 calculation pipeline. Currently they appear as plain label-value rows buried after intermediate outputs (dilution velocities, release characteristics, background concentrations). This plan promotes them to a visually distinct result card that sits at the <em>top</em> of the HAC output section — before any intermediate values — in both Scenario and Zone report panels.
+    Zone Type and Hazard Distance are the engineering conclusion of the entire BS EN 60079-10 calculation pipeline. Currently they appear as plain label-value rows buried after intermediate outputs (dilution velocities, release characteristics, background concentrations). This plan promotes them to a visually distinct result card that sits at the <em>top</em> of the HAC output section - before any intermediate values - in both Scenario and Zone report panels.
     <br><br>
-    The card uses a coloured header band and zone-type badge pill(s) matching the existing zone colour scheme (Zone 0 = red, Zone 1 = blue, Zone 2 = green) already used in the HAC Summary Table and 2D/3D geometry plots. Zone colours are simultaneously refactored from three hardcoded copies to a single shared constant. A new <code>HacResultCard</code> component is shared between both report panels. The DOCX export pipeline is unaffected.
+    The card uses a coloured header band and zone-type badge pill(s) matching the existing zone colour scheme (Zone 0 = red, Zone 1 = blue, Zone 2 = green) already used in the HAC Summary Table and 2D/3D geometry plots. Zone colours are refactored from the currently hardcoded report, 2D plot, 3D buffer, and legend consumers to a single shared constant. A new <code>HacResultCard</code> component is shared between both web report panels. DOCX/XLSX export output is intentionally unchanged for this plan.
   </div>
 
   <!-- STATS -->
   <div class="cards">
     <div class="card">
       <div class="card-title">New Files</div>
-      <div class="card-value" style="color: var(--green);">2</div>
-      <div class="card-desc">lib/zone-colours.ts · hac-result-card.tsx</div>
+      <div class="card-value" style="color: var(--green);">3</div>
+      <div class="card-desc">lib/zone-colours.ts, hac-result-card.tsx, hac-result-card.test.tsx</div>
     </div>
     <div class="card">
       <div class="card-title">Modified Files</div>
-      <div class="card-value" style="color: var(--amber);">4</div>
-      <div class="card-desc">scenario-reports · zone-reports · hac-summary-table · plot-2d-canvas</div>
+      <div class="card-value" style="color: var(--amber);">6</div>
+      <div class="card-desc">scenario, zone, summary, 2D plot, 3D buffer, legend</div>
     </div>
     <div class="card">
       <div class="card-title">Parallel Phases</div>
@@ -414,8 +414,8 @@
     </div>
     <div class="card">
       <div class="card-title">Test Impact</div>
-      <div class="card-value" style="color: var(--green);">None</div>
-      <div class="card-desc">No existing tests reference report components</div>
+      <div class="card-value" style="color: var(--green);">Add</div>
+      <div class="card-desc">Existing report tests must still pass; add focused card tests</div>
     </div>
   </div>
 
@@ -441,25 +441,37 @@
         <tr>
           <td><span class="mono">components/dashboard/reports/hac-result-card.tsx</span></td>
           <td><span class="badge badge-new">NEW</span></td>
-          <td>Shared <code>HacResultCard</code> component — coloured card header, badge pills, extrapolation tooltips</td>
+          <td>Shared <code>HacResultCard</code> component - coloured card header, badge pills, extrapolation tooltips</td>
           <td>2</td>
         </tr>
         <tr>
           <td><span class="mono">components/dashboard/reports/hac-summary-table.tsx</span></td>
           <td><span class="badge badge-mod">MOD</span></td>
-          <td>Lines 142–144: replace local colour consts with import from <code>zone-colours.ts</code></td>
+          <td>Lines 142-144: replace local colour consts with import from <code>zone-colours.ts</code></td>
           <td>2</td>
         </tr>
         <tr>
           <td><span class="mono">components/dashboard/geometry-plot/plot-2d-canvas.tsx</span></td>
           <td><span class="badge badge-mod">MOD</span></td>
-          <td>Lines 1910–1913: replace inline hex ternary with <code>ZONE_COLOURS</code> import</td>
+          <td>Lines 1910-1913: replace inline hex ternary with <code>ZONE_COLOURS</code> import</td>
+          <td>2</td>
+        </tr>
+        <tr>
+          <td><span class="mono">lib/geometry-buffer-utils.ts</span></td>
+          <td><span class="badge badge-mod">MOD</span></td>
+          <td>Update <code>getHACColour()</code> to use <code>ZONE_COLOURS</code>; keep no-zone/non-hazardous neutral precedence</td>
+          <td>2</td>
+        </tr>
+        <tr>
+          <td><span class="mono">components/dashboard/geometry-plot/zone-legend-overlay.tsx</span></td>
+          <td><span class="badge badge-mod">MOD</span></td>
+          <td>Replace legend item hex values with <code>ZONE_COLOURS</code> so legend colours cannot drift from rendered zones</td>
           <td>2</td>
         </tr>
         <tr>
           <td><span class="mono">components/dashboard/reports/scenario-reports.tsx</span></td>
           <td><span class="badge badge-mod">MOD</span></td>
-          <td>Add <code>HacResultCard</code> at top of BS EN and Phast branches; remove Zone Type row (line 500) + 3 distance rows (lines 526–546)</td>
+          <td>Add <code>HacResultCard</code> at top of BS EN and Phast branches; remove Zone Type row (line 500) + 3 distance rows (lines 526-546)</td>
           <td>3</td>
         </tr>
         <tr>
@@ -467,6 +479,12 @@
           <td><span class="badge badge-mod">MOD</span></td>
           <td>Add <code>HacResultCard</code> at top of all hacType branches (Phast/User-defined, Interior, BS EN main + missing-dispersion case); remove Zone Type + Hazard Distance rows</td>
           <td>3</td>
+        </tr>
+        <tr>
+          <td><span class="mono">components/dashboard/reports/__tests__/hac-result-card.test.tsx</span></td>
+          <td><span class="badge badge-new">NEW</span></td>
+          <td>Focused tests for neutral precedence, compound zone parsing, no-zone rendering, and distance flag icons/tooltips</td>
+          <td>4</td>
         </tr>
       </tbody>
     </table>
@@ -478,38 +496,40 @@
   <div class="flow-diagram">
     <pre>
 FIRESTORE DATA FLOW
-═══════════════════════════════════════════════════════════════
+================================================================
 
-  Scenario.outputs                          Zone.outputs
-  ─────────────────                         ────────────────────
-  zoneType: BSZoneType          ←──────     zoneType: ZoneType
+  Scenario.outputs                         Zone.outputs
+  ----------------                         ----------------
+  zoneType: BSZoneType       <----------   zoneType: ZoneType
   jetHazardDistance: number?               hazardDistance: number?
-  heavyGasHazardDistance: ?                hazardDistanceUnit: string?
-  diffusiveHazardDistance: ?               hazardDistanceBasis: string?
+  heavyGasHazardDistance: number?          hazardDistanceUnit: string?
+  diffusiveHazardDistance: number?         hazardDistanceBasis: string?
   is*Extrapolated: boolean?
   is*Clamped: boolean?
   hazardDistance: number?   (Phast)
   hazardDistanceUnit: string?
 
-         │                                         │
-         ▼                                         ▼
+         |                                         |
+         v                                         v
   ScenarioHacReport()                     ZoneHacReport()
-         │                                         │
-         ├─── [NEW] HacResultCard ◄────────────────┘
-         │         (shared component)
-         │
-         ├─── intermediate flat rows (unchanged)
-         │
-         └─── HACSummaryTable (unchanged)
+         |                                         |
+         +------ [NEW] HacResultCard <------------+
+         |       (shared component)
+         |
+         +------ intermediate flat rows (unchanged)
+         |
+         +------ HACSummaryTable (unchanged)
 
 ZONE COLOURS (after refactor)
-═══════════════════════════════════════════════════════════════
+================================================================
 
-  lib/zone-colours.ts          (NEW — single source of truth)
-         │
-         ├──► hac-summary-table.tsx     (was: local const zone0Color)
-         ├──► plot-2d-canvas.tsx        (was: inline "#ff0000" ternary)
-         └──► hac-result-card.tsx       (NEW consumer)
+  lib/zone-colours.ts          (NEW - single source of truth for rendered zone colours)
+         |
+         +--> hac-summary-table.tsx     (was: local const zone0Color)
+         +--> plot-2d-canvas.tsx        (was: inline "#ff0000" ternary)
+         +--> geometry-buffer-utils.ts  (was: hardcoded getHACColour returns)
+         +--> zone-legend-overlay.tsx   (was: hardcoded legend colours)
+         +--> hac-result-card.tsx       (NEW consumer)
     </pre>
   </div>
 
@@ -570,7 +590,7 @@ ZONE COLOURS (after refactor)
         </div>
         <div style="border-top: 1px solid #2e3352; padding-top: 8px; margin-top: 8px;">
           <div class="zone-dist-label">Jet Hazard Distance</div>
-          <div class="zone-dist">4.22 m ⚠️</div>
+          <div class="zone-dist">4.22 m !</div>
         </div>
       </div>
     </div>
@@ -589,11 +609,11 @@ ZONE COLOURS (after refactor)
 
   <div class="alert alert-info" style="margin-top: 8px;">
     <div class="alert-title">Badge text contrast note</div>
-    Zone 2 (#00ff00) is too bright for white text — the badge text colour must be <code>#000000</code> (dark) for Zone 2 only. All other zone colours and grey use <code>#ffffff</code>.
+    Zone 2 (#00ff00) is too bright for white text - the badge text colour must be <code>#000000</code> (dark) for Zone 2 only. All other zone colours and grey use <code>#ffffff</code>.
   </div>
 
   <!-- BADGE COLOUR MAPPING TABLE -->
-  <div class="section-title"><span class="num">4</span> Zone Type → Badge Colour Mapping</div>
+  <div class="section-title"><span class="num">4</span> Zone Type -> Badge Colour Mapping</div>
 
   <div class="tbl-wrap">
     <table>
@@ -685,21 +705,21 @@ ZONE COLOURS (after refactor)
         </tr>
         <tr>
           <td><code>"Zone 2 (Zone 0 NE)"</code></td>
-          <td>Single pill — primary colour (I1a)</td>
+          <td>Single pill - primary colour (I1a)</td>
           <td><span class="zone-pill" style="background:#00cc00;color:#000;font-size:10px;">Zone 2 (Zone 0 NE)</span></td>
           <td>#00ff00</td>
           <td>#000000</td>
         </tr>
         <tr>
           <td><code>"Zone 2 (Zone 1 NE)"</code></td>
-          <td>Single pill — primary colour</td>
+          <td>Single pill - primary colour</td>
           <td><span class="zone-pill" style="background:#00cc00;color:#000;font-size:10px;">Zone 2 (Zone 1 NE)</span></td>
           <td>#00ff00</td>
           <td>#000000</td>
         </tr>
         <tr>
           <td><code>"Zone 1 (Zone 0 NE)"</code></td>
-          <td>Single pill — primary colour</td>
+          <td>Single pill - primary colour</td>
           <td><span class="zone-pill" style="background:#0000ff;color:#fff;font-size:10px;">Zone 1 (Zone 0 NE)</span></td>
           <td>#0000ff</td>
           <td>#ffffff</td>
@@ -721,9 +741,9 @@ ZONE COLOURS (after refactor)
         <tr>
           <td><code>undefined</code></td>
           <td>No badge rendered</td>
-          <td>—</td>
-          <td>—</td>
-          <td>—</td>
+          <td>-</td>
+          <td>-</td>
+          <td>-</td>
         </tr>
       </tbody>
     </table>
@@ -733,46 +753,46 @@ ZONE COLOURS (after refactor)
   <div class="section-title"><span class="num">5</span> New Component: <code>HacResultCard</code></div>
 
   <p style="color:var(--muted); font-size:13px; margin-bottom: 12px;">
-    Location: <code>components/dashboard/reports/hac-result-card.tsx</code> — "use client" directive required (uses Radix Tooltip).
+    Location: <code>components/dashboard/reports/hac-result-card.tsx</code> - "use client" directive required (uses Radix Tooltip).
   </p>
 
   <pre>// Types
 export type HazardDistanceEntry = {
   label: string;
   value: number | undefined;
-  displayText?: string;     // e.g. "Interior" — shown when value is undefined
-  unit: string;
+  displayText?: string;     // e.g. "Interior" - shown when value is undefined
+  unit?: string;          // optional for displayText-only entries such as Interior
   isExtrapolated?: boolean;
   isClamped?: boolean;
   basis?: string;           // sub-label beneath value (zone panels only, J1b)
 };
 
 export type HacResultCardProps = {
-  zoneType?: string;        // BSZoneType or ZoneType; omit → no badge
-  distances: HazardDistanceEntry[]; // empty → badge-only card
+  zoneType?: string;        // BSZoneType or ZoneType; omit -> no badge
+  distances: HazardDistanceEntry[]; // empty -> badge-only card
 };
 
 // Internal helpers
 function getHeaderColour(zoneType: string | undefined): string
-// Priority: contains "Zone 0" → #ff0000, "Zone 1" → #0000ff, "Zone 2" → #00ff00
-// "No zone" / "Non-hazardous" / undefined → #6b7280
+// Precedence: undefined, "-", "No zone", or text containing "Non-hazardous" -> #6b7280 first.
+// Only after neutral checks: contains "Zone 0" -> #ff0000, "Zone 1" -> #0000ff, "Zone 2" -> #00ff00.
 
 function getBadgeTextColour(hexBg: string): string
-// #00ff00 → "#000000" (Zone 2 only), all others → "#ffffff"
+// #00ff00 -> "#000000" (Zone 2 only), all others -> "#ffffff"
 
 function parseZonePills(zoneType: string): Array&lt;{ label: string; colour: string; connector?: string }&gt;
-// "Zone 0 + Zone 2" → [{label:"Zone 0", colour:"#ff0000"}, {label:"Zone 2", colour:"#00ff00"}]
-// "Zone 1 or Zone 0" → [{label:"Zone 1", colour:"#0000ff", connector:"or"}, {label:"Zone 0", colour:"#ff0000"}]
-// "Zone 1 and even Zone 0" → connector = "and even"
-// Single/NE/No-zone/Non-hazardous → [{label: zoneType, colour: ...}]
+// "Zone 0 + Zone 2" -> [{label:"Zone 0", colour:"#ff0000"}, {label:"Zone 2", colour:"#00ff00"}]
+// "Zone 1 or Zone 0" -> [{label:"Zone 1", colour:"#0000ff", connector:"or"}, {label:"Zone 0", colour:"#ff0000"}]
+// "Zone 1 and even Zone 0" -> connector = "and even"
+// Single/NE/No-zone/Non-hazardous -> [{label: zoneType, colour: ...}]. Non-hazardous entries are neutral, not red/blue/green.
 
-// Extrapolation/clamping — reuse same Tooltip pattern as ExtrapolatedReportField
+// Extrapolation/clamping - reuse same Tooltip pattern as ExtrapolatedReportField
 // (AlertTriangle orange for extrapolated; Info blue for clamped)</pre>
 
   <!-- BEFORE / AFTER -->
   <div class="section-title"><span class="num">6</span> Before / After Behaviour</div>
 
-  <p style="color:var(--muted); font-size:13px; margin-bottom: 14px;">Scenario HAC Report — BS EN 60079-10-1</p>
+  <p style="color:var(--muted); font-size:13px; margin-bottom: 14px;">Scenario HAC Report - BS EN 60079-10-1</p>
   <div class="ba-grid">
     <div class="ba-box ba-before">
       <div class="ba-label">Before</div>
@@ -780,15 +800,15 @@ function parseZonePills(zoneType: string): Array&lt;{ label: string; colour: str
         <div class="ba-row"><span class="ba-key">HAC Type</span><span class="ba-val">BS EN…</span></div>
         <div class="ba-row"><span class="ba-key">Process Pressure</span><span class="ba-val">5.0 bar(a)</span></div>
         <div class="ba-row"><span class="ba-key">Gas Mass Release Rate</span><span class="ba-val">0.123 kg/s</span></div>
-        <div class="ba-row"><span class="ba-key">Volumetric Release Rate</span><span class="ba-val">0.045 m³/s</span></div>
-        <div class="ba-row"><span class="ba-key">Release Characteristic</span><span class="ba-val">0.032 m³/s</span></div>
+        <div class="ba-row"><span class="ba-key">Volumetric Release Rate</span><span class="ba-val">0.045 m3/s</span></div>
+        <div class="ba-row"><span class="ba-key">Release Characteristic</span><span class="ba-val">0.032 m3/s</span></div>
         <div class="ba-row"><span class="ba-key">High Dilution Velocity</span><span class="ba-val">0.5 m/s</span></div>
         <div class="ba-row"><span class="ba-key">Medium Dilution Velocity</span><span class="ba-val">0.25 m/s</span></div>
         <div class="ba-row"><span class="ba-key">Dilution Level</span><span class="ba-val">Medium</span></div>
-        <div class="ba-row" style="background:#3a1a1a;"><span class="ba-key">Zone Type ← buried</span><span class="ba-val">Zone 1</span></div>
-        <div class="ba-row" style="background:#3a1a1a;"><span class="ba-key">Jet Hazard Distance ← buried</span><span class="ba-val">3.45 m</span></div>
-        <div class="ba-row" style="background:#3a1a1a;"><span class="ba-key">Heavy Gas Hazard Distance ← buried</span><span class="ba-val">1.23 m</span></div>
-        <div class="ba-row" style="background:#3a1a1a;"><span class="ba-key">Diffusive Hazard Distance ← buried</span><span class="ba-val">0.87 m</span></div>
+        <div class="ba-row" style="background:#3a1a1a;"><span class="ba-key">Zone Type <- buried</span><span class="ba-val">Zone 1</span></div>
+        <div class="ba-row" style="background:#3a1a1a;"><span class="ba-key">Jet Hazard Distance <- buried</span><span class="ba-val">3.45 m</span></div>
+        <div class="ba-row" style="background:#3a1a1a;"><span class="ba-key">Heavy Gas Hazard Distance <- buried</span><span class="ba-val">1.23 m</span></div>
+        <div class="ba-row" style="background:#3a1a1a;"><span class="ba-key">Diffusive Hazard Distance <- buried</span><span class="ba-val">0.87 m</span></div>
       </div>
     </div>
     <div class="ba-box ba-after">
@@ -805,8 +825,8 @@ function parseZonePills(zoneType: string): Array&lt;{ label: string; colour: str
         </div>
         <div class="ba-row"><span class="ba-key">Process Pressure</span><span class="ba-val">5.0 bar(a)</span></div>
         <div class="ba-row"><span class="ba-key">Gas Mass Release Rate</span><span class="ba-val">0.123 kg/s</span></div>
-        <div class="ba-row"><span class="ba-key">Volumetric Release Rate</span><span class="ba-val">0.045 m³/s</span></div>
-        <div class="ba-row"><span class="ba-key">Release Characteristic</span><span class="ba-val">0.032 m³/s</span></div>
+        <div class="ba-row"><span class="ba-key">Volumetric Release Rate</span><span class="ba-val">0.045 m3/s</span></div>
+        <div class="ba-row"><span class="ba-key">Release Characteristic</span><span class="ba-val">0.032 m3/s</span></div>
         <div class="ba-row"><span class="ba-key">High Dilution Velocity</span><span class="ba-val">0.5 m/s</span></div>
         <div class="ba-row"><span class="ba-key">Medium Dilution Velocity</span><span class="ba-val">0.25 m/s</span></div>
         <div class="ba-row"><span class="ba-key">Dilution Level</span><span class="ba-val">Medium</span></div>
@@ -814,14 +834,14 @@ function parseZonePills(zoneType: string): Array&lt;{ label: string; colour: str
     </div>
   </div>
 
-  <p style="color:var(--muted); font-size:13px; margin-bottom: 14px;">Zone HAC Report — BS EN (outdoor)</p>
+  <p style="color:var(--muted); font-size:13px; margin-bottom: 14px;">Zone HAC Report - BS EN (outdoor)</p>
   <div class="ba-grid">
     <div class="ba-box ba-before">
       <div class="ba-label">Before</div>
       <div class="ba-content">
-        <div class="ba-row" style="background:#3a1a1a;"><span class="ba-key">Hazard Distance Basis ← separate row</span><span class="ba-val">BS EN (Jet)</span></div>
-        <div class="ba-row" style="background:#3a1a1a;"><span class="ba-key">Zone Type ← plain row</span><span class="ba-val">Zone 2</span></div>
-        <div class="ba-row" style="background:#3a1a1a;"><span class="ba-key">Hazard Distance ← plain row</span><span class="ba-val">2.10 m</span></div>
+        <div class="ba-row" style="background:#3a1a1a;"><span class="ba-key">Hazard Distance Basis <- separate row</span><span class="ba-val">BS EN (Jet)</span></div>
+        <div class="ba-row" style="background:#3a1a1a;"><span class="ba-key">Zone Type <- plain row</span><span class="ba-val">Zone 2</span></div>
+        <div class="ba-row" style="background:#3a1a1a;"><span class="ba-key">Hazard Distance <- plain row</span><span class="ba-val">2.10 m</span></div>
         <div class="ba-row"><span class="ba-key">Extend to Grade</span><span class="ba-val">Yes</span></div>
         <div class="ba-row"><span class="ba-key">Geometry</span><span class="ba-val">Sphere...</span></div>
       </div>
@@ -853,7 +873,7 @@ function parseZonePills(zoneType: string): Array&lt;{ label: string; colour: str
       <div class="phase-num">1</div>
       <div>
         <div class="phase-title">Extract Shared Zone Colour Constants</div>
-        <div class="phase-subtitle">Zero-risk refactor — no logic changes</div>
+        <div class="phase-subtitle">Zero-risk refactor - no logic changes</div>
       </div>
     </div>
     <div class="phase-body">
@@ -867,7 +887,7 @@ function parseZonePills(zoneType: string): Array&lt;{ label: string; colour: str
           <span class="badge badge-new">NEW</span>
         </li>
       </ul>
-      <p style="color:var(--muted); font-size:12px; margin-top:10px;">Commit after this phase: <code>refactor: extract zone colours to shared constant</code></p>
+      <p style="color:var(--muted); font-size:12px; margin-top:10px;">Do not commit after this phase alone; commit after Phase 2A-2E have updated the consumers.</p>
     </div>
   </div>
 
@@ -877,9 +897,9 @@ function parseZonePills(zoneType: string): Array&lt;{ label: string; colour: str
       <div class="phase-num">2</div>
       <div>
         <div class="phase-title">Update Consumers + Create HacResultCard</div>
-        <div class="phase-subtitle">Depends on Phase 1. All three tasks can run in parallel.</div>
+        <div class="phase-subtitle">Depends on Phase 1. Tasks 2A-2E can run in parallel after Phase 1.</div>
       </div>
-      <span class="phase-parallel">⚡ Parallel</span>
+      <span class="phase-parallel">Parallel</span>
     </div>
     <div class="phase-body">
       <ul class="task-list">
@@ -889,7 +909,7 @@ function parseZonePills(zoneType: string): Array&lt;{ label: string; colour: str
             <div class="task-title">Update <code>hac-summary-table.tsx</code></div>
             <div class="task-detail">
               Add <code>import &#123; ZONE_COLOURS &#125; from "@/lib/zone-colours"</code>.<br>
-              Lines 142–144: replace <code>const zone0Color = "#ff0000"</code> etc. with <code>const zone0Color = ZONE_COLOURS.zone0</code>.
+              Lines 142-144: replace <code>const zone0Color = "#ff0000"</code> etc. with <code>const zone0Color = ZONE_COLOURS.zone0</code>.
             </div>
           </div>
           <span class="badge badge-mod">MOD</span>
@@ -900,8 +920,24 @@ function parseZonePills(zoneType: string): Array&lt;{ label: string; colour: str
             <div class="task-title">Update <code>plot-2d-canvas.tsx</code></div>
             <div class="task-detail">
               Add <code>import &#123; ZONE_COLOURS &#125; from "@/lib/zone-colours"</code>.<br>
-              Lines 1910–1913: replace inline <code>"#ff0000"</code> / <code>"#0000ff"</code> / <code>"#00ff00"</code> in the colour ternary with <code>ZONE_COLOURS.zone0</code> etc.
+              Lines 1910-1913: replace inline <code>"#ff0000"</code> / <code>"#0000ff"</code> / <code>"#00ff00"</code> in the colour ternary with <code>ZONE_COLOURS.zone0</code> etc.
             </div>
+          </div>
+          <span class="badge badge-mod">MOD</span>
+        </li>
+        <li>
+          <span class="task-id">2D</span>
+          <div class="task-body">
+            <div class="task-title">Update <code>geometry-buffer-utils.ts</code></div>
+            <div class="task-detail">Import <code>ZONE_COLOURS</code> and replace red/blue/green returns in <code>getHACColour()</code>. Check <code>/non-?hazardous/</code> before <code>/zone\s*[012]/</code> after stripping parenthetical NE text, so <code>Non-hazardous (Zone 0 NE)</code> remains neutral.</div>
+          </div>
+          <span class="badge badge-mod">MOD</span>
+        </li>
+        <li>
+          <span class="task-id">2E</span>
+          <div class="task-body">
+            <div class="task-title">Update <code>zone-legend-overlay.tsx</code></div>
+            <div class="task-detail">Import <code>ZONE_COLOURS</code> and replace the three legend <code>color</code> hex values. Do not change pattern CSS or overlay sizing.</div>
           </div>
           <span class="badge badge-mod">MOD</span>
         </li>
@@ -912,7 +948,7 @@ function parseZonePills(zoneType: string): Array&lt;{ label: string; colour: str
             <div class="task-detail">
               "use client" directive. Imports: <code>ZONE_COLOURS</code>, Radix <code>Tooltip</code>/<code>TooltipTrigger</code>/<code>TooltipContent</code>/<code>TooltipProvider</code>, <code>Card</code>/<code>CardContent</code> from <code>@/components/ui/card</code>, <code>roundToSignificantFigures</code> from <code>@/lib/utils</code>, <code>Info</code>/<code>AlertTriangle</code> from <code>lucide-react</code>.<br><br>
               Internal helpers: <code>getHeaderColour()</code>, <code>getBadgeTextColour()</code>, <code>parseZonePills()</code>.<br><br>
-              Card layout: full-width colour strip div (h-2.5, rounded-t-md) at very top of Card, then CardContent with flex row: badge section (left) + distance section (right, stacked). If distances is empty, render badge section only. If zoneType is undefined and distances is empty, return null.
+              Card layout: full-width colour strip div (h-2.5, rounded-t-md) at very top of Card, then CardContent with flex row: badge section (left) + distance section (right, stacked). Before rendering, drop numeric entries unless <code>typeof value === "number" && Number.isFinite(value)</code>. Keep entries with <code>displayText</code> even when <code>value</code> is undefined. If distances is empty, render badge section only. If zoneType is undefined and distances is empty, return null.
             </div>
           </div>
           <span class="badge badge-new">NEW</span>
@@ -928,9 +964,9 @@ function parseZonePills(zoneType: string): Array&lt;{ label: string; colour: str
       <div class="phase-num">3</div>
       <div>
         <div class="phase-title">Integrate HacResultCard into Report Components</div>
-        <div class="phase-subtitle">Depends on Phase 2C. Tasks 3A and 3B edit different files — safe to parallelise.</div>
+        <div class="phase-subtitle">Depends on Phase 2C. Tasks 3A and 3B edit different files - safe to parallelise.</div>
       </div>
-      <span class="phase-parallel">⚡ Parallel</span>
+      <span class="phase-parallel">Parallel</span>
     </div>
     <div class="phase-body">
       <ul class="task-list">
@@ -939,8 +975,8 @@ function parseZonePills(zoneType: string): Array&lt;{ label: string; colour: str
           <div class="task-body">
             <div class="task-title">Integrate into <code>scenario-reports.tsx</code></div>
             <div class="task-detail">
-              <strong>BS EN main return (line 432+):</strong> Add <code>&lt;HacResultCard /&gt;</code> before the <code>&lt;div className="flex flex-1 flex-col"&gt;</code>. Build <code>scenarioDistances</code> array: when <code>isHazardDistanceSuppressed</code> → empty; otherwise filter the three distance entries to those with <code>value !== undefined</code>. Remove <code>ReportRowField</code> for Zone Type (line 500) and all three <code>ExtrapolatedReportField</code> distance rows (lines 526–546).<br><br>
-              <strong>Phast early-return (line 234):</strong> Add <code>&lt;HacResultCard /&gt;</code> before the flat-row div. distances = single hazardDistance entry if defined, else []. Remove <code>ReportRowField</code> for Hazard Distance (lines 287–293).
+              <strong>BS EN main return (line 432+):</strong> Add <code>&lt;HacResultCard /&gt;</code> before the <code>&lt;div className="flex flex-1 flex-col"&gt;</code>. Build <code>scenarioDistances</code> array: when <code>isHazardDistanceSuppressed</code> -> empty; otherwise filter the three distance entries with <code>typeof value === "number" && Number.isFinite(value)</code>. Remove <code>ReportRowField</code> for Zone Type (line 500) and all three <code>ExtrapolatedReportField</code> distance rows (lines 526-546).<br><br>
+              <strong>Phast early-return (line 234):</strong> Add <code>&lt;HacResultCard /&gt;</code> before the flat-row div. distances = single hazardDistance entry only when <code>typeof hazardDistance === "number" && Number.isFinite(hazardDistance)</code>, else []. Remove <code>ReportRowField</code> for Hazard Distance (lines 287-293).
             </div>
           </div>
           <span class="badge badge-mod">MOD</span>
@@ -951,9 +987,9 @@ function parseZonePills(zoneType: string): Array&lt;{ label: string; colour: str
             <div class="task-title">Integrate into <code>zone-reports.tsx</code></div>
             <div class="task-detail">
               <strong>Phast / User-defined branch (line 126):</strong> Card props: <code>zoneType</code> + single distance entry with <code>basis={hazardDistanceBasis}</code>. Remove Zone Type row, Hazard Distance row, and Hazard Distance Basis row (now inside card).<br><br>
-              <strong>Interior branch (line 184):</strong> Card props: <code>zoneType</code> + single entry with <code>value=undefined</code>, <code>displayText="Interior"</code>, <code>basis={hazardDistanceBasis}</code>. Remove Zone Type row.<br><br>
-              <strong>BS EN — isMissingDispersionType case (line 246):</strong> Card props: <code>zoneType</code> + empty distances []. Remove Zone Type row. Existing amber alert stays below card.<br><br>
-              <strong>BS EN — main return (line 304):</strong> Place ONE card instance before all three sub-branches (outdoor / indoor-Xb&lt;Xcrit / indoor-Xb≥Xcrit). Props: <code>zoneType</code> + single distance entry (value=hazardDistance, basis=hazardDistanceBasis) if defined. Remove Zone Type + Hazard Distance rows from all three sub-branches. Remove Hazard Distance Basis rows from all three sub-branches (now in card).
+              <strong>Interior branch (line 184):</strong> Card props: <code>zoneType</code> + single entry with <code>value=undefined</code>, <code>displayText="Interior"</code>, omitted <code>unit</code>, <code>basis={hazardDistanceBasis}</code>. Remove Zone Type row.<br><br>
+              <strong>BS EN - isMissingDispersionType case (line 246):</strong> Card props: <code>zoneType</code> + empty distances []. Remove Zone Type row. Existing amber alert stays below card.<br><br>
+              <strong>BS EN - main return (line 304):</strong> Place ONE card instance before all three sub-branches (outdoor / indoor-Xb&lt;Xcrit / indoor-Xb>=Xcrit). Props: <code>zoneType</code> + single distance entry only when <code>typeof hazardDistance === "number" && Number.isFinite(hazardDistance)</code> (value=hazardDistance, basis=hazardDistanceBasis). Remove Zone Type + Hazard Distance rows from all three sub-branches. Remove Hazard Distance Basis rows from all three sub-branches (now in card).
             </div>
           </div>
           <span class="badge badge-mod">MOD</span>
@@ -974,18 +1010,20 @@ function parseZonePills(zoneType: string): Array&lt;{ label: string; colour: str
     </div>
     <div class="phase-body">
       <ul class="checklist">
-        <li><code>npm run typecheck</code> — zero errors (strict mode; no <code>any</code>)</li>
-        <li><code>npm run lint</code> — zero warnings (CI blocks on max-warnings: 0)</li>
-        <li><code>npm test</code> — all existing tests pass (no tests reference scenario-reports or zone-reports)</li>
-        <li>Manual smoke: BS EN scenario — card at top, 3 distances, zone badge, intermediate rows below</li>
-        <li>Manual smoke: Phast scenario — card at top, single distance, badge if zoneType defined</li>
-        <li>Manual smoke: Zone (Outdoor BS EN) — card with badge + single distance + basis sub-label</li>
-        <li>Manual smoke: Zone (Interior) — card with badge + "Interior" text</li>
-        <li>Manual smoke: Scenario with Xb ≥ Xcrit — card with badge only; existing Xb alert still visible</li>
-        <li>Manual smoke: BS EN zone with missing dispersion type — badge only; existing amber warning visible</li>
-        <li>Manual smoke: Dark mode — card surface uses Tailwind dark: variants; colours consistent</li>
-        <li>Manual smoke: Compound zone type ("Zone 0 + Zone 2") — two adjacent pills; red header</li>
-        <li>Git push — pre-push hook runs full test suite</li>
+        <li>Create <code>components/dashboard/reports/__tests__/hac-result-card.test.tsx</code> before final verification. Cover: <code>Non-hazardous (Zone 0 NE)</code> neutral card, <code>Zone 0 + Zone 2</code> compound pills, <code>Zone 1 or Zone 0</code> connector, null render when no zone and no distances, Interior display text without unit, and extrapolated/clamped icons.</li>
+        <li><code>npm run typecheck</code> - zero errors (strict mode; no <code>any</code>)</li>
+        <li><code>npm run lint</code> - zero warnings (CI blocks on max-warnings: 0)</li>
+        <li><code>npm test</code> - all existing tests pass, including existing report tests under <code>components/dashboard/reports/__tests__/</code></li>
+        <li>Add and run <code>npx vitest run components/dashboard/reports/__tests__/hac-result-card.test.tsx</code> for neutral precedence, compound zone pills, no-zone null rendering, Interior display text, and extrapolated/clamped indicators</li>
+        <li>Manual smoke: BS EN scenario - card at top, 3 distances, zone badge, intermediate rows below</li>
+        <li>Manual smoke: Phast scenario - card at top, single distance, badge if zoneType defined</li>
+        <li>Manual smoke: Zone (Outdoor BS EN) - card with badge + single distance + basis sub-label</li>
+        <li>Manual smoke: Zone (Interior) - card with badge + "Interior" text</li>
+        <li>Manual smoke: Scenario with Xb >= Xcrit - card with badge only; existing Xb alert still visible</li>
+        <li>Manual smoke: BS EN zone with missing dispersion type - badge only; existing amber warning visible</li>
+        <li>Manual smoke: Dark mode - card surface uses Tailwind dark: variants; colours consistent</li>
+        <li>Manual smoke: Compound zone type ("Zone 0 + Zone 2") - two adjacent pills; red header</li>
+        <li>Git push - pre-push hook runs full test suite</li>
       </ul>
     </div>
   </div>
@@ -993,31 +1031,22 @@ function parseZonePills(zoneType: string): Array&lt;{ label: string; colour: str
   <!-- PARALLEL DEPENDENCY DIAGRAM -->
   <div class="section-title"><span class="num">8</span> Task Dependency Diagram</div>
   <div class="mermaid-box">
-Phase 1 ─── 1A: Create lib/zone-colours.ts
-                    │
-         ┌──────────┼──────────┐
-         ▼          ▼          ▼
-Phase 2  2A          2B         2C
-  hac-summary   plot-2d     HacResultCard
-  -table.tsx    -canvas.tsx   (new)
-  (import)      (import)
-         │          │          │
-         └──────────┴────┬─────┘
-                         ▼
-Phase 3          ┌───────┴───────┐
-                 ▼               ▼
-                3A               3B
-          scenario-reports   zone-reports
-          .tsx integration   .tsx integration
-                 │               │
-                 └───────┬───────┘
-                         ▼
-Phase 4         Verify + Push
+Phase 1: 1A create lib/zone-colours.ts
+          |
+          v
+Phase 2: 2A summary import, 2B plot import, 2C card component,
+         2D 3D buffer import, 2E legend import
+          |
+          v
+Phase 3: 3A scenario-reports integration + 3B zone-reports integration
+          |
+          v
+Phase 4: tests, typecheck, lint, full test suite, push
   </div>
 
   <div class="alert alert-info">
     <div class="alert-title">Parallelisation recommendation</div>
-    Phase 2 tasks (2A, 2B, 2C) and Phase 3 tasks (3A, 3B) can each be handed to separate subagents simultaneously. Each task operates on a distinct file with no risk of merge conflicts within a phase.
+    Phase 2 tasks (2A, 2B, 2C, 2D, 2E) and Phase 3 tasks (3A, 3B) can each be handed to separate subagents simultaneously. Each task operates on a distinct file; keep imports aligned with <code>lib/zone-colours.ts</code> and avoid overlapping edits.
   </div>
 
   <!-- EDGE CASES -->
@@ -1035,21 +1064,21 @@ Phase 4         Verify + Push
       <tbody>
         <tr>
           <td><code>zoneType === undefined</code> AND <code>distances = []</code></td>
-          <td>Return null — card not rendered. Avoids empty card in edge states.</td>
+          <td>Return null - card not rendered. Avoids empty card in edge states.</td>
           <td><span class="badge badge-risk-low">LOW</span></td>
         </tr>
         <tr>
-          <td><code>isHazardDistanceSuppressed</code> (Xb ≥ Xcrit indoor)</td>
+          <td><code>isHazardDistanceSuppressed</code> (Xb >= Xcrit indoor)</td>
           <td>Card shows zone type badge only (distances=[]). Existing Xb/Xcrit <code>Alert</code> remains below unchanged.</td>
           <td><span class="badge badge-risk-low">LOW</span></td>
         </tr>
         <tr>
-          <td>BS EN Zone — <code>isMissingDispersionType</code></td>
+          <td>BS EN Zone - <code>isMissingDispersionType</code></td>
           <td>Card shows badge only. Existing amber "Distance Basis not selected" alert remains below.</td>
           <td><span class="badge badge-risk-low">LOW</span></td>
         </tr>
         <tr>
-          <td>Interior zone — no numeric distance</td>
+          <td>Interior zone - no numeric distance</td>
           <td>Card shows badge + "Interior" via <code>displayText</code> on entry. No number needed.</td>
           <td><span class="badge badge-risk-low">LOW</span></td>
         </tr>
@@ -1059,43 +1088,43 @@ Phase 4         Verify + Push
           <td><span class="badge badge-risk-med">MED</span></td>
         </tr>
         <tr>
-          <td>Compound zone "Zone 1 or Zone 0" — connector word</td>
+          <td>Compound zone "Zone 1 or Zone 0" - connector word</td>
           <td>parseZonePills detects " or " separator; renders "or" as a small plain-text connector between pills.</td>
           <td><span class="badge badge-risk-low">LOW</span></td>
         </tr>
         <tr>
-          <td>"Zone 1 and even Zone 0" — 3-word connector</td>
+          <td>"Zone 1 and even Zone 0" - 3-word connector</td>
           <td>parseZonePills detects " and even " separator; connector shown as "and even".</td>
           <td><span class="badge badge-risk-low">LOW</span></td>
         </tr>
         <tr>
-          <td>Phast scenario — <code>zoneType</code> undefined in outputs</td>
+          <td>Phast scenario - <code>zoneType</code> undefined in outputs</td>
           <td>Card renders without badge (P1b). Still shows single hazardDistance if defined.</td>
           <td><span class="badge badge-risk-low">LOW</span></td>
         </tr>
         <tr>
           <td>Extrapolated hazard distance</td>
-          <td>Same Tooltip/AlertTriangle pattern as existing <code>ExtrapolatedReportField</code> — orange icon with tooltip.</td>
+          <td>Same Tooltip/AlertTriangle pattern as existing <code>ExtrapolatedReportField</code> - orange icon with tooltip.</td>
           <td><span class="badge badge-risk-low">LOW</span></td>
         </tr>
         <tr>
           <td>Clamped hazard distance</td>
-          <td>Blue Info icon with tooltip — same as existing component.</td>
+          <td>Blue Info icon with tooltip - same as existing component.</td>
           <td><span class="badge badge-risk-low">LOW</span></td>
         </tr>
         <tr>
-          <td>DOCX export</td>
-          <td>Unaffected. Export reads Firestore data directly — does not render React components.</td>
+          <td>DOCX/XLSX export</td>
+          <td>Intentionally unchanged. This plan changes web report panels only; export generators continue to render flat HAC calculation data from Firestore.</td>
           <td><span class="badge badge-risk-low">LOW</span></td>
         </tr>
         <tr>
           <td>HACSummaryTable zone colour swatches</td>
-          <td>Refactored to import from zone-colours.ts. SVG hex values unchanged — visual output identical.</td>
+          <td>Refactored to import from zone-colours.ts. SVG hex values unchanged - visual output identical.</td>
           <td><span class="badge badge-risk-low">LOW</span></td>
         </tr>
         <tr>
           <td>2D geometry plot zone colours</td>
-          <td>Refactored to import ZONE_COLOURS. Same hex values — visual output identical.</td>
+          <td>Refactored to import ZONE_COLOURS. Same hex values - visual output identical.</td>
           <td><span class="badge badge-risk-low">LOW</span></td>
         </tr>
         <tr>
@@ -1119,14 +1148,14 @@ Phase 4         Verify + Push
       <span class="commit-step">C1</span>
       <div>
         <div class="commit-msg">refactor: extract zone colours to shared constant</div>
-        <div class="commit-desc">After Phase 1 (zone-colours.ts) + Phase 2A &amp; 2B (consumer updates). Zero functional change — safe to commit early.</div>
+        <div class="commit-desc">After Phase 1 plus Phase 2A, 2B, 2D, and 2E consumer updates. This keeps the shared constant and all refactored imports in one coherent commit.</div>
       </div>
     </div>
     <div class="commit-item">
       <span class="commit-step">C2</span>
       <div>
         <div class="commit-msg">feat: add HacResultCard component for zone type and hazard distance</div>
-        <div class="commit-desc">After Phase 2C. New component is not yet consumed — no visible UI change. Allows review of component in isolation.</div>
+        <div class="commit-desc">After Phase 2C. New component is not yet consumed - no visible UI change. Allows review of component in isolation.</div>
       </div>
     </div>
     <div class="commit-item">
@@ -1155,8 +1184,8 @@ Phase 4         Verify + Push
       <tbody>
         <tr>
           <td>Extrapolation/clamping tooltip pattern</td>
-          <td><code>scenario-reports.tsx:52–88</code> (ExtrapolatedReportField)</td>
-          <td>Copy the Tooltip/AlertTriangle/Info icon pattern into HacResultCard distance entry rendering. Do not re-export ExtrapolatedReportField — it's a local function.</td>
+          <td><code>scenario-reports.tsx:52-88</code> (ExtrapolatedReportField)</td>
+          <td>Copy the Tooltip/AlertTriangle/Info icon pattern into HacResultCard distance entry rendering. Do not re-export ExtrapolatedReportField - it's a local function.</td>
         </tr>
         <tr>
           <td><code>roundToSignificantFigures</code></td>
@@ -1166,7 +1195,7 @@ Phase 4         Verify + Push
         <tr>
           <td><code>Card</code>, <code>CardContent</code></td>
           <td><code>components/ui/card.tsx</code></td>
-          <td>Use as outer wrapper. Note: Card has <code>min-h-[100px] min-w-[100px]</code> — may want to override min-height for compact zones.</td>
+          <td>Use as outer wrapper. Note: Card has <code>min-h-[100px] min-w-[100px]</code> - may want to override min-height for compact zones.</td>
         </tr>
         <tr>
           <td><code>Tooltip</code>, <code>TooltipProvider</code>, etc.</td>
@@ -1175,8 +1204,8 @@ Phase 4         Verify + Push
         </tr>
         <tr>
           <td>Zone colour logic in <code>createZonePatternSVG</code></td>
-          <td><code>hac-summary-table.tsx:136–139</code></td>
-          <td>Reference for zone detection logic (<code>includes("Zone 0")</code>, priority ordering). Do not import this function — replicate the logic in <code>getHeaderColour()</code>.</td>
+          <td><code>hac-summary-table.tsx:136-139</code></td>
+          <td>Reference for zone detection logic (<code>includes("Zone 0")</code>, priority ordering). Do not import this function - replicate the logic in <code>getHeaderColour()</code>.</td>
         </tr>
       </tbody>
     </table>
@@ -1186,14 +1215,14 @@ Phase 4         Verify + Push
   <div class="section-title"><span class="num">12</span> Open Decisions (None)</div>
   <div class="alert alert-info">
     <div class="alert-title">All decisions resolved</div>
-    All 25 clarifying questions (A1 through Q1) have been answered in full before this plan was written. No open decisions remain. The implementer should not need to make any design judgements — this plan is self-contained.
+    All 25 clarifying questions (A1 through Q1) have been answered in full before this plan was written. No open decisions remain. The implementer should not need to make any design judgements - this plan is self-contained.
   </div>
 
   <hr class="divider">
 
   <footer style="color: var(--muted); font-size: 12px; display: flex; justify-content: space-between; flex-wrap: wrap; gap: 8px;">
-    <span>Plan: HAC Result Card · nEXus ux-improvements branch</span>
-    <span>Generated 2026-06-01 · Claude Sonnet 4.6</span>
+    <span>Plan: HAC Result Card , nEXus ux-improvements branch</span>
+    <span>Generated 2026-06-01 , Claude Sonnet 4.6</span>
   </footer>
 
 </div>
