@@ -1,0 +1,846 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8"/>
+<meta name="viewport" content="width=device-width, initial-scale=1.0"/>
+<title>Plan: Surface Incomplete Area/EquipmentItem Inputs</title>
+<style>
+  :root {
+    --bg: #0f1117;
+    --surface: #1a1d27;
+    --surface2: #1e2235;
+    --border: #2e3352;
+    --accent: #6c8ef7;
+    --accent2: #a78bfa;
+    --text: #e2e8f0;
+    --muted: #94a3b8;
+    --green: #34d399;
+    --amber: #f59e0b;
+    --red: #f87171;
+    --blue: #60a5fa;
+    --teal: #2dd4bf;
+    --risk-low: #166534;
+    --risk-low-text: #86efac;
+    --risk-med: #92400e;
+    --risk-med-text: #fcd34d;
+    --risk-high: #7f1d1d;
+    --risk-high-text: #fca5a5;
+    --code-bg: #0d1117;
+    --tag-bg: #1e2a4a;
+  }
+  *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+  body { background: var(--bg); color: var(--text); font-family: 'Segoe UI', system-ui, sans-serif; font-size: 14px; line-height: 1.6; }
+  a { color: var(--accent); text-decoration: none; }
+  a:hover { text-decoration: underline; }
+
+  /* Layout */
+  .page { max-width: 960px; margin: 0 auto; padding: 48px 24px 80px; }
+  .toc-nav { position: sticky; top: 0; z-index: 10; background: rgba(15,17,23,0.95); backdrop-filter: blur(8px); border-bottom: 1px solid var(--border); padding: 10px 24px; display: flex; gap: 16px; flex-wrap: wrap; font-size: 12px; }
+  .toc-nav a { color: var(--muted); transition: color 0.15s; }
+  .toc-nav a:hover { color: var(--accent); text-decoration: none; }
+  .toc-brand { color: var(--accent); font-weight: 700; margin-right: 8px; }
+
+  /* Header */
+  .page-header { margin-bottom: 40px; padding-bottom: 28px; border-bottom: 1px solid var(--border); }
+  .page-header h1 { font-size: 28px; font-weight: 700; color: var(--accent); margin-bottom: 8px; }
+  .meta { display: flex; flex-wrap: wrap; gap: 12px; margin-top: 14px; }
+  .meta-item { display: flex; align-items: center; gap: 6px; font-size: 12px; color: var(--muted); }
+  .meta-item strong { color: var(--text); }
+  .badge { display: inline-block; font-size: 11px; font-weight: 600; padding: 2px 8px; border-radius: 10px; }
+  .badge-plan { background: var(--tag-bg); color: var(--accent); }
+  .badge-feat { background: #1a2f1a; color: var(--green); }
+  .badge-ui { background: #2a1a3a; color: var(--accent2); }
+
+  /* Sections */
+  section { margin-bottom: 52px; }
+  section h2 { font-size: 20px; font-weight: 700; color: var(--accent2); margin-bottom: 20px; padding-bottom: 8px; border-bottom: 1px solid var(--border); display: flex; align-items: center; gap: 10px; }
+  section h2 .section-num { font-size: 12px; font-weight: 600; color: var(--muted); background: var(--surface2); border: 1px solid var(--border); border-radius: 4px; padding: 2px 7px; }
+  h3 { font-size: 15px; font-weight: 600; color: var(--text); margin: 24px 0 12px; }
+  h4 { font-size: 13px; font-weight: 600; color: var(--muted); margin: 16px 0 8px; text-transform: uppercase; letter-spacing: 0.05em; }
+
+  /* Executive summary card */
+  .summary-card { background: var(--surface); border: 1px solid var(--border); border-left: 4px solid var(--accent); border-radius: 8px; padding: 20px 24px; }
+  .summary-card p { color: var(--text); line-height: 1.7; margin-bottom: 10px; }
+  .summary-card p:last-child { margin-bottom: 0; }
+
+  /* Cards */
+  .card { background: var(--surface); border: 1px solid var(--border); border-radius: 8px; padding: 18px 20px; }
+  .card + .card { margin-top: 12px; }
+  .card-grid { display: grid; grid-template-columns: repeat(auto-fit, minmax(260px, 1fr)); gap: 14px; }
+
+  /* Before/After */
+  .ba-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 16px; }
+  .ba-before { border-left: 3px solid var(--red); }
+  .ba-after { border-left: 3px solid var(--green); }
+  .ba-label { font-size: 11px; font-weight: 700; text-transform: uppercase; letter-spacing: 0.08em; margin-bottom: 10px; }
+  .ba-before .ba-label { color: var(--red); }
+  .ba-after .ba-label { color: var(--green); }
+  ul.ba-list { list-style: none; padding: 0; }
+  ul.ba-list li { padding: 4px 0; font-size: 13px; display: flex; align-items: flex-start; gap: 8px; }
+  ul.ba-list li::before { flex-shrink: 0; margin-top: 2px; font-size: 12px; }
+  .ba-before ul.ba-list li::before { content: "✗"; color: var(--red); }
+  .ba-after ul.ba-list li::before { content: "✓"; color: var(--green); }
+
+  /* Tables */
+  table { width: 100%; border-collapse: collapse; font-size: 13px; }
+  th { text-align: left; padding: 10px 14px; background: var(--surface2); color: var(--muted); font-weight: 600; font-size: 11px; text-transform: uppercase; letter-spacing: 0.05em; border-bottom: 1px solid var(--border); }
+  td { padding: 10px 14px; border-bottom: 1px solid var(--border); vertical-align: top; }
+  tr:last-child td { border-bottom: none; }
+  tbody tr:hover td { background: rgba(108,142,247,0.04); }
+  .file-path { font-family: 'Consolas', 'Cascadia Code', monospace; font-size: 12px; color: var(--accent); }
+  .change-type { font-size: 11px; font-weight: 600; padding: 2px 7px; border-radius: 4px; white-space: nowrap; }
+  .ct-extend { background: #1a2a1a; color: var(--green); }
+  .ct-rewrite { background: #1a1a2a; color: var(--accent); }
+  .ct-new-prop { background: #2a1a2a; color: var(--accent2); }
+  .ct-wire { background: #2a2a1a; color: var(--amber); }
+  .ct-test { background: #1a2a2a; color: var(--teal); }
+  .ct-verify { background: #1a1a1a; color: var(--muted); }
+
+  /* Risk levels */
+  .risk { display: inline-block; font-size: 11px; font-weight: 700; padding: 2px 8px; border-radius: 4px; }
+  .risk-low { background: var(--risk-low); color: var(--risk-low-text); }
+  .risk-med { background: var(--risk-med); color: var(--risk-med-text); }
+  .risk-high { background: var(--risk-high); color: var(--risk-high-text); }
+
+  /* Phase timeline */
+  .phase-list { display: flex; flex-direction: column; gap: 16px; }
+  .phase { background: var(--surface); border: 1px solid var(--border); border-radius: 8px; overflow: hidden; }
+  .phase-header { display: flex; align-items: center; gap: 14px; padding: 14px 18px; border-bottom: 1px solid var(--border); cursor: default; flex-wrap: wrap; }
+  .phase-num { width: 32px; height: 32px; border-radius: 50%; display: flex; align-items: center; justify-content: center; font-size: 13px; font-weight: 700; flex-shrink: 0; }
+  .phase-1 .phase-num { background: #1e2a4a; color: var(--accent); }
+  .phase-2 .phase-num { background: #2a1a3a; color: var(--accent2); }
+  .phase-3 .phase-num { background: #1a2a1a; color: var(--green); }
+  .phase-4 .phase-num { background: #2a2a1a; color: var(--amber); }
+  .phase-5 .phase-num { background: #1a2a2a; color: var(--teal); }
+  .phase-title { font-weight: 700; font-size: 15px; flex: 1; }
+  .phase-parallel { font-size: 11px; font-weight: 600; padding: 2px 8px; border-radius: 4px; background: #1a2f1a; color: var(--green); }
+  .phase-serial { font-size: 11px; font-weight: 600; padding: 2px 8px; border-radius: 4px; background: #1a1a2f; color: var(--blue); }
+  .phase-body { padding: 16px 18px; }
+  .task-list { list-style: none; }
+  .task-list li { padding: 5px 0; font-size: 13px; display: flex; align-items: flex-start; gap: 10px; }
+  .task-list li::before { content: "→"; color: var(--muted); flex-shrink: 0; }
+  .task-dep { font-size: 11px; color: var(--muted); background: var(--surface2); border: 1px solid var(--border); border-radius: 4px; padding: 1px 6px; margin-top: 2px; }
+
+  /* Code blocks */
+  pre { background: var(--code-bg); border: 1px solid var(--border); border-radius: 6px; padding: 14px 16px; font-family: 'Consolas', 'Cascadia Code', 'Courier New', monospace; font-size: 12px; line-height: 1.7; overflow-x: auto; margin: 12px 0; color: #c9d1d9; }
+  code { font-family: 'Consolas', 'Cascadia Code', 'Courier New', monospace; font-size: 12px; }
+  .code-label { font-size: 11px; font-weight: 600; color: var(--muted); background: var(--surface2); border: 1px solid var(--border); border-radius: 4px 4px 0 0; border-bottom: none; padding: 4px 12px; display: inline-block; margin-bottom: -1px; position: relative; z-index: 1; }
+  .kw { color: #ff7b72; }
+  .fn { color: #d2a8ff; }
+  .str { color: #a5d6ff; }
+  .cm { color: #8b949e; font-style: italic; }
+  .type { color: #ffa657; }
+  .num { color: #79c0ff; }
+
+  /* Checklist */
+  .checklist { list-style: none; }
+  .checklist li { padding: 5px 0; font-size: 13px; display: flex; align-items: flex-start; gap: 10px; }
+  .check-box { width: 16px; height: 16px; border: 2px solid var(--border); border-radius: 3px; flex-shrink: 0; margin-top: 1px; }
+
+  /* Mermaid */
+  .mermaid-wrapper { background: var(--surface); border: 1px solid var(--border); border-radius: 8px; padding: 20px; overflow-x: auto; }
+  .mermaid { display: flex; justify-content: center; }
+
+  /* Callout */
+  .callout { border-radius: 8px; padding: 14px 18px; font-size: 13px; margin: 14px 0; display: flex; gap: 12px; align-items: flex-start; }
+  .callout-info { background: #0d1b3e; border: 1px solid #1e3a6e; }
+  .callout-warn { background: #2a1f0a; border: 1px solid #5c3a0a; }
+  .callout-icon { font-size: 16px; flex-shrink: 0; margin-top: 1px; }
+  .callout-body { flex: 1; }
+  .callout-body strong { display: block; margin-bottom: 4px; }
+
+  /* Tag pill */
+  .tag { font-size: 11px; font-weight: 600; padding: 2px 7px; border-radius: 10px; background: var(--tag-bg); color: var(--accent); }
+
+  /* Open decisions */
+  .decision { background: var(--surface); border: 1px solid var(--border); border-left: 4px solid var(--accent2); border-radius: 8px; padding: 16px 20px; margin-bottom: 12px; }
+  .decision h4 { color: var(--accent2); margin: 0 0 6px; text-transform: none; font-size: 13px; }
+  .decision p { font-size: 13px; color: var(--text); }
+
+  /* Responsive */
+  @media (max-width: 640px) {
+    .page { padding: 24px 16px 60px; }
+    .ba-grid { grid-template-columns: 1fr; }
+    .card-grid { grid-template-columns: 1fr; }
+    .toc-nav { display: none; }
+    pre { font-size: 11px; }
+    table, thead, tbody, tr { display: block; }
+    thead { display: none; }
+    tr { border-bottom: 1px solid var(--border); padding: 10px 0; }
+    td { display: flex; gap: 8px; border-bottom: none; padding: 4px 0; }
+    td::before { content: attr(data-label); font-weight: 600; color: var(--muted); min-width: 110px; flex-shrink: 0; font-size: 11px; text-transform: uppercase; letter-spacing: 0.05em; }
+  }
+</style>
+<!-- Mermaid for diagrams -->
+<script type="module">
+  import mermaid from 'https://cdn.jsdelivr.net/npm/mermaid@10/dist/mermaid.esm.min.mjs';
+  mermaid.initialize({ startOnLoad: true, theme: 'dark', themeVariables: { background: '#1a1d27', primaryColor: '#6c8ef7', primaryTextColor: '#e2e8f0', primaryBorderColor: '#2e3352', lineColor: '#94a3b8', secondaryColor: '#1e2235', tertiaryColor: '#0f1117', edgeLabelBackground: '#1a1d27', clusterBkg: '#1e2235', titleColor: '#e2e8f0', nodeTextColor: '#e2e8f0' } });
+</script>
+</head>
+<body>
+
+<nav class="toc-nav">
+  <span class="toc-brand">Plan</span>
+  <a href="#summary">Summary</a>
+  <a href="#affected">Files</a>
+  <a href="#before-after">Before/After</a>
+  <a href="#architecture">Architecture</a>
+  <a href="#phases">Phases</a>
+  <a href="#edge-cases">Edge Cases</a>
+  <a href="#tests">Tests</a>
+  <a href="#parallel">Parallelization</a>
+  <a href="#commit">Commit</a>
+  <a href="#decisions">Open Decisions</a>
+</nav>
+
+<div class="page">
+
+  <header class="page-header">
+    <h1>HAC Status Indicator — Surface Incomplete Area/EquipmentItem Inputs</h1>
+    <p style="color:var(--muted); max-width: 680px;">Make new Area and EquipmentItem items "start empty" (no placeholder numeric HAC values) and reuse the existing <code>failedItems</code> / <code>CalculationFailureModal</code> machinery to tell users exactly which fields are missing before a HAC calculation can succeed.</p>
+    <div class="meta">
+      <div class="meta-item"><strong>Branch</strong> feat/auto-hac-calculation</div>
+      <div class="meta-item"><strong>Date</strong> 2026-06-12</div>
+      <div class="meta-item"><strong>Files changed</strong> ~9</div>
+      <div class="meta-item"><span class="badge badge-plan">Plan</span></div>
+      <div class="meta-item"><span class="badge badge-feat">Feature</span></div>
+      <div class="meta-item"><span class="badge badge-ui">UI + Engine</span></div>
+    </div>
+  </header>
+
+  <!-- ─────────────────── EXECUTIVE SUMMARY ─────────────────── -->
+  <section id="summary">
+    <h2><span class="section-num">01</span> Executive Summary</h2>
+    <div class="summary-card">
+      <p>The HAC status indicator (<code>components/dashboard/hac-status-indicator.tsx</code>) currently tells users when they need to build the study tree down to Zone level to enable a HAC calculation. Once the tree reaches Zone level, however, the indicator gives no help identifying <em>which</em> items (Area, EquipmentItem, Scenario, Zone) still have incomplete or invalid inputs preventing a successful calculation.</p>
+      <p>Today, new Area and EquipmentItem items are created with <strong>fully-populated numeric HAC defaults</strong> (<code>defaultArea.hac</code>, <code>defaultEquipmentItem.hac</code> in <code>app/types/firestore.tsx</code>), so they calculate "successfully" with made-up placeholder numbers (e.g. <code>length: 10</code>, <code>ambientTemperature: 288.15</code>, <code>pressure: 101325</code>) that the user never consciously entered. This is inconsistent with Scenario, which starts as <code>hacType: "None"</code> — a deliberate "not configured" sentinel that the calculation engine already treats as <code>"never-calculated"</code> rather than success/failure.</p>
+      <p><strong>The agreed approach</strong>: make Area and EquipmentItem "start empty" on creation (no placeholder numeric values), and let the <em>existing</em> <code>failedItems</code> / <code>calculation-failure-modal.tsx</code> machinery surface "Missing: Length, Breadth, Height, ..." style messages — the same way scenario gas-release calculations already do today via the <code>"Missing or invalid inputs: x, y, z"</code> error convention (see <code>lib/bscalculations/scenario/bs-gas-calculations.ts:81-89</code>, already parsed by <code>sanitizeError</code> in <code>components/dashboard/calculation-failure-modal.tsx:30-31</code>).</p>
+      <p><strong>No new schema discriminator</strong> (no <code>hacType</code> on Area/EquipmentItem), <strong>no new display state</strong>, <strong>no new "incomplete items" concept</strong> — this is a scoped, additive change: relax a handful of required numeric fields to optional, trim the "new item" templates, and add validation guards so the calculation engine throws a clear, well-formatted error instead of producing <code>NaN</code> or <code>null</code>-spread results.</p>
+    </div>
+
+    <h3>Net Effect for the User</h3>
+    <div class="ba-grid">
+      <div class="card ba-after">
+        <div class="ba-label">New behaviour</div>
+        <ul class="ba-list">
+          <li><strong>New Area</strong> → calculates immediately, fails with "Missing: Length, Breadth, Height, Blockage Factor, Volume Air Flow Rate, Ambient Temperature, Ambient Pressure" → shows in the HAC status indicator's failure modal → click-through opens the Area HAC form.</li>
+          <li><strong>New EquipmentItem</strong> → fails with "Missing: Material" → same modal, click-through opens the EquipmentItem HAC form.</li>
+          <li><strong>Scenario</strong> (<code>hacType: "None"</code>) → unchanged, <code>"never-calculated"</code>, not a failure.</li>
+          <li><strong>Existing fully-populated Firestore documents</strong> → unaffected (optional fields remain valid when present).</li>
+        </ul>
+      </div>
+      <div class="card ba-before">
+        <div class="ba-label">Current behaviour</div>
+        <ul class="ba-list">
+          <li>New Area calculates "successfully" using made-up placeholder numbers the user never entered (10m × 10m × 5m room, 15°C, 1 atm, etc.)</li>
+          <li>New EquipmentItem calculates "successfully" with <code>material: ""</code> — silent no-op spread of <code>null</code> equipment results, stale/empty outputs</li>
+          <li>HAC status indicator shows "in-sync" / "out-of-sync" for items the user hasn't actually configured</li>
+          <li>No guidance pointing the user at which item or field needs attention</li>
+        </ul>
+      </div>
+    </div>
+  </section>
+
+  <!-- ─────────────────── AFFECTED FILES ─────────────────── -->
+  <section id="affected">
+    <h2><span class="section-num">02</span> Affected Files</h2>
+    <div style="border: 1px solid var(--border); border-radius: 8px; overflow: hidden;">
+      <table>
+        <thead>
+          <tr>
+            <th>File</th>
+            <th>Change type</th>
+            <th>Summary</th>
+          </tr>
+        </thead>
+        <tbody>
+          <tr>
+            <td data-label="File"><span class="file-path">app/types/firestore.tsx</span></td>
+            <td data-label="Change"><span class="change-type ct-extend">Relax schema + trim defaults</span></td>
+            <td data-label="Summary">Relax 7 <code>AreaHacSchema</code> numeric fields to <code>.optional()</code>; trim <code>defaultAreaHac</code>, <code>defaultArea.hac</code>, and <code>defaultEquipmentItem.hac</code> templates</td>
+          </tr>
+          <tr>
+            <td data-label="File"><span class="file-path">lib/bscalculations/validate-inputs.ts</span></td>
+            <td data-label="Change"><span class="change-type ct-extend">Add validation guards</span></td>
+            <td data-label="Summary">Extend <code>validateAreaInputs</code> to throw <code>"Missing or invalid inputs: ..."</code> for missing required Area fields; extend/add <code>validateEquipmentInputs</code> to throw for missing/empty <code>material</code></td>
+          </tr>
+          <tr>
+            <td data-label="File"><span class="file-path">lib/bscalculations/area/bs-area-calculation.ts</span></td>
+            <td data-label="Change"><span class="change-type ct-verify">Verify only</span></td>
+            <td data-label="Summary">No code change expected — relies on <code>validateAreaInputs</code> guard. Re-check TS types after Phase 1 (destructure of now-optional fields)</td>
+          </tr>
+          <tr>
+            <td data-label="File"><span class="file-path">lib/bscalculations/bs-calculation-service.ts</span></td>
+            <td data-label="Change"><span class="change-type ct-extend">Add null-check</span></td>
+            <td data-label="Summary">Add guard after <code>calculateEquipmentItemResults</code> so a <code>null</code> result (or empty <code>material</code>) throws a clear error instead of spreading <code>...null</code> silently</td>
+          </tr>
+          <tr>
+            <td data-label="File"><span class="file-path">lib/bscalculations/equipment/bs-equipment-calculations.ts</span></td>
+            <td data-label="Change"><span class="change-type ct-verify">No functional change</span></td>
+            <td data-label="Summary">Keep returning <code>null</code> / logging — caller now handles <code>null</code></td>
+          </tr>
+          <tr>
+            <td data-label="File"><span class="file-path">test-utils/study-item-fixtures.ts</span></td>
+            <td data-label="Change"><span class="change-type ct-test">Add fixtures</span></td>
+            <td data-label="Summary">Keep <code>createArea()</code> / <code>createEquipmentItem()</code> "complete" by default; add <code>createEmptyArea()</code> / <code>createEmptyEquipmentItem()</code> for the new failure-path tests</td>
+          </tr>
+          <tr>
+            <td data-label="File"><span class="file-path">lib/bscalculations/__tests__/bs-calculation-service.test.ts</span></td>
+            <td data-label="Change"><span class="change-type ct-test">Verify + add tests</span></td>
+            <td data-label="Summary">Existing <code>baseArea</code>/<code>baseEquipmentItem</code> fixtures already complete (verify only); add new "empty Area / EquipmentItem fails" test cases</td>
+          </tr>
+          <tr>
+            <td data-label="File"><span class="file-path">lib/bscalculations/__tests__/zone-calculation.test.ts</span></td>
+            <td data-label="Change"><span class="change-type ct-verify">Verify only</span></td>
+            <td data-label="Summary"><code>baseArea</code>/<code>baseEquipment</code> already complete — confirm <code>npm test</code> still passes after Phase 1</td>
+          </tr>
+          <tr>
+            <td data-label="File"><span class="file-path">lib/bscalculations/__tests__/hazard-distance-suppression.test.ts</span></td>
+            <td data-label="Change"><span class="change-type ct-verify">Verify only</span></td>
+            <td data-label="Summary"><code>baseArea</code> already complete; confirm non-null assertions (<code>area.hac.ambientPressure!</code>) still typecheck with now-optional fields</td>
+          </tr>
+          <tr>
+            <td data-label="File"><span class="file-path">lib/bscalculations/__tests__/validate-inputs.test.ts</span></td>
+            <td data-label="Change"><span class="change-type ct-test">New file (or extend)</span></td>
+            <td data-label="Summary">Unit tests for new <code>validateAreaInputs</code> missing-fields branch and the new equipment <code>material</code> check</td>
+          </tr>
+          <tr>
+            <td data-label="File"><span class="file-path">components/dashboard/__tests__/use-auto-calculation.test.tsx</span><br/><span class="file-path">components/dashboard/__tests__/calculation-failure-modal.test.tsx</span></td>
+            <td data-label="Change"><span class="change-type ct-test">Add tests</span></td>
+            <td data-label="Summary">Verify existing tests still pass; add cases for the new "Missing: Length, Breadth, ..." and "Missing: Material" messages, including cascaded Scenario failures</td>
+          </tr>
+        </tbody>
+      </table>
+    </div>
+  </section>
+
+  <!-- ─────────────────── BEFORE / AFTER ─────────────────── -->
+  <section id="before-after">
+    <h2><span class="section-num">03</span> Before / After Behaviour</h2>
+    <div class="ba-grid">
+      <div class="card ba-before">
+        <div class="ba-label">Before</div>
+        <ul class="ba-list">
+          <li>New Area's <code>hac</code> object is fully populated: <code>length: 10, breadth: 10, height: 5, ambientTemperature: 288.15, ambientPressure: 101325, blockageFactor: 0, volumeAirFlowRate: 1</code></li>
+          <li>Calculation "succeeds" immediately using these placeholder numbers — user never entered them</li>
+          <li>New EquipmentItem has <code>hac.material: ""</code> — <code>calculateEquipmentItemResults("")</code> returns <code>null</code>, but <code>{...null}</code> is a no-op spread, so the calculation reports <code>success: true</code> with stale/empty outputs</li>
+          <li>HAC status indicator shows "in-sync"/"out-of-sync" for items the user hasn't configured — no signal that inputs are placeholder data</li>
+        </ul>
+      </div>
+      <div class="card ba-after">
+        <div class="ba-label">After</div>
+        <ul class="ba-list">
+          <li>New Area's <code>hac</code> object omits the 7 numeric fields entirely — only <code>ventilationLocation</code>, <code>ventilationDirection</code>, unit fields, and <code>notes</code> remain</li>
+          <li><code>validateAreaInputs</code> throws <code>"Missing or invalid inputs: length, breadth, height, blockageFactor, volumeAirFlowRate, ambientTemperature, ambientPressure"</code> — surfaces as <code>calculationState.status === "failed"</code></li>
+          <li>New EquipmentItem's <code>hac.material</code> remains <code>""</code>; calculation now <strong>throws</strong> <code>"Missing or invalid inputs: material"</code> instead of silently succeeding</li>
+          <li><code>failedItems</code> picks up both via existing <code>isRootCauseFailure()</code> logic; <code>CalculationFailureModal</code>'s <code>sanitizeError()</code> renders "Some required fields are incomplete — Click to open and review the inputs."</li>
+          <li>Clicking the failed item navigates to its HAC form (<code>requestedFormTab: "hac"</code>) — existing navigation wiring, no change needed</li>
+        </ul>
+      </div>
+    </div>
+  </section>
+
+  <!-- ─────────────────── ARCHITECTURE ─────────────────── -->
+  <section id="architecture">
+    <h2><span class="section-num">04</span> Architecture &amp; Data Flow</h2>
+
+    <div class="mermaid-wrapper">
+      <div class="mermaid">
+flowchart TD
+    A["New Area created\n(defaultArea template)"] -->|"hac fields now undefined"| B["calculateAreaResults(hac)"]
+    B --> C["validateAreaInputs(hac)\nNEW: throws if required fields missing"]
+    C -->|"throws Error"| D["bsCalculationHandler catch block\nreturns success:false,\nerror: 'Missing or invalid inputs: length, breadth, ...'"]
+    D --> E["calculationState.status = 'failed'\ncalculationState.error.message = '...'"]
+    E --> F["use-auto-calculation.ts\nfailedItems useMemo\nisRootCauseFailure() = true"]
+    F --> G["hac-status-indicator.tsx\ndisplayState = 'failed'"]
+    G --> H["calculation-failure-modal.tsx\nsanitizeError() returns\n'Some required fields are incomplete'\n'Click to open and review the inputs.'"]
+    H --> I["User clicks row\nonNavigateToItem(index)\nopens Area HAC form,\nsets requestedFormTab='hac'"]
+
+    A2["New EquipmentItem created\n(defaultEquipmentItem template)"] -->|"hac.material = ''"| B2["calculateEquipmentItemResults(material)\nOR validateEquipmentInputs guard"]
+    B2 -->|"material not found / empty"| C2["NEW: throw Error\n'Missing or invalid inputs: material'"]
+    C2 --> D2["bsCalculationHandler catch block"]
+    D2 --> E
+      </div>
+    </div>
+
+    <h3>Validation Call Chain (Area)</h3>
+    <div class="callout callout-info">
+      <span class="callout-icon">ℹ</span>
+      <div class="callout-body">
+        <strong>Cascading is intentional</strong>
+        <code>validateAreaInputs(area.hac)</code> is called from <code>calculateAreaResults</code> AND from every scenario calculation file (<code>bs-gas-calculations.ts:69</code>, <code>bs-liquid-calculations.ts:68</code>, <code>bs-pool-calculations.ts:50</code>, <code>bs-user-defined-calculations.ts:49</code>). If a Scenario's parent Area is incomplete, the Scenario calculation will also throw <code>"Missing or invalid inputs: ..."</code> — producing a <em>separate</em> <code>failedItems</code> entry for the Scenario. This is correct: the Scenario genuinely can't calculate without a complete Area, and the cascaded entry naturally disappears once the Area is fixed and recalculates.
+      </div>
+    </div>
+
+    <div class="mermaid-wrapper" style="margin-top:16px;">
+      <div class="mermaid">
+flowchart LR
+    AREA["Area.hac\n(incomplete)"] -->|"validateAreaInputs throws"| AREAFAIL["Area: failed\n'Missing or invalid inputs:\nlength, breadth, ...'"]
+    AREA -->|"same hac passed into\nbs-gas-calculations.ts etc."| SCENARIO["Scenario calculation"]
+    SCENARIO -->|"validateAreaInputs throws\n(same hac, same error)"| SCENARIOFAIL["Scenario: failed\n(same message)"]
+    AREAFAIL --> MODAL["failedItems modal\nshows BOTH entries"]
+    SCENARIOFAIL --> MODAL
+    MODAL -->|"user fixes Area"| RECALC["Area recalculates successfully"]
+    RECALC -->|"Scenario recalculates"| CLEAR["Scenario failure clears"]
+      </div>
+    </div>
+  </section>
+
+  <!-- ─────────────────── IMPLEMENTATION PHASES ─────────────────── -->
+  <section id="phases">
+    <h2><span class="section-num">05</span> Implementation Phases</h2>
+
+    <div class="callout callout-info">
+      <span class="callout-icon">⚡</span>
+      <div class="callout-body">
+        <strong>Sequencing overview</strong>
+        Phase 1 (schema relaxation) is sequential and must land first — everything else depends on it. Phases 2 and 3 can then run in parallel (5 workstreams across disjoint files). Phase 4 (new tests) depends on Phase 2 + Phase 3a. Phase 5 (manual browser verification) is last.
+      </div>
+    </div>
+
+    <div class="phase-list">
+
+      <!-- PHASE 1 -->
+      <div class="phase phase-1">
+        <div class="phase-header">
+          <div class="phase-num">1</div>
+          <div class="phase-title">Schema relaxation — <code>app/types/firestore.tsx</code></div>
+          <span class="phase-serial">Sequential — lands first</span>
+        </div>
+        <div class="phase-body">
+          <ul class="task-list">
+            <li><strong>1.1</strong> <code>AreaHacSchema</code> (lines 910-950): add <code>.optional()</code> to <code>ambientTemperature</code>, <code>ambientPressure</code>, <code>length</code>, <code>breadth</code>, <code>height</code>, <code>blockageFactor</code>, <code>volumeAirFlowRate</code>. <span class="task-dep">Do NOT touch</span> <code>ventilationLocation</code>, <code>ventilationDirection</code>, any <code>*Unit</code> field, <code>areaWindVelocity</code> (already optional), <code>notes</code> (already optional). The <code>.superRefine()</code> block checks <code>ambientPressureUnit</code> only — unaffected.</li>
+            <li><strong>1.2</strong> <code>defaultAreaHac</code> (lines 953-971): remove <code>ambientTemperature</code>, <code>ambientPressure</code>, <code>length</code>, <code>breadth</code>, <code>height</code>, <code>blockageFactor</code>, <code>volumeAirFlowRate</code>. Keep <code>ventilationLocation</code>, <code>ventilationDirection</code>, all <code>*Unit</code> fields, <code>notes</code> — see code block below.</li>
+            <li><strong>1.3</strong> <code>defaultArea.hac</code> (lines 2309-2327): mirror the same trim — remove the same 7 fields (and stale inline comments <code>// 15°C in Kelvin</code>, <code>// 1 atm in Pa</code>). Keep <code>ventilationLocation</code>, all <code>*Unit</code> fields, <code>ventilationDirection</code>, <code>notes</code>, <code>areaWindVelocityUnit</code>.</li>
+            <li><strong>1.4</strong> <code>defaultEquipmentItem.hac</code> (lines 2349-2356): remove <code>pressure: 101325</code> and <code>temperature: 293.15</code> (both already <code>.optional()</code> in <code>EquipmentItemSchema.hac</code> — template-only change). Also remove the same two fields from <code>EquipmentItemSchema.hac</code>'s own <code>.default({...})</code> block (lines 1814-1821) for consistency. Keep <code>material: ""</code>, <code>pressureUnit</code>, <code>temperatureUnit</code>, <code>notes: ""</code>.</li>
+            <li><strong>1.5</strong> <code>material</code> field (line 1805): leave as <code>z.string()</code> — do <strong>not</strong> add <code>.min(1)</code>. Empty string remains schema-valid; the calculation engine (Phase 2) surfaces the missing-material error.</li>
+          </ul>
+
+          <div class="code-label">app/types/firestore.tsx — trimmed defaultAreaHac</div>
+          <pre><span class="kw">const</span> defaultAreaHac = {
+  ventilationLocation: <span class="str">"Indoor"</span> <span class="kw">as const</span>,
+  ambientTemperatureUnit: defaultDisplayUnitByDim.temperature,
+  ambientPressureUnit: defaultDisplayUnitByDim.pressure,
+  lengthUnit: defaultDisplayUnitByDim.length,
+  breadthUnit: defaultDisplayUnitByDim.length,
+  heightUnit: defaultDisplayUnitByDim.length,
+  ventilationDirection: <span class="str">"Sideways - long"</span> <span class="kw">as const</span>,
+  volumeAirFlowRateUnit: defaultDisplayUnitByDim.volumetricFlow,
+  areaWindVelocityUnit: defaultDisplayUnitByDim.velocity,
+  notes: <span class="str">""</span>,
+};</pre>
+
+          <div class="callout callout-warn" style="margin-top:14px;">
+            <span class="callout-icon">⚠</span>
+            <div class="callout-body">
+              <strong>Verification for Phase 1</strong>
+              Run <code>npm run typecheck</code> immediately after these edits — compile errors will reveal every call site that assumed these 7 fields were non-optional, beyond the test files already identified in Phases 3/4. Cross-check the <code>z.infer&lt;typeof AreaHacSchema&gt;</code> type flows correctly into <code>Area["hac"]</code>.
+            </div>
+          </div>
+        </div>
+      </div>
+
+      <!-- PHASE 2 -->
+      <div class="phase phase-2">
+        <div class="phase-header">
+          <div class="phase-num">2</div>
+          <div class="phase-title">Validation guards — <code>validate-inputs.ts</code>, <code>bs-calculation-service.ts</code></div>
+          <span class="phase-parallel">Parallel with Phase 3 (after Phase 1)</span>
+        </div>
+        <div class="phase-body">
+
+          <h4>2a — validateAreaInputs: missing-fields check</h4>
+          <p style="font-size:13px; margin-bottom:8px;">Current implementation only validates <em>bounds</em> when fields are present — it does not check <em>presence</em>. Add a presence check that collects all missing required fields and throws a single <code>"Missing or invalid inputs: ..."</code> error, following the exact convention in <code>bs-gas-calculations.ts:81-89</code>.</p>
+
+          <div class="code-label">lib/bscalculations/validate-inputs.ts</div>
+          <pre><span class="kw">const</span> REQUIRED_AREA_HAC_FIELDS: <span class="type">Array</span>&lt;<span class="kw">keyof</span> <span class="type">Area</span>[<span class="str">"hac"</span>]&gt; = [
+  <span class="str">"length"</span>,
+  <span class="str">"breadth"</span>,
+  <span class="str">"height"</span>,
+  <span class="str">"blockageFactor"</span>,
+  <span class="str">"volumeAirFlowRate"</span>,
+  <span class="str">"ambientTemperature"</span>,
+  <span class="str">"ambientPressure"</span>,
+];
+
+<span class="kw">export function</span> <span class="fn">validateAreaInputs</span>(hac: <span class="type">Area</span>[<span class="str">"hac"</span>]): <span class="type">void</span> {
+  <span class="kw">const</span> missingFields = REQUIRED_AREA_HAC_FIELDS.<span class="fn">filter</span>(
+    (field) =&gt; hac[field] == <span class="kw">null</span>
+  );
+
+  <span class="kw">if</span> (missingFields.length &gt; <span class="num">0</span>) {
+    <span class="kw">throw new</span> <span class="type">Error</span>(<span class="str">`Missing or invalid inputs: ${missingFields.join(", ")}`</span>);
+  }
+
+  <span class="fn">validateTemperature</span>(hac.ambientTemperature, <span class="str">"ambientTemperature"</span>);
+  <span class="fn">validatePressure</span>(hac.ambientPressure, <span class="str">"ambientPressure"</span>);
+}</pre>
+
+          <ul class="task-list" style="margin-top:10px;">
+            <li>Order of <code>REQUIRED_AREA_HAC_FIELDS</code> determines error message field order — pick an order matching the Area HAC form's field order (length, breadth, height, blockageFactor, volumeAirFlowRate, ambientTemperature, ambientPressure mirrors schema declaration order)</li>
+            <li>Use plain <code>Error</code>, not <code>ValidationError</code> — <code>bs-gas-calculations.ts</code> uses plain <code>Error</code> for this exact "Missing or invalid inputs:" pattern. Grep for <code>instanceof ValidationError</code> before finalizing to confirm nothing special-cases this.</li>
+            <li><code>== null</code> (not <code>!hac[field]</code>) correctly treats <code>blockageFactor: 0</code> as <em>present</em> (valid value), not missing</li>
+          </ul>
+
+          <h4 style="margin-top:24px;">2b — EquipmentItem material validation</h4>
+          <p style="font-size:13px; margin-bottom:8px;"><code>calculateEquipmentItemResults</code> returns <code>Material | null</code> — <code>null</code> when <code>material</code> is empty or not found, logging via <code>console.error</code> but not throwing. The caller currently does <code>{...equipmentResults}</code>, which is a JS no-op when <code>equipmentResults</code> is <code>null</code> — calculation silently "succeeds" with stale/empty outputs. This is the bug to fix.</p>
+
+          <div class="code-label">lib/bscalculations/validate-inputs.ts — prefer a testable helper</div>
+          <pre><span class="kw">export function</span> <span class="fn">validateEquipmentInputs</span>(equipment: <span class="type">EquipmentItem</span>): <span class="type">void</span> {
+  <span class="kw">if</span> (!equipment.hac.material) {
+    <span class="kw">throw new</span> <span class="type">Error</span>(<span class="str">"Missing or invalid inputs: material"</span>);
+  }
+  <span class="cm">// ... existing relativeDensityAir check unchanged</span>
+}</pre>
+
+          <div class="code-label">lib/bscalculations/bs-calculation-service.ts — call before calculateEquipmentItemResults</div>
+          <pre><span class="fn">validateEquipmentInputs</span>(updatedItem);
+
+<span class="kw">const</span> equipmentResults = <span class="fn">calculateEquipmentItemResults</span>(
+  updatedItem.hac.material
+);
+
+<span class="kw">if</span> (!equipmentResults) {
+  <span class="kw">throw new</span> <span class="type">Error</span>(<span class="str">"Missing or invalid inputs: material"</span>);
+}</pre>
+
+          <div class="callout callout-info" style="margin-top:10px;">
+            <span class="callout-icon">ℹ</span>
+            <div class="callout-body">
+              Both guards together handle the empty-string case AND the "non-empty but not-found-in-materials-database" case (e.g. a stale/renamed material). Caught by the existing <code>try { ... } catch (error) { return { success: false, updatedItem, error: String(error) }; }</code> block — produces <code>calculationState.error.message === "Missing or invalid inputs: material"</code>, which <code>sanitizeError</code> already renders as "Some required fields are incomplete".
+            </div>
+          </div>
+
+          <h4 style="margin-top:24px;">2c — calculateAreaResults: confirm no further change needed</h4>
+          <p style="font-size:13px;"><code>lib/bscalculations/area/bs-area-calculation.ts:28-79</code> already calls <code>validateAreaInputs(inputs)</code> before destructuring/arithmetic. Once 2a throws on missing fields, the subsequent destructure and arithmetic (<code>length * breadth * height</code> etc.) are guaranteed numbers at runtime. <strong>No code change expected</strong>, but re-read after Phase 1+2a — if <code>npm run typecheck</code> complains that <code>length</code> etc. are typed <code>number | undefined</code> at the arithmetic lines, add non-null assertions (<code>length!</code>) at the destructure since <code>validateAreaInputs</code> has already guaranteed presence. Pick whichever keeps the diff smallest.</p>
+        </div>
+      </div>
+
+      <!-- PHASE 3 -->
+      <div class="phase phase-3">
+        <div class="phase-header">
+          <div class="phase-num">3</div>
+          <div class="phase-title">Fixture updates — test-utils + existing test files</div>
+          <span class="phase-parallel">Parallel with Phase 2 (after Phase 1)</span>
+        </div>
+        <div class="phase-body">
+
+          <h4>3a — test-utils/study-item-fixtures.ts</h4>
+          <ul class="task-list">
+            <li><strong>createArea()</strong> (lines 97-157): current fixture has placeholder zeros (<code>length: 0</code>, etc.) that were already borderline-invalid under the strict schema. <strong>Recommendation</strong>: keep <code>createArea()</code> producing a <strong>complete, valid</strong> Area by default (update zeros to genuinely valid values: <code>length: 10</code>, <code>breadth: 10</code>, <code>height: 5</code>, <code>blockageFactor: 0</code>, <code>volumeAirFlowRate: 1</code>, <code>ambientTemperature: 293.15</code>, <code>ambientPressure: 101325</code>) — minimizes blast radius for existing tests. Add a new export <code>createEmptyArea(overrides)</code> for Phase 4 failure-path tests.</li>
+            <li><strong>createEquipmentItem()</strong> (lines 159-199): keep <code>hac.material: "Methane"</code>, <code>pressure: 101325</code>, <code>temperature: 293.15</code> as the complete default ("Methane" exists in the materials DB). Add <code>createEmptyEquipmentItem(overrides)</code> for Phase 4.</li>
+          </ul>
+
+          <h4 style="margin-top:20px;">3b — lib/bscalculations/__tests__/bs-calculation-service.test.ts</h4>
+          <p style="font-size:13px;"><code>baseArea</code> (hac at lines ~54-69) and <code>baseEquipmentItem</code> (lines ~81-113) already have complete numeric values (<code>ambientTemperature: 293</code>, <code>ambientPressure: 101325</code>, <code>length: 10</code>, <code>breadth: 10</code>, <code>height: 5</code>, <code>blockageFactor: 0</code>, <code>volumeAirFlowRate: 100</code>) — <strong>verification-only</strong>, remain valid under relaxed schema. If <code>baseEquipmentItem</code> has no/empty <code>hac.material</code> and a test exercises the EquipmentItem calculation path expecting success, add <code>hac.material: "Methane"</code>.</p>
+
+          <h4 style="margin-top:20px;">3c — lib/bscalculations/__tests__/zone-calculation.test.ts</h4>
+          <p style="font-size:13px;"><code>baseArea</code> (lines ~14-58) already complete (<code>ambientTemperature: 288.15</code>, <code>ambientPressure: 101325</code>, etc.) — <strong>verification-only</strong>. Check <code>baseEquipment</code> (lines ~60-86) for <code>hac.material</code>, same reasoning as 3b.</p>
+
+          <h4 style="margin-top:20px;">3d — lib/bscalculations/__tests__/hazard-distance-suppression.test.ts</h4>
+          <p style="font-size:13px;"><code>baseArea</code> (lines ~11-58) already complete — <strong>verification-only</strong> for validity. Lines ~328-329 use non-null assertions <code>area.hac.ambientPressure!</code> / <code>area.hac.ambientTemperature!</code> — remain runtime-safe since <code>baseArea</code> always provides these. Run <code>npm run typecheck</code> to confirm the <code>!</code> operator still satisfies the now-optional types; add <code>!</code> only where TS newly complains, do not remove existing ones speculatively.</p>
+
+          <div class="callout callout-warn" style="margin-top:14px;">
+            <span class="callout-icon">⚠</span>
+            <div class="callout-body">
+              <strong>3b/3c/3d may need zero changes</strong>
+              Per analysis, these fixtures are already "complete" and should remain valid. Treat 3b/3c/3d as <em>verification tasks</em> (run the test file, confirm it still passes after Phase 1) rather than guaranteed-edit tasks — don't force changes if <code>npm test</code> already passes.
+            </div>
+          </div>
+        </div>
+      </div>
+
+      <!-- PHASE 4 -->
+      <div class="phase phase-4">
+        <div class="phase-header">
+          <div class="phase-num">4</div>
+          <div class="phase-title">New tests for the failure paths</div>
+          <span class="phase-serial">Depends on Phase 2 + Phase 3a</span>
+        </div>
+        <div class="phase-body">
+
+          <h4>4a — lib/bscalculations/__tests__/validate-inputs.test.ts (new file, or extend if exists)</h4>
+          <ul class="task-list">
+            <li><code>validateAreaInputs</code>: hac missing all 7 required fields → throws <code>Error</code> with message <code>"Missing or invalid inputs: length, breadth, height, blockageFactor, volumeAirFlowRate, ambientTemperature, ambientPressure"</code> (exact order per <code>REQUIRED_AREA_HAC_FIELDS</code>)</li>
+            <li><code>validateAreaInputs</code>: hac missing only <code>ambientTemperature</code> and <code>length</code> → throws <code>"Missing or invalid inputs: length, ambientTemperature"</code> (only missing fields, in defined order)</li>
+            <li><code>validateAreaInputs</code>: fully-populated valid hac → does not throw; existing bounds checks still fire for present-but-invalid values (e.g. <code>ambientTemperature: -300</code> → "Temperature must be above absolute zero...")</li>
+            <li><code>validateEquipmentInputs</code>: <code>hac.material: ""</code> → throws <code>"Missing or invalid inputs: material"</code></li>
+            <li><code>validateEquipmentInputs</code>: <code>hac.material: "Methane"</code> → does not throw (existing <code>relativeDensityAir</code> check unchanged)</li>
+          </ul>
+
+          <h4 style="margin-top:20px;">4b — lib/bscalculations/__tests__/bs-calculation-service.test.ts (new cases)</h4>
+          <ul class="task-list">
+            <li>"New empty Area fails calculation with Missing inputs message" — build via <code>createEmptyArea()</code>, run <code>bsCalculationHandler</code>, assert <code>result.success === false</code> and <code>result.error</code> contains <code>"Missing or invalid inputs:"</code> with all 7 field names</li>
+            <li>"New empty EquipmentItem fails calculation with Missing: Material" — build via <code>createEmptyEquipmentItem()</code>, assert <code>result.error === "Missing or invalid inputs: material"</code></li>
+            <li>"Area with only some fields missing fails with partial list" — omit only <code>ambientTemperature</code>/<code>ambientPressure</code>, assert error lists only those two</li>
+          </ul>
+
+          <h4 style="margin-top:20px;">4c — components/dashboard/__tests__/calculation-failure-modal.test.tsx</h4>
+          <ul class="task-list">
+            <li>Add case verifying <code>sanitizeError("Missing or invalid inputs: length, breadth, height, blockageFactor, volumeAirFlowRate, ambientTemperature, ambientPressure")</code> → label "Some required fields are incomplete", hint "Click to open and review the inputs." — confirms the existing regex covers the new, longer field list without truncation issues</li>
+            <li>Add case for <code>"Missing or invalid inputs: material"</code> → same label/hint</li>
+          </ul>
+
+          <h4 style="margin-top:20px;">4d — components/dashboard/__tests__/use-auto-calculation.test.tsx</h4>
+          <ul class="task-list">
+            <li>New (empty) Area and EquipmentItem at Zone-complete depth → after <code>runCalculation</code>, <code>failedItems</code> contains entries for both, with <code>errorMessage</code> matching the new "Missing or invalid inputs: ..." patterns, and <code>isRootCauseFailure()</code> returns <code>true</code> for both (confirm neither matches the existing cascaded-failure regexes at <code>use-auto-calculation.ts:44-47</code>)</li>
+            <li>If the Area is incomplete AND has a child Scenario, confirm the Scenario <em>also</em> appears in <code>failedItems</code> (cascaded "Missing or invalid inputs: ambientTemperature, ambientPressure" etc.) — per 2a's design note, this is expected/acceptable; add a test asserting it so future changes don't silently alter this behaviour</li>
+          </ul>
+        </div>
+      </div>
+
+      <!-- PHASE 5 -->
+      <div class="phase phase-5">
+        <div class="phase-header">
+          <div class="phase-num">5</div>
+          <div class="phase-title">Manual / browser verification</div>
+          <span class="phase-serial">Last — after everything compiles &amp; tests pass</span>
+        </div>
+        <div class="phase-body">
+          <ul class="checklist">
+            <li><span class="check-box"></span><div>Start dev server (<code>preview_start</code> / <code>npm run dev</code>)</div></li>
+            <li><span class="check-box"></span><div>Create a new Study → Facility/Section → Area → check HAC status indicator shows "failed" with the Area listed</div></li>
+            <li><span class="check-box"></span><div>Open the failure modal, click the Area entry → confirm it navigates to the Area HAC form with <code>requestedFormTab: "hac"</code></div></li>
+            <li><span class="check-box"></span><div>Fill in all 7 required Area fields → confirm the Area recalculates and the failure clears (or moves to the next incomplete item)</div></li>
+            <li><span class="check-box"></span><div>Create a new EquipmentItem under the Area → confirm "Missing: Material" appears; select a material → confirm it clears</div></li>
+            <li><span class="check-box"></span><div>Build down to Zone level with a Scenario (<code>hacType: "None"</code>) → confirm Scenario shows as <code>"never-calculated"</code> (not <code>"failed"</code>), unchanged from current behaviour</div></li>
+            <li><span class="check-box"></span><div>Confirm the overall <code>displayState</code> priority chain in <code>hac-status-indicator.tsx</code> still produces sensible icons/tooltips throughout (no new states introduced, but verify <code>"failed"</code> triggers correctly for a brand-new Area)</div></li>
+          </ul>
+        </div>
+      </div>
+
+    </div>
+  </section>
+
+  <!-- ─────────────────── EDGE CASES ─────────────────── -->
+  <section id="edge-cases">
+    <h2><span class="section-num">06</span> Edge Cases &amp; Validation Concerns</h2>
+    <div style="border: 1px solid var(--border); border-radius: 8px; overflow: hidden;">
+      <table>
+        <thead><tr><th>#</th><th>Edge Case</th><th>Resolution</th><th>Risk</th></tr></thead>
+        <tbody>
+          <tr>
+            <td data-label="#">1</td>
+            <td data-label="Edge Case">Existing Firestore documents with all 7 Area fields already populated</td>
+            <td data-label="Resolution">Unaffected — <code>.optional()</code> is additive; <code>safeParse</code> still accepts present values and validates bounds as before.</td>
+            <td data-label="Risk"><span class="risk risk-low">LOW</span></td>
+          </tr>
+          <tr>
+            <td data-label="#">2</td>
+            <td data-label="Edge Case">Existing Firestore documents created before this change with a partially-populated <code>hac</code> (e.g. missing <code>volumeAirFlowRate</code> due to a prior bug)</td>
+            <td data-label="Resolution">Previously would have failed Zod parsing entirely (field required) — now parses successfully but <code>validateAreaInputs</code> throws "Missing or invalid inputs: volumeAirFlowRate" at calculation time. <strong>This is the intended improved behaviour</strong> — clear, actionable message instead of opaque Zod error.</td>
+            <td data-label="Risk"><span class="risk risk-low">LOW</span></td>
+          </tr>
+          <tr>
+            <td data-label="#">3</td>
+            <td data-label="Edge Case"><code>defaultAreaHac</code> (schema-level <code>.default()</code>, fires only when entire <code>hac</code> key is <code>undefined</code>) vs <code>defaultArea.hac</code> (new-item template) — both trimmed identically</td>
+            <td data-label="Resolution">Single usage confirmed (schema definition line 1770 + export list) — safe to trim both consistently.</td>
+            <td data-label="Risk"><span class="risk risk-low">LOW</span></td>
+          </tr>
+          <tr>
+            <td data-label="#">4</td>
+            <td data-label="Edge Case"><code>ventilationLocation</code>/<code>ventilationDirection</code> defaults retained — Area HAC form conditionally renders Indoor vs Outdoor fields based on <code>watch("ventilationLocation")</code></td>
+            <td data-label="Resolution">With <code>ventilationLocation: "Indoor"</code> still defaulted, form renders Indoor fields as empty inputs — user fills them in. No form code change needed, but <strong>verify in browser</strong> (Phase 5) that empty numeric fields render sensibly (not <code>NaN</code>/<code>0</code> placeholders) and <code>react-hook-form</code> + <code>zodResolver</code> handle <code>undefined</code> for <code>.optional()</code> <code>z.coerce.number()</code> fields.</td>
+            <td data-label="Risk"><span class="risk risk-med">MEDIUM</span></td>
+          </tr>
+          <tr>
+            <td data-label="#">5</td>
+            <td data-label="Edge Case"><code>EquipmentItem.hac.pressure</code>/<code>temperature</code> now <code>undefined</code> for new items — <code>scenario-forms.tsx:262-263</code> reads these as inheritance defaults via <code>buildHacDefaultValues</code></td>
+            <td data-label="Resolution">Already handled: <code>scenario-hac-defaults.ts:45-56</code> checks <code>typeof equipmentDefaults?.temperature === "number"</code> before applying — <code>undefined</code> simply skips inheritance override, leaving Scenario's own fields empty too (correct/consistent). <strong>No code change needed</strong> — confirmed by re-reading <code>scenario-hac-defaults.ts:19-56</code>.</td>
+            <td data-label="Risk"><span class="risk risk-low">LOW</span></td>
+          </tr>
+          <tr>
+            <td data-label="#">6</td>
+            <td data-label="Edge Case">Cascading failures: an incomplete Area causes child Scenarios (with <code>hacType: "BS EN 60079-10-1"</code>) to also fail via <code>validateAreaInputs(area.hac)</code> inside <code>bs-gas-calculations.ts</code> etc.</td>
+            <td data-label="Resolution"><strong>Intentional</strong> per 2a — both surface in <code>failedItems</code>. Verify <code>isRootCauseFailure()</code> doesn't suppress the Scenario entry confusingly (Phase 4d test). If the modal feels noisy in manual testing, grouping/dedup is a <strong>follow-up</strong> — not implemented now.</td>
+            <td data-label="Risk"><span class="risk risk-med">MEDIUM</span></td>
+          </tr>
+          <tr>
+            <td data-label="#">7</td>
+            <td data-label="Edge Case"><code>material: z.string()</code> with no <code>.min(1)</code> — an EquipmentItem could have <code>material: "   "</code> (whitespace), truthy but not a real material</td>
+            <td data-label="Resolution"><code>calculateEquipmentItemResults("   ")</code> → <code>materials.find(...)</code> returns <code>undefined</code> → function returns <code>null</code> → 2b's <code>!equipmentResults</code> check catches this regardless of the <code>!hac.material</code> truthiness check. Both guards together handle empty-string AND not-found cases.</td>
+            <td data-label="Risk"><span class="risk risk-low">LOW</span></td>
+          </tr>
+          <tr>
+            <td data-label="#">8</td>
+            <td data-label="Edge Case"><code>blockageFactor: 0</code> is a <strong>valid</strong> value (<code>min(0).max(1)</code>) but also falsy</td>
+            <td data-label="Resolution"><code>0 == null</code> is <code>false</code> in JS, so <code>blockageFactor: 0</code> correctly passes the "is it present" check and is NOT reported as missing. <code>missingFields.filter((field) => hac[field] == null)</code> uses <code>== null</code> (catches <code>null</code>/<code>undefined</code>), not <code>!hac[field]</code> (would incorrectly flag <code>0</code>).</td>
+            <td data-label="Risk"><span class="risk risk-low">LOW</span></td>
+          </tr>
+          <tr>
+            <td data-label="#">9</td>
+            <td data-label="Edge Case">TypeScript strict mode: making 7 fields optional on <code>AreaHacSchema</code> changes <code>z.infer&lt;typeof AreaHacSchema&gt;</code> — any code destructuring <code>area.hac.length</code> etc. without a null-check now gets a type error</td>
+            <td data-label="Resolution"><code>npm run typecheck</code> after Phase 1 is the primary safety net; 2c addresses the known case in <code>bs-area-calculation.ts</code>. Search for <code>.hac.length</code>, <code>.hac.breadth</code>, <code>.hac.height</code>, <code>.hac.blockageFactor</code>, <code>.hac.volumeAirFlowRate</code>, <code>.hac.ambientTemperature</code>, <code>.hac.ambientPressure</code> across <code>lib/</code>, <code>components/</code>, <code>app/</code> — likely candidates: report generators (<code>area-reports.tsx</code>, <code>hac-summary-table.tsx</code>) should show "—"/"Not set" rather than crash.</td>
+            <td data-label="Risk"><span class="risk risk-med">MEDIUM</span></td>
+          </tr>
+          <tr>
+            <td data-label="#">10</td>
+            <td data-label="Edge Case">Report/export code (<code>area-reports.tsx</code>, <code>docx-report-sections/*</code>, <code>hac-summary-table.tsx</code>) may format <code>area.hac.length</code> etc. for PDF/DOCX export. Can an incomplete Area even reach export?</td>
+            <td data-label="Resolution">Check <code>canExportSafely</code> (<code>lib/calculation-versioning.ts</code>) — if it already gates export on <code>failedItems</code>/sync status being clean, incomplete Areas won't reach report generation. <strong>Read-and-confirm task</strong>, likely no code change; if no gate exists, ensure report code doesn't crash on <code>undefined</code> numeric fields (defensive <code>?? "—"</code> formatting).</td>
+            <td data-label="Risk"><span class="risk risk-med">MEDIUM</span></td>
+          </tr>
+        </tbody>
+      </table>
+    </div>
+  </section>
+
+  <!-- ─────────────────── TEST PLAN ─────────────────── -->
+  <section id="tests">
+    <h2><span class="section-num">07</span> Testing &amp; Verification Approach</h2>
+
+    <h3>Quality Gate Sequence</h3>
+    <ul class="checklist">
+      <li><span class="check-box"></span><div><code>npm run typecheck</code> after Phase 1 — surfaces every call site affected by the new optional fields (edge case #9). Re-run after Phase 2 and Phase 3.</div></li>
+      <li><span class="check-box"></span><div><code>npm run lint</code> — must pass with 0 warnings (CI gate). Run after each phase.</div></li>
+      <li><span class="check-box"></span><div><code>npm test</code> (full Vitest suite) — after Phase 3 (fixture updates), confirm all <strong>existing</strong> tests still pass before adding new ones in Phase 4. Isolates "did I break something existing" from "does the new feature work."</div></li>
+      <li><span class="check-box"></span><div>Full suite + typecheck + lint after Phase 4 (the complete change)</div></li>
+      <li><span class="check-box"></span><div>Manual/browser verification (Phase 5)</div></li>
+    </ul>
+
+    <h3>Targeted Test Runs (during development)</h3>
+    <div class="code-label">vitest commands</div>
+    <pre><span class="fn">npx vitest run</span> lib/bscalculations/__tests__/bs-calculation-service.test.ts
+<span class="fn">npx vitest run</span> lib/bscalculations/__tests__/zone-calculation.test.ts
+<span class="fn">npx vitest run</span> lib/bscalculations/__tests__/hazard-distance-suppression.test.ts
+<span class="fn">npx vitest run</span> lib/bscalculations/__tests__/validate-inputs.test.ts   <span class="cm"># new</span>
+<span class="fn">npx vitest run</span> components/dashboard/__tests__/use-auto-calculation.test.tsx
+<span class="fn">npx vitest run</span> components/dashboard/__tests__/calculation-failure-modal.test.tsx</pre>
+
+    <h3>Test Coverage Map</h3>
+    <div style="border: 1px solid var(--border); border-radius: 8px; overflow: hidden; margin-bottom: 20px;">
+      <table>
+        <thead><tr><th>Test file</th><th>New / changed coverage</th></tr></thead>
+        <tbody>
+          <tr>
+            <td data-label="File"><span class="file-path">validate-inputs.test.ts</span> (new)</td>
+            <td data-label="Coverage">Missing-fields error (full list + partial list), bounds checks on present-but-invalid values, equipment material missing/present</td>
+          </tr>
+          <tr>
+            <td data-label="File"><span class="file-path">bs-calculation-service.test.ts</span></td>
+            <td data-label="Coverage">Empty Area → "Missing or invalid inputs: ..." (all 7 fields); Empty EquipmentItem → "Missing or invalid inputs: material"; partial-field Area → partial list</td>
+          </tr>
+          <tr>
+            <td data-label="File"><span class="file-path">calculation-failure-modal.test.tsx</span></td>
+            <td data-label="Coverage"><code>sanitizeError()</code> handles the new longer field list and the "material" message correctly</td>
+          </tr>
+          <tr>
+            <td data-label="File"><span class="file-path">use-auto-calculation.test.tsx</span></td>
+            <td data-label="Coverage">New empty Area/EquipmentItem appear in <code>failedItems</code>; cascaded Scenario failure also appears; <code>isRootCauseFailure()</code> returns <code>true</code> for both new error patterns</td>
+          </tr>
+        </tbody>
+      </table>
+    </div>
+  </section>
+
+  <!-- ─────────────────── PARALLELIZATION ─────────────────── -->
+  <section id="parallel">
+    <h2><span class="section-num">08</span> Parallelization Plan</h2>
+
+    <div class="mermaid-wrapper">
+      <div class="mermaid">
+flowchart LR
+    P1["Phase 1: Schema relaxation\n(firestore.tsx)\nSEQUENTIAL - lands first"]
+    P2["Phase 2: Validation guards\n(validate-inputs.ts,\nbs-calculation-service.ts,\nbs-area-calculation.ts)"]
+    P3a["Phase 3a:\nstudy-item-fixtures.ts"]
+    P3b["Phase 3b:\nbs-calculation-service.test.ts fixtures"]
+    P3c["Phase 3c:\nzone-calculation.test.ts fixtures"]
+    P3d["Phase 3d:\nhazard-distance-suppression.test.ts fixtures"]
+    P4["Phase 4: New tests\n(depends on 2 AND 3a)"]
+    P5["Phase 5: Manual browser verification\n+ edge case #10 report check"]
+
+    P1 --> P2
+    P1 --> P3a
+    P1 --> P3b
+    P1 --> P3c
+    P1 --> P3d
+    P2 --> P4
+    P3a --> P4
+    P3b --> P4
+    P3c --> P4
+    P3d --> P4
+    P4 --> P5
+      </div>
+    </div>
+
+    <div class="card-grid" style="margin-top:16px;">
+      <div class="card">
+        <h4>Phase 1</h4>
+        <p style="font-size:13px; color:var(--text);">Must land first and alone (single file, foundational).</p>
+      </div>
+      <div class="card">
+        <h4>Phases 2 &amp; 3a-d</h4>
+        <p style="font-size:13px; color:var(--text);">Can run in <strong>parallel</strong> (5 concurrent workstreams) once Phase 1 lands — entirely disjoint files: Phase 2 touches <code>validate-inputs.ts</code>, <code>bs-calculation-service.ts</code>, possibly <code>bs-area-calculation.ts</code>; Phase 3a-d each touch one fixture/test file.</p>
+      </div>
+      <div class="card">
+        <h4>Phase 3b/3c/3d caution</h4>
+        <p style="font-size:13px; color:var(--text);">Might need <strong>zero changes</strong> — treat as verification tasks (run the test file, confirm still green after Phase 1), not guaranteed-edit tasks.</p>
+      </div>
+      <div class="card">
+        <h4>Phase 4</h4>
+        <p style="font-size:13px; color:var(--text);">Depends on Phase 2 (validation guards must exist to test) AND Phase 3a (needs <code>createEmptyArea</code>/<code>createEmptyEquipmentItem</code> fixtures). Sub-tasks 4a/4b/4c/4d touch different test files — parallelize among themselves once shared deps land.</p>
+      </div>
+      <div class="card">
+        <h4>Phase 5</h4>
+        <p style="font-size:13px; color:var(--text);">Manual verification — last, after everything compiles/tests pass.</p>
+      </div>
+    </div>
+  </section>
+
+  <!-- ─────────────────── COMMIT STRATEGY ─────────────────── -->
+  <section id="commit">
+    <h2><span class="section-num">09</span> Commit &amp; Push Strategy</h2>
+
+    <h3>Commits in dependency order</h3>
+    <ol style="padding-left: 20px; font-size: 13px; line-height: 2;">
+      <li><code>feat: relax Area HAC numeric fields to optional and trim new-item defaults</code> — Phase 1 (<code>app/types/firestore.tsx</code>)</li>
+      <li><code>feat: validate required Area inputs and EquipmentItem material before calculation</code> — Phase 2 (<code>validate-inputs.ts</code>, <code>bs-calculation-service.ts</code>, possibly <code>bs-area-calculation.ts</code>)</li>
+      <li><code>test: add empty Area/EquipmentItem fixtures for incomplete-input scenarios</code> — Phase 3a (<code>test-utils/study-item-fixtures.ts</code>)</li>
+      <li><code>test: update existing fixtures for optional Area HAC fields</code> — Phase 3b/c/d <em>combined, only if changes needed</em> (skip if verification-only)</li>
+      <li><code>test: cover Missing-inputs failure paths for Area and EquipmentItem</code> — Phase 4 (new validate-inputs tests, bs-calculation-service tests, modal tests, use-auto-calculation tests)</li>
+    </ol>
+
+    <div class="callout callout-warn" style="margin-top:16px;">
+      <span class="callout-icon">⚠</span>
+      <div class="callout-body">
+        <strong>No WIP commits — each commit must be independently green</strong>
+        Run <code>npm run typecheck &amp;&amp; npm run lint &amp;&amp; npm test</code> <strong>before each commit</strong>. Phase 1 alone will fail typecheck until Phase 2/3 land — if strict per-phase sequencing would require a knowingly-red intermediate commit, <strong>merge Phase 1 and Phase 2 (and any required Phase 3 changes) into one commit</strong>, then Phase 4 as a second commit. Each commit above is a complete, test-passing logical unit.
+      </div>
+    </div>
+
+    <h3 style="margin-top:20px;">Push timing</h3>
+    <p style="font-size: 13px;">Push to <code>origin/feat/auto-hac-calculation</code> after the final commit and a full green <code>npm test &amp;&amp; npm run typecheck &amp;&amp; npm run lint</code>. Do not push intermediate commits unless requested — push once at the end of the implementation session, or per the existing incremental push pattern already used on this branch (multiple commits pushed per recent commit log) if that's preferred.</p>
+  </section>
+
+  <!-- ─────────────────── OPEN DECISIONS ─────────────────── -->
+  <section id="decisions">
+    <h2><span class="section-num">10</span> Open Decisions / Flag for User Confirmation During Implementation</h2>
+
+    <div class="decision">
+      <h4>1. Fixture strategy (Phase 3a)</h4>
+      <p><code>createArea()</code>/<code>createEquipmentItem()</code> remain "complete" by default with new <code>createEmptyArea()</code>/<code>createEmptyEquipmentItem()</code> exports added — confirm this naming/approach is acceptable, or whether an <code>overrides</code>-based pattern (documented in a comment) without new exported functions is preferred.</p>
+    </div>
+
+    <div class="decision">
+      <h4>2. Cascading failures (Edge Case #6)</h4>
+      <p>An incomplete Area produces a "Missing or invalid inputs: ..." failure for itself AND for every descendant Scenario that calculates against it. Accepted as correct for this change, but if the resulting modal feels noisy in manual testing (Phase 5), grouping/deduplication is a candidate <strong>follow-up</strong> — not in scope now.</p>
+    </div>
+
+    <div class="decision">
+      <h4>3. Error vs ValidationError</h4>
+      <p>For the new <code>validateAreaInputs</code> "missing fields" throw (2a) — confirm a quick grep for <code>instanceof ValidationError</code> turns up nothing that would special-case Area's missing-fields error differently from a plain <code>Error</code>.</p>
+    </div>
+
+    <div class="decision">
+      <h4>4. Report/export defensive formatting (Edge Case #10)</h4>
+      <p>If <code>canExportSafely</code> does NOT already gate exports on <code>failedItems</code>, decide whether adding <code>?? "—"</code> style fallbacks to <code>area-reports.tsx</code>/<code>hac-summary-table.tsx</code> is in-scope for this change or a fast-follow.</p>
+    </div>
+  </section>
+
+  <footer style="margin-top: 48px; padding-top: 20px; border-top: 1px solid var(--border); color: var(--muted); font-size: 12px; display:flex; justify-content:space-between; flex-wrap:wrap; gap:8px;">
+    <span>Generated by Claude Code · nEXus project · 2026-06-12</span>
+    <a href="index.html" style="color:var(--accent);">← Back to Review Docs</a>
+  </footer>
+
+</div>
+</body>
+</html>
