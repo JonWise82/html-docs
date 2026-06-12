@@ -190,7 +190,7 @@
   <a href="#tests">Tests</a>
   <a href="#parallel">Parallelization</a>
   <a href="#commit">Commit</a>
-  <a href="#decisions">Open Decisions</a>
+  <a href="#decisions">Resolved Decisions</a>
 </nav>
 
 <div class="page">
@@ -201,7 +201,7 @@
     <div class="meta">
       <div class="meta-item"><strong>Branch</strong> feat/auto-hac-calculation</div>
       <div class="meta-item"><strong>Date</strong> 2026-06-12</div>
-      <div class="meta-item"><strong>Files changed</strong> ~9</div>
+      <div class="meta-item"><strong>Files changed</strong> ~13</div>
       <div class="meta-item"><span class="badge badge-plan">Plan</span></div>
       <div class="meta-item"><span class="badge badge-feat">Feature</span></div>
       <div class="meta-item"><span class="badge badge-ui">UI + Engine</span></div>
@@ -214,14 +214,30 @@
     <div class="summary-card">
       <p>The HAC status indicator (<code>components/dashboard/hac-status-indicator.tsx</code>) currently tells users when they need to build the study tree down to Zone level to enable a HAC calculation. Once the tree reaches Zone level, however, the indicator gives no help identifying <em>which</em> items (Area, EquipmentItem, Scenario, Zone) still have incomplete or invalid inputs preventing a successful calculation.</p>
       <p>Today, new Area and EquipmentItem items are created with <strong>fully-populated numeric HAC defaults</strong> (<code>defaultArea.hac</code>, <code>defaultEquipmentItem.hac</code> in <code>app/types/firestore.tsx</code>), so they calculate "successfully" with made-up placeholder numbers (e.g. <code>length: 10</code>, <code>ambientTemperature: 288.15</code>, <code>pressure: 101325</code>) that the user never consciously entered. This is inconsistent with Scenario, which starts as <code>hacType: "None"</code> — a deliberate "not configured" sentinel that the calculation engine already treats as <code>"never-calculated"</code> rather than success/failure.</p>
-      <p><strong>The agreed approach</strong>: make Area and EquipmentItem "start empty" on creation (no placeholder numeric values), and let the <em>existing</em> <code>failedItems</code> / <code>calculation-failure-modal.tsx</code> machinery surface "Missing: Length, Breadth, Height, ..." style messages — the same way scenario gas-release calculations already do today via the <code>"Missing or invalid inputs: x, y, z"</code> error convention (see <code>lib/bscalculations/scenario/bs-gas-calculations.ts:81-89</code>, already parsed by <code>sanitizeError</code> in <code>components/dashboard/calculation-failure-modal.tsx:30-31</code>).</p>
+      <p><strong>The agreed approach</strong>: make Area and EquipmentItem "start empty" on creation (no placeholder numeric values), keep using the existing <code>failedItems</code> flow, and extend <code>calculation-failure-modal.tsx</code> so the <code>"Missing or invalid inputs: x, y, z"</code> convention renders as visible field details such as <code>Missing: Length, Breadth, Height</code>. Scenario calculations already emit this convention; the modal needs the extra detail rendering.</p>
       <p><strong>No new schema discriminator</strong> (no <code>hacType</code> on Area/EquipmentItem), <strong>no new display state</strong>, <strong>no new "incomplete items" concept</strong> — this is a scoped, additive change: relax a handful of required numeric fields to optional, trim the "new item" templates, and add validation guards so the calculation engine throws a clear, well-formatted error instead of producing <code>NaN</code> or <code>null</code>-spread results.</p>
+    </div>
+
+    <h3>Resolved Review Decisions</h3>
+    <div class="card">
+      <p style="font-size:13px; color:var(--text); margin-bottom:10px;"><strong>This section supersedes any narrower wording elsewhere in this plan.</strong> It folds in the independent review and removes implementation ambiguity before work begins.</p>
+      <ul class="task-list">
+        <li><strong>Missing fields must be visible in the modal.</strong> Update <code>components/dashboard/calculation-failure-modal.tsx</code> so <code>sanitizeError()</code> parses <code>Missing or invalid inputs:</code> field keys, maps known keys to labels, and renders a detail line such as <code>Missing: Length, Breadth, Height</code>. The current modal only says "Some required fields are incomplete", which is not enough.</li>
+        <li><strong>Area validation is conditional.</strong> Always require <code>ambientTemperature</code> and <code>ambientPressure</code>. For <code>ventilationLocation: "Indoor"</code>, require <code>length</code>, <code>breadth</code>, <code>height</code>, <code>blockageFactor</code>, <code>ventilationDirection</code>, and <code>volumeAirFlowRate</code>. For <code>ventilationLocation: "Outdoor"</code>, require <code>areaWindVelocity</code> instead of hidden indoor volume fields.</li>
+        <li><strong>Validation must assert types, not only presence.</strong> Treat <code>undefined</code>, <code>null</code>, <code>""</code>, non-numeric values, and <code>NaN</code> as missing/invalid before arithmetic. Validate bounds explicitly: dimensions and flow <code>&gt; 0</code>, <code>blockageFactor</code> between 0 and 1, ambient temperature <code>&gt; 0 K</code>, ambient pressure <code>&gt; 0 Pa</code>, wind velocity <code>&gt; 0</code>.</li>
+        <li><strong>Use assertion helpers for TypeScript narrowing.</strong> Add <code>assertCompleteIndoorAreaHac</code> / <code>assertCompleteOutdoorAreaHac</code>, or one discriminating assertion helper, in <code>validate-inputs.ts</code>. <code>calculateAreaResults</code> should call the helper before arithmetic rather than relying on scattered non-null assertions.</li>
+        <li><strong>Equipment pressure and temperature remain inheritance inputs, not EquipmentItem completeness requirements.</strong> A new EquipmentItem is incomplete only when <code>material</code> is missing or unknown. Scenarios that inherit pressure or temperature should continue to fail with the existing inheritance-specific messages until the user sets those fields or disables inheritance.</li>
+        <li><strong>Normalize thrown errors in <code>bsCalculationHandler</code>.</strong> Replace <code>String(error)</code> in calculation catch blocks with <code>error instanceof Error ? error.message : String(error)</code> so tests and UI do not receive an <code>Error:</code> prefix. Keep grouped missing-field messages as plain <code>Error</code>, not <code>ValidationError</code>.</li>
+        <li><strong>Unknown materials use the same user-facing field message.</strong> Empty, whitespace-only, or stale material identifiers should all produce <code>Missing or invalid inputs: material</code>. A distinct "material not found" workflow is out of scope.</li>
+        <li><strong>Exports are gated, but the gate must be verified.</strong> <code>canExportSafely</code>, <code>canExportSafelyForSubtree</code>, and the server export gate already block failed/out-of-sync HAC exports. Add or adjust tests proving failed Area/Equipment states disable HAC export; report formatting fallbacks are not required unless a gate test fails.</li>
+      </ul>
     </div>
 
     <h3>Net Effect for the User</h3>
     <div class="ba-grid">
       <div class="card ba-after">
         <div class="ba-label">New behaviour</div>
+        <p style="font-size:13px; color:var(--text); margin-bottom:8px;"><strong>Authoritative behaviour:</strong> Indoor Areas require indoor volume/ventilation fields plus ambient fields; Outdoor Areas require <code>areaWindVelocity</code> plus ambient fields; EquipmentItems require material only, with pressure/temperature handled by Scenario inheritance errors when relevant.</p>
         <ul class="ba-list">
           <li><strong>New Area</strong> → calculates immediately, fails with "Missing: Length, Breadth, Height, Blockage Factor, Volume Air Flow Rate, Ambient Temperature, Ambient Pressure" → shows in the HAC status indicator's failure modal → click-through opens the Area HAC form.</li>
           <li><strong>New EquipmentItem</strong> → fails with "Missing: Material" → same modal, click-through opens the EquipmentItem HAC form.</li>
@@ -257,27 +273,32 @@
           <tr>
             <td data-label="File"><span class="file-path">app/types/firestore.tsx</span></td>
             <td data-label="Change"><span class="change-type ct-extend">Relax schema + trim defaults</span></td>
-            <td data-label="Summary">Relax 7 <code>AreaHacSchema</code> numeric fields to <code>.optional()</code>; trim <code>defaultAreaHac</code>, <code>defaultArea.hac</code>, and <code>defaultEquipmentItem.hac</code> templates</td>
+            <td data-label="Summary">Relax the Area numeric fields that must start empty to <code>.optional()</code>; keep unit and selector defaults; trim <code>defaultAreaHac</code>, <code>defaultArea.hac</code>, <code>EquipmentItemSchema.hac.default</code>, and <code>defaultEquipmentItem.hac</code> templates so new items do not inject placeholder numbers</td>
           </tr>
           <tr>
             <td data-label="File"><span class="file-path">lib/bscalculations/validate-inputs.ts</span></td>
             <td data-label="Change"><span class="change-type ct-extend">Add validation guards</span></td>
-            <td data-label="Summary">Extend <code>validateAreaInputs</code> to throw <code>"Missing or invalid inputs: ..."</code> for missing required Area fields; extend/add <code>validateEquipmentInputs</code> to throw for missing/empty <code>material</code></td>
+            <td data-label="Summary">Add conditional Area assertion helpers for Indoor vs Outdoor requirements; validate finite numeric types and bounds before arithmetic; extend <code>validateEquipmentInputs</code> to throw for missing/empty <code>material</code></td>
           </tr>
           <tr>
             <td data-label="File"><span class="file-path">lib/bscalculations/area/bs-area-calculation.ts</span></td>
-            <td data-label="Change"><span class="change-type ct-verify">Verify only</span></td>
-            <td data-label="Summary">No code change expected — relies on <code>validateAreaInputs</code> guard. Re-check TS types after Phase 1 (destructure of now-optional fields)</td>
+            <td data-label="Change"><span class="change-type ct-extend">Use validated narrowing</span></td>
+            <td data-label="Summary">Call the Area assertion helper before arithmetic; branch Outdoor Areas so they do not require hidden indoor volume fields and do not calculate indoor ventilation outputs from undefined values</td>
           </tr>
           <tr>
             <td data-label="File"><span class="file-path">lib/bscalculations/bs-calculation-service.ts</span></td>
-            <td data-label="Change"><span class="change-type ct-extend">Add null-check</span></td>
-            <td data-label="Summary">Add guard after <code>calculateEquipmentItemResults</code> so a <code>null</code> result (or empty <code>material</code>) throws a clear error instead of spreading <code>...null</code> silently</td>
+            <td data-label="Change"><span class="change-type ct-extend">Add guards + normalize errors</span></td>
+            <td data-label="Summary">Call <code>validateEquipmentInputs</code>, guard <code>null</code> equipment results, and normalize caught <code>Error</code> objects to <code>error.message</code> so UI/tests do not receive an <code>Error:</code> prefix</td>
           </tr>
           <tr>
             <td data-label="File"><span class="file-path">lib/bscalculations/equipment/bs-equipment-calculations.ts</span></td>
             <td data-label="Change"><span class="change-type ct-verify">No functional change</span></td>
             <td data-label="Summary">Keep returning <code>null</code> / logging — caller now handles <code>null</code></td>
+          </tr>
+          <tr>
+            <td data-label="File"><span class="file-path">components/dashboard/calculation-failure-modal.tsx</span></td>
+            <td data-label="Change"><span class="change-type ct-extend">Render missing-field details</span></td>
+            <td data-label="Summary">Extend <code>sanitizeError()</code> to return parsed missing-field labels and render a detail line such as <code>Missing: Length, Breadth</code> under the generic failure label</td>
           </tr>
           <tr>
             <td data-label="File"><span class="file-path">test-utils/study-item-fixtures.ts</span></td>
@@ -302,7 +323,17 @@
           <tr>
             <td data-label="File"><span class="file-path">lib/bscalculations/__tests__/validate-inputs.test.ts</span></td>
             <td data-label="Change"><span class="change-type ct-test">New file (or extend)</span></td>
-            <td data-label="Summary">Unit tests for new <code>validateAreaInputs</code> missing-fields branch and the new equipment <code>material</code> check</td>
+            <td data-label="Summary">Unit tests for Indoor/Outdoor Area missing-field branches, finite-number/bounds validation, and the equipment <code>material</code> check</td>
+          </tr>
+          <tr>
+            <td data-label="File"><span class="file-path">app/types/__tests__/schema-defaults.test.ts</span><br/><span class="file-path">app/types/__tests__/geometry-validation.test.ts</span><br/><span class="file-path">app/types/__tests__/component-validation-examples.test.ts</span></td>
+            <td data-label="Change"><span class="change-type ct-test">Update schema tests</span></td>
+            <td data-label="Summary">Prove omitted Area numeric fields parse, schema/defaults no longer inject placeholder numeric HAC values, and invalid present values still fail validation</td>
+          </tr>
+          <tr>
+            <td data-label="File"><span class="file-path">components/dashboard/reports/__tests__/export-report-modal.test.tsx</span><br/><span class="file-path">app/api/reports/export/__tests__/route.test.ts</span></td>
+            <td data-label="Change"><span class="change-type ct-test">Verify export gate</span></td>
+            <td data-label="Summary">Confirm failed/out-of-sync Area or EquipmentItem states block HAC exports through client and server gates; do not add report formatting fallbacks unless these gates fail</td>
           </tr>
           <tr>
             <td data-label="File"><span class="file-path">components/dashboard/__tests__/use-auto-calculation.test.tsx</span><br/><span class="file-path">components/dashboard/__tests__/calculation-failure-modal.test.tsx</span></td>
@@ -333,7 +364,7 @@
           <li>New Area's <code>hac</code> object omits the 7 numeric fields entirely — only <code>ventilationLocation</code>, <code>ventilationDirection</code>, unit fields, and <code>notes</code> remain</li>
           <li><code>validateAreaInputs</code> throws <code>"Missing or invalid inputs: length, breadth, height, blockageFactor, volumeAirFlowRate, ambientTemperature, ambientPressure"</code> — surfaces as <code>calculationState.status === "failed"</code></li>
           <li>New EquipmentItem's <code>hac.material</code> remains <code>""</code>; calculation now <strong>throws</strong> <code>"Missing or invalid inputs: material"</code> instead of silently succeeding</li>
-          <li><code>failedItems</code> picks up both via existing <code>isRootCauseFailure()</code> logic; <code>CalculationFailureModal</code>'s <code>sanitizeError()</code> renders "Some required fields are incomplete — Click to open and review the inputs."</li>
+          <li><code>failedItems</code> picks up both via existing <code>isRootCauseFailure()</code> logic; <code>CalculationFailureModal</code>'s <code>sanitizeError()</code> renders the generic label plus a visible <code>Missing: ...</code> field-detail line.</li>
           <li>Clicking the failed item navigates to its HAC form (<code>requestedFormTab: "hac"</code>) — existing navigation wiring, no change needed</li>
         </ul>
       </div>
@@ -452,7 +483,15 @@ flowchart LR
           <h4>2a — validateAreaInputs: missing-fields check</h4>
           <p style="font-size:13px; margin-bottom:8px;">Current implementation only validates <em>bounds</em> when fields are present — it does not check <em>presence</em>. Add a presence check that collects all missing required fields and throws a single <code>"Missing or invalid inputs: ..."</code> error, following the exact convention in <code>bs-gas-calculations.ts:81-89</code>.</p>
 
-          <div class="code-label">lib/bscalculations/validate-inputs.ts</div>
+          <div class="callout callout-warn" style="margin-top:10px;">
+            <span class="callout-icon">!</span>
+            <div class="callout-body">
+              <strong>Authoritative validation shape</strong>
+              The implementation must be conditional and type-narrowing: add Area HAC assertion helper(s) that collect missing/invalid fields, throw <code>Missing or invalid inputs: ...</code>, and narrow the type for callers. Indoor requires dimensions, blockage factor, ventilation direction, volume air flow, and ambient fields. Outdoor requires <code>areaWindVelocity</code> and ambient fields. Do not implement a presence-only <code>== null</code> check.
+            </div>
+          </div>
+
+          <div class="code-label">lib/bscalculations/validate-inputs.ts — legacy sketch, replace with assertion helpers above</div>
           <pre><span class="kw">const</span> REQUIRED_AREA_HAC_FIELDS: <span class="type">Array</span>&lt;<span class="kw">keyof</span> <span class="type">Area</span>[<span class="str">"hac"</span>]&gt; = [
   <span class="str">"length"</span>,
   <span class="str">"breadth"</span>,
@@ -507,12 +546,12 @@ flowchart LR
           <div class="callout callout-info" style="margin-top:10px;">
             <span class="callout-icon">ℹ</span>
             <div class="callout-body">
-              Both guards together handle the empty-string case AND the "non-empty but not-found-in-materials-database" case (e.g. a stale/renamed material). Caught by the existing <code>try { ... } catch (error) { return { success: false, updatedItem, error: String(error) }; }</code> block — produces <code>calculationState.error.message === "Missing or invalid inputs: material"</code>, which <code>sanitizeError</code> already renders as "Some required fields are incomplete".
+              Both guards together handle the empty-string case AND the "non-empty but not-found-in-materials-database" case (e.g. a stale/renamed material). Update the surrounding catch blocks to return <code>error instanceof Error ? error.message : String(error)</code>, not <code>String(error)</code>, so <code>calculationState.error.message === "Missing or invalid inputs: material"</code> exactly and the modal can parse the field list reliably.
             </div>
           </div>
 
-          <h4 style="margin-top:24px;">2c — calculateAreaResults: confirm no further change needed</h4>
-          <p style="font-size:13px;"><code>lib/bscalculations/area/bs-area-calculation.ts:28-79</code> already calls <code>validateAreaInputs(inputs)</code> before destructuring/arithmetic. Once 2a throws on missing fields, the subsequent destructure and arithmetic (<code>length * breadth * height</code> etc.) are guaranteed numbers at runtime. <strong>No code change expected</strong>, but re-read after Phase 1+2a — if <code>npm run typecheck</code> complains that <code>length</code> etc. are typed <code>number | undefined</code> at the arithmetic lines, add non-null assertions (<code>length!</code>) at the destructure since <code>validateAreaInputs</code> has already guaranteed presence. Pick whichever keeps the diff smallest.</p>
+          <h4 style="margin-top:24px;">2c — calculateAreaResults: use validated Area HAC narrowing</h4>
+          <p style="font-size:13px;"><code>lib/bscalculations/area/bs-area-calculation.ts:28-79</code> must call the new Area assertion helper before destructuring/arithmetic. For Indoor Areas, calculate <code>totalVolume</code>, <code>effectiveVolume</code>, <code>airChangeRate</code>, and <code>areaInternalAirVelocity</code> from the narrowed indoor fields. For Outdoor Areas, do not run indoor volume arithmetic against undefined values; return an Area output object that leaves indoor-only outputs unset and lets Scenario code use <code>area.hac.areaWindVelocity</code> as the general area velocity. Prefer assertion-based narrowing over non-null assertions.</p>
         </div>
       </div>
 
@@ -559,6 +598,14 @@ flowchart LR
         </div>
         <div class="phase-body">
 
+          <div class="callout callout-info" style="margin-top:10px;">
+            <span class="callout-icon">i</span>
+            <div class="callout-body">
+              <strong>Authoritative Phase 4 coverage</strong>
+              Add tests for Indoor Area missing fields, Outdoor Area missing fields, finite-number/bounds rejection, EquipmentItem material failure, modal field-detail rendering, schema/default behavior in <code>app/types/__tests__</code>, and client/server HAC export gates. Older bullets in this phase are examples only where they conflict with this matrix.
+            </div>
+          </div>
+
           <h4>4a — lib/bscalculations/__tests__/validate-inputs.test.ts (new file, or extend if exists)</h4>
           <ul class="task-list">
             <li><code>validateAreaInputs</code>: hac missing all 7 required fields → throws <code>Error</code> with message <code>"Missing or invalid inputs: length, breadth, height, blockageFactor, volumeAirFlowRate, ambientTemperature, ambientPressure"</code> (exact order per <code>REQUIRED_AREA_HAC_FIELDS</code>)</li>
@@ -577,8 +624,8 @@ flowchart LR
 
           <h4 style="margin-top:20px;">4c — components/dashboard/__tests__/calculation-failure-modal.test.tsx</h4>
           <ul class="task-list">
-            <li>Add case verifying <code>sanitizeError("Missing or invalid inputs: length, breadth, height, blockageFactor, volumeAirFlowRate, ambientTemperature, ambientPressure")</code> → label "Some required fields are incomplete", hint "Click to open and review the inputs." — confirms the existing regex covers the new, longer field list without truncation issues</li>
-            <li>Add case for <code>"Missing or invalid inputs: material"</code> → same label/hint</li>
+            <li>Add case verifying <code>sanitizeError("Missing or invalid inputs: length, breadth, height, blockageFactor, volumeAirFlowRate, ambientTemperature, ambientPressure")</code> returns label "Some required fields are incomplete", hint "Click to open and review the inputs.", and parsed detail labels <code>Length, Breadth, Height, Blockage Factor, Volume Air Flow Rate, Ambient Temperature, Ambient Pressure</code>.</li>
+            <li>Add case for <code>"Missing or invalid inputs: material"</code> returning detail label <code>Material</code>, and a render test confirming the modal visibly displays <code>Missing: Material</code>.</li>
           </ul>
 
           <h4 style="margin-top:20px;">4d — components/dashboard/__tests__/use-auto-calculation.test.tsx</h4>
@@ -601,7 +648,8 @@ flowchart LR
             <li><span class="check-box"></span><div>Start dev server (<code>preview_start</code> / <code>npm run dev</code>)</div></li>
             <li><span class="check-box"></span><div>Create a new Study → Facility/Section → Area → check HAC status indicator shows "failed" with the Area listed</div></li>
             <li><span class="check-box"></span><div>Open the failure modal, click the Area entry → confirm it navigates to the Area HAC form with <code>requestedFormTab: "hac"</code></div></li>
-            <li><span class="check-box"></span><div>Fill in all 7 required Area fields → confirm the Area recalculates and the failure clears (or moves to the next incomplete item)</div></li>
+            <li><span class="check-box"></span><div>Fill in the required fields for the selected Area mode (Indoor: volume/ventilation + ambient fields; Outdoor: wind velocity + ambient fields) → confirm the Area recalculates and the failure clears or moves to the next incomplete item</div></li>
+            <li><span class="check-box"></span><div>Switch a new Area to Outdoor → confirm the modal asks for Area Wind Velocity, Ambient Temperature, and Ambient Pressure only, not Length/Breadth/Height/Blockage/Volume Air Flow Rate.</div></li>
             <li><span class="check-box"></span><div>Create a new EquipmentItem under the Area → confirm "Missing: Material" appears; select a material → confirm it clears</div></li>
             <li><span class="check-box"></span><div>Build down to Zone level with a Scenario (<code>hacType: "None"</code>) → confirm Scenario shows as <code>"never-calculated"</code> (not <code>"failed"</code>), unchanged from current behaviour</div></li>
             <li><span class="check-box"></span><div>Confirm the overall <code>displayState</code> priority chain in <code>hac-status-indicator.tsx</code> still produces sensible icons/tooltips throughout (no new states introduced, but verify <code>"failed"</code> triggers correctly for a brand-new Area)</div></li>
@@ -690,7 +738,7 @@ flowchart LR
 
     <h3>Quality Gate Sequence</h3>
     <ul class="checklist">
-      <li><span class="check-box"></span><div><code>npm run typecheck</code> after Phase 1 — surfaces every call site affected by the new optional fields (edge case #9). Re-run after Phase 2 and Phase 3.</div></li>
+      <li><span class="check-box"></span><div><code>npm run typecheck</code> after the first green implementation unit (schema relaxation + validation + Area calculation narrowing + modal updates) — surfaces every call site affected by the new optional fields (edge case #9). Re-run after fixture/test updates.</div></li>
       <li><span class="check-box"></span><div><code>npm run lint</code> — must pass with 0 warnings (CI gate). Run after each phase.</div></li>
       <li><span class="check-box"></span><div><code>npm test</code> (full Vitest suite) — after Phase 3 (fixture updates), confirm all <strong>existing</strong> tests still pass before adding new ones in Phase 4. Isolates "did I break something existing" from "does the new feature work."</div></li>
       <li><span class="check-box"></span><div>Full suite + typecheck + lint after Phase 4 (the complete change)</div></li>
@@ -792,8 +840,7 @@ flowchart LR
 
     <h3>Commits in dependency order</h3>
     <ol style="padding-left: 20px; font-size: 13px; line-height: 2;">
-      <li><code>feat: relax Area HAC numeric fields to optional and trim new-item defaults</code> — Phase 1 (<code>app/types/firestore.tsx</code>)</li>
-      <li><code>feat: validate required Area inputs and EquipmentItem material before calculation</code> — Phase 2 (<code>validate-inputs.ts</code>, <code>bs-calculation-service.ts</code>, possibly <code>bs-area-calculation.ts</code>)</li>
+      <li><code>feat: start Area and Equipment HAC inputs empty with guarded calculations</code> — Phases 1 + 2 as one green unit (<code>app/types/firestore.tsx</code>, <code>validate-inputs.ts</code>, <code>bs-calculation-service.ts</code>, <code>bs-area-calculation.ts</code>, <code>calculation-failure-modal.tsx</code>)</li>
       <li><code>test: add empty Area/EquipmentItem fixtures for incomplete-input scenarios</code> — Phase 3a (<code>test-utils/study-item-fixtures.ts</code>)</li>
       <li><code>test: update existing fixtures for optional Area HAC fields</code> — Phase 3b/c/d <em>combined, only if changes needed</em> (skip if verification-only)</li>
       <li><code>test: cover Missing-inputs failure paths for Area and EquipmentItem</code> — Phase 4 (new validate-inputs tests, bs-calculation-service tests, modal tests, use-auto-calculation tests)</li>
@@ -803,7 +850,7 @@ flowchart LR
       <span class="callout-icon">⚠</span>
       <div class="callout-body">
         <strong>No WIP commits — each commit must be independently green</strong>
-        Run <code>npm run typecheck &amp;&amp; npm run lint &amp;&amp; npm test</code> <strong>before each commit</strong>. Phase 1 alone will fail typecheck until Phase 2/3 land — if strict per-phase sequencing would require a knowingly-red intermediate commit, <strong>merge Phase 1 and Phase 2 (and any required Phase 3 changes) into one commit</strong>, then Phase 4 as a second commit. Each commit above is a complete, test-passing logical unit.
+        Run <code>npm run typecheck &amp;&amp; npm run lint &amp;&amp; npm test</code> <strong>before each commit</strong>. Do not commit Phase 1 alone if typecheck is red. The first commit should include schema relaxation, runtime validation, Area calculation narrowing/Outdoor branching, service error normalization, and modal detail rendering so it is green by itself.
       </div>
     </div>
 
@@ -813,26 +860,29 @@ flowchart LR
 
   <!-- ─────────────────── OPEN DECISIONS ─────────────────── -->
   <section id="decisions">
-    <h2><span class="section-num">10</span> Open Decisions / Flag for User Confirmation During Implementation</h2>
+    <h2><span class="section-num">10</span> Resolved Decisions for Implementation</h2>
 
     <div class="decision">
       <h4>1. Fixture strategy (Phase 3a)</h4>
-      <p><code>createArea()</code>/<code>createEquipmentItem()</code> remain "complete" by default with new <code>createEmptyArea()</code>/<code>createEmptyEquipmentItem()</code> exports added — confirm this naming/approach is acceptable, or whether an <code>overrides</code>-based pattern (documented in a comment) without new exported functions is preferred.</p>
+      <p><code>createArea()</code>/<code>createEquipmentItem()</code> remain complete and valid by default. Add explicit <code>createEmptyArea()</code>/<code>createEmptyEquipmentItem()</code> exports for failure-path tests. Do not require further user confirmation for this naming.</p>
     </div>
 
     <div class="decision">
       <h4>2. Cascading failures (Edge Case #6)</h4>
+      <p><strong>Decision:</strong> Keep direct Area failures and descendant Scenario failures for this change, and cover the behavior in tests. Grouping or deduplication is out of scope unless later user testing proves the modal is too noisy.</p>
       <p>An incomplete Area produces a "Missing or invalid inputs: ..." failure for itself AND for every descendant Scenario that calculates against it. Accepted as correct for this change, but if the resulting modal feels noisy in manual testing (Phase 5), grouping/deduplication is a candidate <strong>follow-up</strong> — not in scope now.</p>
     </div>
 
     <div class="decision">
       <h4>3. Error vs ValidationError</h4>
-      <p>For the new <code>validateAreaInputs</code> "missing fields" throw (2a) — confirm a quick grep for <code>instanceof ValidationError</code> turns up nothing that would special-case Area's missing-fields error differently from a plain <code>Error</code>.</p>
+      <p><strong>Decision:</strong> Use plain <code>Error</code> for grouped <code>Missing or invalid inputs:</code> messages, matching Scenario validation convention. Do not use <code>ValidationError</code> for grouped missing-field lists because the batch route formats <code>ValidationError</code> as an individual field range error. Normalize caught plain errors to <code>error.message</code> in <code>bsCalculationHandler</code>.</p>
+      <p>Implementation note: <code>app/api/bs-calculation/batch/route.ts</code> does special-case <code>ValidationError</code>, so grouped missing-field messages must remain plain <code>Error</code> values and must be normalized to <code>error.message</code> by <code>bsCalculationHandler</code>.</p>
     </div>
 
     <div class="decision">
       <h4>4. Report/export defensive formatting (Edge Case #10)</h4>
-      <p>If <code>canExportSafely</code> does NOT already gate exports on <code>failedItems</code>, decide whether adding <code>?? "—"</code> style fallbacks to <code>area-reports.tsx</code>/<code>hac-summary-table.tsx</code> is in-scope for this change or a fast-follow.</p>
+      <p><strong>Decision:</strong> Do not add report formatting fallbacks as part of this change unless tests prove the export gate is bypassed. The intended protection is the existing <code>canExportSafely</code>/<code>canExportSafelyForSubtree</code> client gate plus the server export gate; add tests that failed/out-of-sync Area or Equipment states block HAC export.</p>
+      <p>Implementation note: treat export blocking as the required safety mechanism. Add report formatting fallbacks only if the added client/server export-gate tests prove failed or out-of-sync HAC items can still reach HAC report generation.</p>
     </div>
   </section>
 
