@@ -1,0 +1,497 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1.0" />
+<title>Plan — Honest HAC Status (Zone-Level)</title>
+<style>
+  :root {
+    --bg: #0f1117;
+    --surface: #1a1d27;
+    --surface2: #1e2235;
+    --border: #2e3352;
+    --accent: #6c8ef7;
+    --accent2: #a78bfa;
+    --text: #e2e8f0;
+    --muted: #94a3b8;
+    --green: #34d399;
+    --amber: #fbbf24;
+    --red: #f87171;
+    --code: #0b0d13;
+  }
+  * { box-sizing: border-box; margin: 0; padding: 0; }
+  html { scroll-behavior: smooth; }
+  body { background: var(--bg); color: var(--text); font-family: 'Segoe UI', system-ui, sans-serif; font-size: 14px; line-height: 1.55; }
+  .page { max-width: 960px; margin: 0 auto; padding: 40px 20px 80px; }
+  a { color: var(--accent); }
+  header.hero { border: 1px solid var(--border); background: linear-gradient(135deg, #1a1d27, #161a2c); border-radius: 14px; padding: 28px 26px; margin-bottom: 28px; }
+  .hero .kicker { color: var(--accent2); font-size: 12px; text-transform: uppercase; letter-spacing: 1.5px; font-weight: 700; }
+  .hero h1 { font-size: 26px; font-weight: 800; margin: 8px 0 6px; line-height: 1.2; }
+  .hero p { color: var(--muted); font-size: 13.5px; max-width: 70ch; }
+  .meta-row { display: flex; flex-wrap: wrap; gap: 8px; margin-top: 16px; }
+  .pill { font-size: 11.5px; border-radius: 20px; padding: 4px 11px; border: 1px solid var(--border); background: var(--surface); color: var(--muted); }
+  .pill.green { color: var(--green); border-color: #1f5141; }
+  .pill.accent { color: var(--accent); border-color: #2a3a6e; }
+
+  nav.toc { position: sticky; top: 0; z-index: 5; background: rgba(15,17,23,0.92); backdrop-filter: blur(6px); border: 1px solid var(--border); border-radius: 10px; padding: 10px 12px; margin-bottom: 28px; display: flex; flex-wrap: wrap; gap: 6px; }
+  nav.toc a { font-size: 12px; text-decoration: none; color: var(--muted); padding: 4px 9px; border-radius: 6px; }
+  nav.toc a:hover { background: var(--surface2); color: var(--text); }
+
+  section { margin-bottom: 34px; scroll-margin-top: 60px; }
+  h2 { font-size: 19px; font-weight: 700; margin-bottom: 14px; padding-bottom: 8px; border-bottom: 1px solid var(--border); display: flex; align-items: center; gap: 10px; }
+  h2 .num { font-size: 13px; color: var(--bg); background: var(--accent); border-radius: 6px; width: 24px; height: 24px; display: inline-flex; align-items: center; justify-content: center; font-weight: 800; flex-shrink: 0; }
+  h3 { font-size: 15px; font-weight: 700; margin: 18px 0 8px; color: var(--accent2); }
+  p { margin-bottom: 10px; }
+  ul, ol { margin: 0 0 12px 22px; }
+  li { margin-bottom: 5px; }
+
+  .card { background: var(--surface); border: 1px solid var(--border); border-radius: 10px; padding: 16px 18px; margin-bottom: 14px; }
+  .card.l-green { border-left: 4px solid var(--green); }
+  .card.l-amber { border-left: 4px solid var(--amber); }
+  .card.l-red { border-left: 4px solid var(--red); }
+  .card.l-accent { border-left: 4px solid var(--accent); }
+  .card h3 { margin-top: 0; }
+
+  .grid2 { display: grid; grid-template-columns: 1fr 1fr; gap: 14px; }
+  @media (max-width: 680px) { .grid2 { grid-template-columns: 1fr; } }
+
+  code, .mono { font-family: 'Consolas', 'SF Mono', monospace; font-size: 12.5px; }
+  code.inline { background: var(--code); border: 1px solid var(--border); border-radius: 4px; padding: 1px 5px; color: #c7d2fe; }
+  pre { background: var(--code); border: 1px solid var(--border); border-radius: 8px; padding: 14px 16px; overflow-x: auto; margin-bottom: 12px; }
+  pre code { color: #cbd5e1; font-size: 12.5px; line-height: 1.5; white-space: pre; }
+  .tok-c { color: #6b7280; } .tok-k { color: #c084fc; } .tok-s { color: #86efac; } .tok-f { color: #93c5fd; }
+
+  table { width: 100%; border-collapse: collapse; margin-bottom: 14px; font-size: 12.8px; }
+  th, td { text-align: left; padding: 9px 11px; border-bottom: 1px solid var(--border); vertical-align: top; }
+  th { color: var(--accent2); font-weight: 700; background: var(--surface2); }
+  tr:hover td { background: rgba(108,142,247,0.05); }
+  .wrap { overflow-x: auto; border: 1px solid var(--border); border-radius: 8px; }
+  .wrap table { margin-bottom: 0; }
+
+  .status { display: inline-flex; align-items: center; gap: 5px; font-weight: 600; white-space: nowrap; }
+  .dot { width: 10px; height: 10px; border-radius: 50%; display: inline-block; flex-shrink: 0; }
+  .dot.green { background: var(--green); } .dot.amber { background: var(--amber); } .dot.red { background: var(--red); } .dot.grey { background: var(--muted); }
+
+  .risk-tag { font-size: 10.5px; font-weight: 800; border-radius: 5px; padding: 2px 8px; text-transform: uppercase; letter-spacing: 0.5px; }
+  .risk-low { background: rgba(52,211,153,0.15); color: var(--green); }
+  .risk-med { background: rgba(251,191,36,0.15); color: var(--amber); }
+
+  .check { list-style: none; margin-left: 0; }
+  .check li { position: relative; padding-left: 28px; margin-bottom: 7px; }
+  .check li::before { content: "☐"; position: absolute; left: 4px; color: var(--accent); font-size: 15px; }
+
+  /* diagram */
+  .flow { display: flex; flex-direction: column; gap: 0; align-items: stretch; }
+  .flow-node { background: var(--surface2); border: 1px solid var(--border); border-radius: 8px; padding: 10px 14px; font-size: 12.5px; }
+  .flow-node b { color: var(--text); }
+  .flow-arrow { text-align: center; color: var(--muted); font-size: 16px; padding: 3px 0; }
+  .decision { border-left: 4px solid var(--amber); }
+  .branch-row { display: grid; grid-template-columns: 1fr 1fr; gap: 12px; }
+  @media (max-width: 680px) { .branch-row { grid-template-columns: 1fr; } }
+
+  .legend { display: flex; flex-wrap: wrap; gap: 14px; font-size: 12px; color: var(--muted); margin-top: 8px; }
+  .legend span { display: inline-flex; align-items: center; gap: 6px; }
+
+  .back { display: inline-block; margin-bottom: 20px; font-size: 12.5px; text-decoration: none; }
+  footer { margin-top: 40px; padding-top: 18px; border-top: 1px solid var(--border); color: var(--muted); font-size: 12px; }
+  .note { font-size: 12px; color: var(--muted); font-style: italic; }
+</style>
+</head>
+<body>
+<div class="page">
+
+  <a class="back" href="index.html">← Back to Review Docs</a>
+
+  <header class="hero">
+    <div class="kicker">Implementation Plan</div>
+    <h1>Make the HAC Status Indicator Honest — require a real zone-level result</h1>
+    <p>The sidebar HAC status shows a green "calculation complete" check when a study is only developed
+    to Area level, or when a Scenario's HAC type isn't even chosen. This plan makes the existing
+    sync-status logic tell the truth: green only when at least one real, current <b>zone classification</b>
+    exists — without inventing any new "completeness" concept, touching exports, or reverting the
+    auto-calculation UX.</p>
+    <div class="meta-row">
+      <span class="pill accent">Branch: feat/auto-hac-calculation</span>
+      <span class="pill">Primary file: lib/calculation-versioning.ts</span>
+      <span class="pill green">Auto-calc retained</span>
+      <span class="pill green">Exports untouched</span>
+      <span class="pill">No persisted-state / migration</span>
+    </div>
+  </header>
+
+  <nav class="toc">
+    <a href="#summary">Executive Summary</a>
+    <a href="#decisions">Decisions</a>
+    <a href="#files">Affected Files</a>
+    <a href="#arch">Architecture & Flow</a>
+    <a href="#rules">The 3 Rules</a>
+    <a href="#phases">Implementation Phases</a>
+    <a href="#beforeafter">Before / After</a>
+    <a href="#risks">Risks</a>
+    <a href="#edges">Edge Cases</a>
+    <a href="#tests">Test Plan</a>
+    <a href="#commit">Commit & Push</a>
+  </nav>
+
+  <!-- ============ SUMMARY ============ -->
+  <section id="summary">
+    <h2><span class="num">1</span> Executive Summary</h2>
+    <div class="card l-accent">
+      <p><b>The bug.</b> The indicator reads <code class="inline">getSyncStatusLabel(studyRoot, studyItems)</code>.
+      Its rollup reports the <i>worst</i> per-item sync label across all calculable descendants, which
+      conflates <b>"every existing item calculated without error"</b> with <b>"a real HAC result exists."</b>
+      So an Area whose own calculation succeeded — with no Zone beneath it — rolls up as
+      <span class="status"><span class="dot green"></span>in-sync</span>. Likewise a
+      <code class="inline">BS EN 60079-10-1</code> zone with no <code class="inline">dispersionType</code>
+      returns <code class="inline">success:true</code> with <b>empty</b> outputs, and still reads green.</p>
+      <p style="margin-bottom:0"><b>The fix.</b> Extend the <i>existing</i>
+      <code class="inline">never-calculated</code> logic (which already special-cases Scenario
+      <code class="inline">hacType:"None"</code>) so the green check requires <b>≥1 real, current zone
+      result</b> and nothing stale/failed. The change lives in one shared module so the top indicator
+      and per-item tree icons stay consistent. No new state, no new <code class="inline">DisplayState</code>,
+      no export change, no Firestore migration.</p>
+    </div>
+    <div class="grid2">
+      <div class="card l-green"><h3>In scope</h3>
+        <ul style="margin-bottom:0">
+          <li>Honest labels in <code class="inline">lib/calculation-versioning.ts</code></li>
+          <li>Ripple to all four <code class="inline">getSyncStatusLabel</code> consumers</li>
+          <li>Unit + consumer tests; new <code class="inline">createZone</code> fixture</li>
+        </ul>
+      </div>
+      <div class="card l-red"><h3>Explicitly NOT in scope</h3>
+        <ul style="margin-bottom:0">
+          <li>Reverting to the manual <code class="inline">RunHACButton</code></li>
+          <li>Any formal "study complete" concept or new UI state</li>
+          <li><code class="inline">canExportSafely</code> / report export gating</li>
+          <li>Changes to persisted <code class="inline">calculationState</code></li>
+        </ul>
+      </div>
+    </div>
+  </section>
+
+  <!-- ============ DECISIONS ============ -->
+  <section id="decisions">
+    <h2><span class="num">2</span> Resolved Decisions <span class="pill green" style="font-size:11px">all confirmed</span></h2>
+    <div class="wrap"><table>
+      <thead><tr><th style="width:22%">Decision</th><th>Resolution</th></tr></thead>
+      <tbody>
+        <tr><td><b>Honest label</b></td><td>"Configured but no real zone result anywhere in scope" and "Scenario hacType/releaseType unset" → <code class="inline">never-calculated</code> (the existing non-green, non-failed state). No new state.</td></tr>
+        <tr><td><b>Green threshold</b></td><td>Study-root goes green only when <b>≥1 real, current zone result exists AND nothing is stale/failed</b>. (Not "every branch must end in a zone" — that would be a completeness rule, which is out of scope.)</td></tr>
+        <tr><td><b>None / Interior</b></td><td><code class="inline">Interior</code> counts (has a <code class="inline">zoneType</code> output). <code class="inline">None</code> does <b>not</b> (zone-level "nothing here").</td></tr>
+        <tr><td><b>Guard scope</b></td><td><b>All rollup types</b> (study/section/facility AND area/equipmentItem/scenario) — keeps top indicator and per-item icons consistent.</td></tr>
+        <tr><td><b>"Real result" key</b></td><td>Distance-bearing zones (<code class="inline">BS</code>/<code class="inline">Phast</code>/<code class="inline">User-defined</code>) count only when <code class="inline">outputs.hazardDistance</code> is a <b>finite number</b>; <code class="inline">Interior</code> counts when <code class="inline">outputs.zoneType</code> is present.</td></tr>
+        <tr><td><b>Blast radius</b></td><td>Let it ripple — change shared logic so all consumers agree.</td></tr>
+        <tr><td><b>Export gate</b></td><td>Indicator only — <code class="inline">canExportSafely</code> untouched.</td></tr>
+        <tr><td><b>Zone fixture</b></td><td>Add a reusable <code class="inline">createZone</code> to <code class="inline">test-utils/study-item-fixtures.ts</code>.</td></tr>
+      </tbody>
+    </table></div>
+  </section>
+
+  <!-- ============ FILES ============ -->
+  <section id="files">
+    <h2><span class="num">3</span> Affected Files</h2>
+
+    <h3>Primary — behavioural change</h3>
+    <div class="wrap"><table>
+      <thead><tr><th>File</th><th>Functions (approx. line)</th><th>Change</th></tr></thead>
+      <tbody>
+        <tr><td><code class="inline">lib/calculation-versioning.ts</code></td>
+            <td><code class="inline">getDirectSyncStatusLabel</code> (452), <code class="inline">getRollupSyncStatusLabel</code> (791), new <code class="inline">zoneHasRealResult</code></td>
+            <td>The only logic change. Add predicate; extend Scenario block; add Zone branch; add zone-presence guard to rollup.</td></tr>
+      </tbody>
+    </table></div>
+
+    <h3>Reuse / reference (read, do not edit)</h3>
+    <div class="wrap"><table>
+      <thead><tr><th>File</th><th>Why</th></tr></thead>
+      <tbody>
+        <tr><td><code class="inline">lib/study-tree-traversal.ts</code></td><td><code class="inline">getDescendantItemsByType(idx,"zone",items)</code> (line 248) — cycle/depth-guarded zone discovery. Prefer over manual walking.</td></tr>
+        <tr><td><code class="inline">lib/bscalculations/bs-calculation-service.ts</code> (871–976)</td><td>Authority for "what a real zone result looks like": BS w/o dispersionType → <code class="inline">{}</code>; Interior → <code class="inline">{zoneType,…}</code>; None → all-undefined.</td></tr>
+        <tr><td><code class="inline">app/types/firestore.tsx</code></td><td>Zone outputs schema (2024), <code class="inline">ZoneHacTypeSchema</code> (1189), <code class="inline">ScenarioHacTypeSchema</code> (1142).</td></tr>
+      </tbody>
+    </table></div>
+
+    <h3>Consumers of the changed label (verify ripple — likely no edits)</h3>
+    <div class="wrap"><table>
+      <thead><tr><th>Consumer</th><th>Uses label as…</th><th>Handles <code class="inline">never-calculated</code>?</th></tr></thead>
+      <tbody>
+        <tr><td><code class="inline">hac-status-indicator.tsx</code> <b>(target)</b></td><td>Top indicator; non-green for never/out-of-sync</td><td><span class="status"><span class="dot green"></span>Yes — amber clock, no edit</span></td></tr>
+        <tr><td><code class="inline">study-tree/custom-tree-item.tsx</code> (61)</td><td>Per-item tree icon</td><td><span class="status"><span class="dot green"></span>Yes — neutral Circle</span></td></tr>
+        <tr><td><code class="inline">reports/sync-status-banner.tsx</code> (39)</td><td>Report banner + Calculate button</td><td><span class="status"><span class="dot green"></span>Yes — actionable status</span></td></tr>
+        <tr><td><code class="inline">geometry-plot/geometry-plot.tsx</code> (554)</td><td>Shown when <code class="inline">!== "in-sync"</code></td><td><span class="status"><span class="dot green"></span>Yes</span></td></tr>
+      </tbody>
+    </table></div>
+
+    <h3>Tests</h3>
+    <ul>
+      <li><code class="inline">lib/__tests__/calculation-versioning.test.ts</code> — <code class="inline">// @ts-nocheck</code>; uses <code class="inline">createArea/createScenario/…</code>. <b>No <code class="inline">createZone</code> fixture exists</b> — existing zone test inlines a raw object (lines 83–99).</li>
+      <li><code class="inline">test-utils/study-item-fixtures.ts</code> — add <code class="inline">createZone</code> here.</li>
+      <li><code class="inline">components/dashboard/__tests__/hac-status-indicator.test.tsx</code> — <b>mocks</b> <code class="inline">getSyncStatusLabel</code> (line 8), so insulated; only assert it still passes.</li>
+      <li><code class="inline">components/dashboard/reports/__tests__/sync-status-banner.test.tsx</code> — verify unaffected.</li>
+    </ul>
+  </section>
+
+  <!-- ============ ARCHITECTURE ============ -->
+  <section id="arch">
+    <h2><span class="num">4</span> Architecture &amp; Data Flow</h2>
+
+    <h3>Where the label is produced and consumed</h3>
+    <div class="card">
+      <div class="flow">
+        <div class="flow-node"><b>StudyItems</b> — immutable flat map <code class="inline">Record&lt;string, StudyItem&gt;</code> with per-item <code class="inline">calculationState</code> &amp; <code class="inline">outputs</code></div>
+        <div class="flow-arrow">▼</div>
+        <div class="flow-node l-accent" style="border-left:4px solid var(--accent)"><b>lib/calculation-versioning.ts</b> · <code class="inline">getSyncStatusLabel(item, items)</code><br>
+          → containers/rollup types → <code class="inline">getRollupSyncStatusLabel</code> → worst of <code class="inline">getDirectSyncStatusLabel</code> over descendants <span class="pill" style="font-size:10px">⟵ change here</span></div>
+        <div class="flow-arrow">▼ &nbsp; one label: in-sync / out-of-sync / never-calculated / failed / calculating / unknown</div>
+        <div class="branch-row">
+          <div class="flow-node">🔝 <b>hac-status-indicator.tsx</b><br><span class="note">top sidebar — the reported bug</span></div>
+          <div class="flow-node">🌳 <b>custom-tree-item.tsx</b><br><span class="note">per-item tree icons (ripple)</span></div>
+          <div class="flow-node">📄 <b>sync-status-banner.tsx</b><br><span class="note">report banner (ripple)</span></div>
+          <div class="flow-node">📐 <b>geometry-plot.tsx</b><br><span class="note">geometry overlay (ripple)</span></div>
+        </div>
+      </div>
+      <div class="legend">
+        <span><span class="dot green"></span> in-sync (green)</span>
+        <span><span class="dot amber"></span> out-of-sync (amber)</span>
+        <span><span class="dot grey"></span> never-calculated (neutral)</span>
+        <span><span class="dot red"></span> failed</span>
+      </div>
+    </div>
+
+    <h3>Decision logic added to the rollup (study root)</h3>
+    <div class="card decision">
+      <div class="flow">
+        <div class="flow-node">Compute <code class="inline">worstLabel</code> across descendants (existing)</div>
+        <div class="flow-arrow">▼</div>
+        <div class="flow-node"><b>Is <code class="inline">worstLabel === "in-sync"</code>?</b></div>
+        <div class="branch-row">
+          <div>
+            <div class="flow-arrow">No ▼</div>
+            <div class="flow-node">Return <code class="inline">worstLabel</code> as-is — failed/out-of-sync/calculating already dominate</div>
+          </div>
+          <div>
+            <div class="flow-arrow">Yes ▼ — NEW guard</div>
+            <div class="flow-node decision"><b>Does any descendant zone satisfy <code class="inline">zoneHasRealResult</code>?</b></div>
+            <div class="branch-row">
+              <div><div class="flow-arrow">Yes ▼</div><div class="flow-node" style="border-color:#1f5141"><span class="status"><span class="dot green"></span>in-sync</span></div></div>
+              <div><div class="flow-arrow">No ▼</div><div class="flow-node" style="border-color:#4b5563"><span class="status"><span class="dot grey"></span>never-calculated</span></div></div>
+            </div>
+          </div>
+        </div>
+      </div>
+      <p class="note" style="margin-top:10px;margin-bottom:0">Only an <code class="inline">in-sync</code> verdict is ever downgraded. A worse label (failed, out-of-sync, calculating) is never weakened, preserving existing severity ordering (<code class="inline">compareSyncLabels</code>).</p>
+    </div>
+  </section>
+
+  <!-- ============ RULES ============ -->
+  <section id="rules">
+    <h2><span class="num">5</span> The Three Honest-Label Rules</h2>
+
+    <div class="card l-accent">
+      <h3>Rule 1 — Scenario with unset HAC type → never-calculated</h3>
+      <p>The existing block in <code class="inline">getDirectSyncStatusLabel</code> already forces
+      <code class="inline">hacType:"None"</code> → <code class="inline">never-calculated</code>. Extend the same
+      <code class="inline">if (item.type === "scenario")</code> block to also return
+      <code class="inline">never-calculated</code> when <code class="inline">hac?.hacType</code> is
+      <code class="inline">undefined</code>/empty (the new "start empty" state).</p>
+      <p class="note" style="margin-bottom:0">Gating on <code class="inline">hacType</code> alone is sufficient — <code class="inline">releaseType</code> is only meaningful within the BS discriminated union, and an unset hacType already covers "nothing chosen." Avoids over-reaching into the union.</p>
+    </div>
+
+    <div class="card l-accent">
+      <h3>Rule 2 — define "real zone result" (new pure predicate)</h3>
+<pre><code><span class="tok-c">// local to calculation-versioning.ts — exhaustive switch so a future</span>
+<span class="tok-c">// hacType literal is a visible gap, not a silent miss.</span>
+<span class="tok-k">function</span> <span class="tok-f">zoneHasRealResult</span>(zone): <span class="tok-k">boolean</span> {
+  <span class="tok-k">if</span> (!<span class="tok-f">isOutputInSync</span>(zone)) <span class="tok-k">return</span> <span class="tok-k">false</span>;   <span class="tok-c">// stale/failed never counts</span>
+  <span class="tok-k">const</span> hac = zone.hac, out = zone.outputs;
+  <span class="tok-k">switch</span> (hac?.hacType) {
+    <span class="tok-k">case</span> <span class="tok-s">"BS EN 60079-10-1"</span>:
+    <span class="tok-k">case</span> <span class="tok-s">"Phast"</span>:
+    <span class="tok-k">case</span> <span class="tok-s">"User-defined"</span>:
+      <span class="tok-k">return</span> <span class="tok-f">Number.isFinite</span>(out?.hazardDistance);  <span class="tok-c">// empty {} ⇒ false</span>
+    <span class="tok-k">case</span> <span class="tok-s">"Interior"</span>:
+      <span class="tok-k">return</span> out?.zoneType != <span class="tok-k">null</span>;             <span class="tok-c">// deliberate classification</span>
+    <span class="tok-k">case</span> <span class="tok-s">"None"</span>:
+    <span class="tok-k">default</span>:                                       <span class="tok-c">// None / undefined</span>
+      <span class="tok-k">return</span> <span class="tok-k">false</span>;
+  }
+}</code></pre>
+      <p class="note" style="margin-bottom:0">Backed by <code class="inline">bs-calculation-service.ts</code> (871–976): a BS zone with no <code class="inline">dispersionType</code> yields <code class="inline">outputs = {}</code> while still returning <code class="inline">success:true</code> — exactly the false-green case this catches.</p>
+    </div>
+
+    <div class="card l-accent">
+      <h3>Rule 3 — rollup requires a real, current zone</h3>
+      <p>In <code class="inline">getRollupSyncStatusLabel</code>, after computing <code class="inline">worstLabel</code>:
+      if it would be <code class="inline">in-sync</code> but no descendant zone satisfies
+      <code class="inline">zoneHasRealResult</code>, downgrade to <code class="inline">never-calculated</code>.
+      Reuse the descendant indices already enumerated by the rollup (or
+      <code class="inline">getDescendantItemsByType(root,"zone",items)</code>). Applies to <b>all</b> rollup types.
+      Preserve the existing container branch that returns <code class="inline">never-calculated</code> for
+      zero calculable descendants.</p>
+    </div>
+  </section>
+
+  <!-- ============ PHASES ============ -->
+  <section id="phases">
+    <h2><span class="num">6</span> Implementation Phases &amp; Tasks</h2>
+
+    <div class="card l-amber">
+      <h3>Phase 1 — Core logic <span class="pill" style="font-size:10px">sequential · 1 commit · NOT parallel</span></h3>
+      <p style="margin-bottom:6px"><b>Task A.</b> All edits in <code class="inline">lib/calculation-versioning.ts</code> (single file, same functions → must be one unit):</p>
+      <ul style="margin-bottom:0">
+        <li>Add <code class="inline">zoneHasRealResult</code> predicate (Rule 2).</li>
+        <li>Extend Scenario block in <code class="inline">getDirectSyncStatusLabel</code> for unset hacType (Rule 1).</li>
+        <li>Add Zone branch: when zone is in-sync but <code class="inline">!zoneHasRealResult</code> → <code class="inline">never-calculated</code>.</li>
+        <li>Add the zone-presence guard to <code class="inline">getRollupSyncStatusLabel</code> (Rule 3), all rollup types.</li>
+        <li>JSDoc explaining the honesty rationale.</li>
+      </ul>
+    </div>
+
+    <div class="card l-green">
+      <h3>Phase 2 — Tests <span class="pill" style="font-size:10px">parallelisable after Task A lands</span></h3>
+      <p style="margin-bottom:6px">Two independent strands (different files → safe for parallel subagents):</p>
+      <div class="grid2">
+        <div class="card" style="margin-bottom:0">
+          <b>Strand 1 · Task C → Task B</b> <span class="note">(sequential — B depends on C)</span>
+          <ul style="margin-bottom:0;margin-top:6px">
+            <li><b>C:</b> add <code class="inline">createZone</code> to <code class="inline">study-item-fixtures.ts</code> (mirror <code class="inline">createScenario</code>; default <code class="inline">hac:{hacType:"None"}</code>, <code class="inline">outputs:{}</code>).</li>
+            <li><b>B:</b> versioning unit tests (see Test Plan) in <code class="inline">calculation-versioning.test.ts</code>.</li>
+          </ul>
+        </div>
+        <div class="card" style="margin-bottom:0">
+          <b>Strand 2 · Task D</b> <span class="note">(fully parallel)</span>
+          <ul style="margin-bottom:0;margin-top:6px">
+            <li>Consumer smoke tests in <code class="inline">sync-status-banner.test.tsx</code> (+ tree-item if present): a zone-less Area subtree renders neutral, not green.</li>
+            <li>Confirm <code class="inline">hac-status-indicator.test.tsx</code> still passes (mocks the label — no edit expected).</li>
+          </ul>
+        </div>
+      </div>
+    </div>
+
+    <div class="card l-accent">
+      <h3>Phase 3 — Verification <span class="pill" style="font-size:10px">sequential · after all tasks</span></h3>
+      <p style="margin-bottom:0">Run the full quality gate (Section 10). Fix any unexpected consumer ripple before committing.</p>
+    </div>
+
+    <h3>Dependency graph</h3>
+    <div class="card">
+      <div class="flow">
+        <div class="flow-node" style="border-left:4px solid var(--amber)"><b>Task A</b> — core logic (gate)</div>
+        <div class="flow-arrow">▼ unlocks</div>
+        <div class="branch-row">
+          <div class="flow-node">Strand 1: <b>C → B</b> (versioning tests)</div>
+          <div class="flow-node">Strand 2: <b>D</b> (consumer tests)</div>
+        </div>
+        <div class="flow-arrow">▼ both complete</div>
+        <div class="flow-node" style="border-left:4px solid var(--accent)"><b>Phase 3</b> — verify → commit → push</div>
+      </div>
+      <p class="note" style="margin-top:8px;margin-bottom:0">Max parallelism after Task A: two strands. Strand 1 is internally sequential (C before B).</p>
+    </div>
+  </section>
+
+  <!-- ============ BEFORE/AFTER ============ -->
+  <section id="beforeafter">
+    <h2><span class="num">7</span> Before / After Behaviour</h2>
+    <div class="wrap"><table>
+      <thead><tr><th>Scenario</th><th>Before (buggy)</th><th>After (honest)</th></tr></thead>
+      <tbody>
+        <tr><td>Facility + Area only, Area calc succeeded</td><td><span class="status"><span class="dot green"></span>in-sync</span></td><td><span class="status"><span class="dot grey"></span>never-calculated</span></td></tr>
+        <tr><td>Area→Equip→Scenario, Scenario hacType unset</td><td><span class="status"><span class="dot green"></span>in-sync</span></td><td><span class="status"><span class="dot grey"></span>never-calculated</span></td></tr>
+        <tr><td><code class="inline">BS</code> zone, no dispersionType (<code class="inline">outputs:{}</code>)</td><td><span class="status"><span class="dot green"></span>in-sync</span></td><td><span class="status"><span class="dot grey"></span>never-calculated</span></td></tr>
+        <tr><td><code class="inline">Interior</code> zone with zoneType, succeeded</td><td><span class="status"><span class="dot green"></span>in-sync</span></td><td><span class="status"><span class="dot green"></span>in-sync <span class="note">(unchanged)</span></span></td></tr>
+        <tr><td><code class="inline">None</code> zone only</td><td><span class="status"><span class="dot green"></span>in-sync</span></td><td><span class="status"><span class="dot grey"></span>never-calculated</span></td></tr>
+        <tr><td><code class="inline">User-defined</code> zone with hazardDistance, succeeded</td><td><span class="status"><span class="dot green"></span>in-sync</span></td><td><span class="status"><span class="dot green"></span>in-sync <span class="note">(unchanged)</span></span></td></tr>
+        <tr><td>Real zone present, sibling item stale</td><td><span class="status"><span class="dot amber"></span>out-of-sync</span></td><td><span class="status"><span class="dot amber"></span>out-of-sync <span class="note">(unchanged)</span></span></td></tr>
+        <tr><td>Real zone present, a descendant calc failed</td><td><span class="status"><span class="dot red"></span>failed</span></td><td><span class="status"><span class="dot red"></span>failed <span class="note">(unchanged)</span></span></td></tr>
+        <tr><td>Brand-new empty study (no descendants)</td><td><span class="status"><span class="dot grey"></span>never-calculated</span></td><td><span class="status"><span class="dot grey"></span>never-calculated <span class="note">(unchanged)</span></span></td></tr>
+        <tr><td>Export gate (<code class="inline">canExportSafely</code>)</td><td colspan="2"><b>Unchanged — explicitly out of scope.</b> Indicator may now be stricter than export; documented &amp; intentional.</td></tr>
+      </tbody>
+    </table></div>
+  </section>
+
+  <!-- ============ RISKS ============ -->
+  <section id="risks">
+    <h2><span class="num">8</span> Risks</h2>
+    <div class="card l-green"><span class="risk-tag risk-low">Low</span> &nbsp;<b>Indicator component churn.</b> <code class="inline">hac-status-indicator.tsx</code> already renders <code class="inline">never-calculated</code>/<code class="inline">out-of-sync</code> as non-green; no component edit. Its test mocks the label fn.</div>
+    <div class="card l-amber"><span class="risk-tag risk-med">Med</span> &nbsp;<b>Ripple to tree icons / banner.</b> Intended. Verify all four consumers still render sensibly and none treated <code class="inline">in-sync</code> as a required precondition. Inspection shows all handle <code class="inline">never-calculated</code>.</div>
+    <div class="card l-amber"><span class="risk-tag risk-med">Med</span> &nbsp;<b>"Real result" definition drift.</b> A future zone hacType must update <code class="inline">zoneHasRealResult</code>. Mitigated by an exhaustive <code class="inline">switch</code> so a new literal is a visible gap.</div>
+    <div class="card l-green"><span class="risk-tag risk-low">Low</span> &nbsp;<b>Export untouched.</b> <code class="inline">canExportSafely</code> keeps its looser semantics; indicator/export may legitimately disagree — documented.</div>
+    <div class="card l-green"><span class="risk-tag risk-low">Low</span> &nbsp;<b>Persisted state.</b> Purely derived labelling; no <code class="inline">calculationState</code> writes change. No Firestore migration.</div>
+  </section>
+
+  <!-- ============ EDGES ============ -->
+  <section id="edges">
+    <h2><span class="num">9</span> Edge Cases &amp; Invariants to Preserve</h2>
+    <ul>
+      <li>Empty new study (zero calculable descendants) must stay <code class="inline">never-calculated</code> — preserve the existing container-rollup branch.</li>
+      <li><code class="inline">failed</code> / <code class="inline">calculating</code> / <code class="inline">out-of-sync</code> must still <b>dominate</b> <code class="inline">in-sync</code> — only <i>downgrade</i> an in-sync verdict, never upgrade a worse one.</li>
+      <li>A real current zone in one branch must not be masked by an unrelated unconfigured branch beyond existing severity rules — the guard is "≥1 real zone + nothing worse," no stricter.</li>
+      <li>Zones nest under <b>Area, EquipmentItem, or Scenario</b> (<code class="inline">study-tree-hierarchy.tsx</code> 7–10) — zone discovery must cover all three parentages (descendant search already does).</li>
+      <li>Stale/failed zone must not count — gate <code class="inline">zoneHasRealResult</code> on <code class="inline">isOutputInSync(zone)</code>, else a stale green sneaks back.</li>
+      <li>Ignition sources are calculable but not part of the zone chain — they must not satisfy the guard; their own failures keep surfacing via existing <code class="inline">failedItems</code>.</li>
+    </ul>
+  </section>
+
+  <!-- ============ TESTS ============ -->
+  <section id="tests">
+    <h2><span class="num">10</span> Test Plan &amp; Verification</h2>
+
+    <h3>New unit cases (Task B — <code class="inline">calculation-versioning.test.ts</code>)</h3>
+    <ul class="check">
+      <li>Area w/ succeeded calc + no zone child → study rollup <code class="inline">never-calculated</code> (not in-sync).</li>
+      <li>Scenario hacType undefined → <code class="inline">getSyncStatusLabel</code> = <code class="inline">never-calculated</code>.</li>
+      <li>Zone <code class="inline">BS</code> w/ <code class="inline">outputs:{}</code> (no dispersionType) → not green.</li>
+      <li>Zone <code class="inline">Interior</code> w/ <code class="inline">outputs.zoneType</code> + succeeded → counts → rollup can be in-sync.</li>
+      <li>Zone <code class="inline">None</code> → never counts.</li>
+      <li>Zone <code class="inline">User-defined</code>/<code class="inline">Phast</code> w/ finite <code class="inline">outputs.hazardDistance</code> + succeeded → counts.</li>
+      <li>Mixed: real current zone + unrelated empty scenario branch → surfaces correctly.</li>
+      <li>Regression: existing in-sync rollup with a real zone still green.</li>
+    </ul>
+
+    <h3>Quality gate (run before each commit; Husky enforces a subset)</h3>
+    <div class="wrap"><table>
+      <thead><tr><th>Command</th><th>Expectation</th></tr></thead>
+      <tbody>
+        <tr><td><code class="inline">npx vitest run lib/__tests__/calculation-versioning.test.ts</code></td><td>New + existing pass</td></tr>
+        <tr><td><code class="inline">npx vitest run .../sync-status-banner.test.tsx .../hac-status-indicator.test.tsx</code></td><td>Consumers unaffected</td></tr>
+        <tr><td><code class="inline">npm test</code></td><td>Full suite green (catch unexpected ripples)</td></tr>
+        <tr><td><code class="inline">npm run typecheck</code></td><td>0 TS errors <span class="note">(core file plain TS; test file is @ts-nocheck)</span></td></tr>
+        <tr><td><code class="inline">npm run lint</code></td><td>0 warnings — CI gate</td></tr>
+        <tr><td><code class="inline">npm run build</code> <span class="note">(optional)</span></td><td>CI parity before push</td></tr>
+      </tbody>
+    </table></div>
+    <p class="note">Set command timeouts to 20–30 min per CLAUDE.md to avoid false failures.</p>
+
+    <h3>Manual (optional, preview workflow)</h3>
+    <ol style="margin-bottom:0">
+      <li>Load a study with only an Area → indicator shows neutral, not green.</li>
+      <li>Add a <code class="inline">User-defined</code> zone with a hazard distance → after auto-calc, indicator turns green.</li>
+      <li>Set a zone to <code class="inline">None</code> → indicator returns to neutral.</li>
+    </ol>
+  </section>
+
+  <!-- ============ COMMIT ============ -->
+  <section id="commit">
+    <h2><span class="num">11</span> Commit &amp; Push Strategy</h2>
+    <div class="card">
+      <p><b>Branch:</b> continue on <code class="inline">feat/auto-hac-calculation</code> (already checked out). No force-push.</p>
+      <p><b>Commit after each logical step</b> (not WIP dumps):</p>
+      <ol>
+        <li><code class="inline">fix(hac-status): report never-calculated until a real zone result exists</code> — Task A (logic).</li>
+        <li><code class="inline">test(hac-status): cover zone-presence and unset-scenario honesty rules</code> — Tasks B/C/D (one commit, or split B vs D if done by parallel subagents).</li>
+      </ol>
+      <p><b>Gate before each commit:</b> typecheck + lint + test. Husky pre-commit runs lint-staged + typecheck; pre-push runs the suite — <b>do not bypass</b> hooks.</p>
+      <p style="margin-bottom:0"><b>Push</b> once Phase 3 is green and both commits exist: <code class="inline">git push origin feat/auto-hac-calculation</code>. No PR/merge in this plan — left to the user.</p>
+    </div>
+  </section>
+
+  <footer>
+    Plan generated by Claude Code · target repo <b>nEXus</b> · branch <code class="inline">feat/auto-hac-calculation</code>.
+    Source plan: <code class="inline">~/.claude/plans/binary-spinning-pearl.md</code>.
+    Hosted on <a href="https://github.com/JonWise82/html-docs">JonWise82/html-docs</a>.
+  </footer>
+
+</div>
+</body>
+</html>
