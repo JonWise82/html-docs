@@ -1,0 +1,569 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1.0" />
+<title>Plan — Strip Auto-HAC to Bare Essentials</title>
+<style>
+  :root {
+    --bg: #0f1117;
+    --surface: #1a1d27;
+    --surface2: #1e2235;
+    --border: #2e3352;
+    --accent: #6c8ef7;
+    --accent2: #a78bfa;
+    --text: #e2e8f0;
+    --muted: #94a3b8;
+    --green: #34d399;
+    --amber: #fbbf24;
+    --red: #f87171;
+    --code: #0b0d13;
+  }
+  * { box-sizing: border-box; margin: 0; padding: 0; }
+  html { scroll-behavior: smooth; }
+  body { background: var(--bg); color: var(--text); font-family: 'Segoe UI', system-ui, sans-serif; font-size: 14px; line-height: 1.55; }
+  .page { max-width: 960px; margin: 0 auto; padding: 40px 20px 80px; }
+  a { color: var(--accent); }
+  header.hero { border: 1px solid var(--border); background: linear-gradient(135deg, #1a1d27, #161a2c); border-radius: 14px; padding: 28px 26px; margin-bottom: 28px; }
+  .hero .kicker { color: var(--accent2); font-size: 12px; text-transform: uppercase; letter-spacing: 1.5px; font-weight: 700; }
+  .hero h1 { font-size: 26px; font-weight: 800; margin: 8px 0 6px; line-height: 1.2; }
+  .hero p { color: var(--muted); font-size: 13.5px; max-width: 70ch; }
+  .meta-row { display: flex; flex-wrap: wrap; gap: 8px; margin-top: 16px; }
+  .pill { font-size: 11.5px; border-radius: 20px; padding: 4px 11px; border: 1px solid var(--border); background: var(--surface); color: var(--muted); }
+  .pill.green { color: var(--green); border-color: #1f5141; }
+  .pill.amber { color: var(--amber); border-color: #5a4a1f; }
+  .pill.red { color: var(--red); border-color: #5a2a2a; }
+  .pill.accent { color: var(--accent); border-color: #2a3a6e; }
+
+  nav.toc { position: sticky; top: 0; z-index: 5; background: rgba(15,17,23,0.92); backdrop-filter: blur(6px); border: 1px solid var(--border); border-radius: 10px; padding: 10px 12px; margin-bottom: 28px; display: flex; flex-wrap: wrap; gap: 6px; }
+  nav.toc a { font-size: 12px; text-decoration: none; color: var(--muted); padding: 4px 9px; border-radius: 6px; }
+  nav.toc a:hover { background: var(--surface2); color: var(--text); }
+
+  section { margin-bottom: 34px; scroll-margin-top: 60px; }
+  h2 { font-size: 19px; font-weight: 700; margin-bottom: 14px; padding-bottom: 8px; border-bottom: 1px solid var(--border); display: flex; align-items: center; gap: 10px; }
+  h2 .num { font-size: 13px; color: var(--bg); background: var(--accent); border-radius: 6px; width: 24px; height: 24px; display: inline-flex; align-items: center; justify-content: center; font-weight: 800; flex-shrink: 0; }
+  h3 { font-size: 15px; font-weight: 700; margin: 18px 0 8px; color: var(--accent2); }
+  p { margin-bottom: 10px; }
+  ul, ol { margin: 0 0 12px 22px; }
+  li { margin-bottom: 5px; }
+
+  .card { background: var(--surface); border: 1px solid var(--border); border-radius: 10px; padding: 16px 18px; margin-bottom: 14px; }
+  .card.l-green { border-left: 4px solid var(--green); }
+  .card.l-amber { border-left: 4px solid var(--amber); }
+  .card.l-red { border-left: 4px solid var(--red); }
+  .card.l-accent { border-left: 4px solid var(--accent); }
+  .card h3 { margin-top: 0; }
+
+  .grid2 { display: grid; grid-template-columns: 1fr 1fr; gap: 14px; }
+  @media (max-width: 680px) { .grid2 { grid-template-columns: 1fr; } }
+
+  code, .mono { font-family: 'Consolas', 'SF Mono', monospace; font-size: 12.5px; }
+  code.inline { background: var(--code); border: 1px solid var(--border); border-radius: 4px; padding: 1px 5px; color: #c7d2fe; }
+  pre { background: var(--code); border: 1px solid var(--border); border-radius: 8px; padding: 14px 16px; overflow-x: auto; margin-bottom: 12px; }
+  pre code { color: #cbd5e1; font-size: 12.5px; line-height: 1.5; white-space: pre; }
+  .tok-c { color: #6b7280; } .tok-k { color: #c084fc; } .tok-s { color: #86efac; } .tok-f { color: #93c5fd; }
+
+  table { width: 100%; border-collapse: collapse; margin-bottom: 14px; font-size: 12.8px; }
+  th, td { text-align: left; padding: 9px 11px; border-bottom: 1px solid var(--border); vertical-align: top; }
+  th { color: var(--accent2); font-weight: 700; background: var(--surface2); }
+  tr:hover td { background: rgba(108,142,247,0.05); }
+  .wrap { overflow-x: auto; border: 1px solid var(--border); border-radius: 8px; }
+  .wrap table { margin-bottom: 0; }
+
+  .status { display: inline-flex; align-items: center; gap: 5px; font-weight: 600; white-space: nowrap; }
+  .dot { width: 10px; height: 10px; border-radius: 50%; display: inline-block; flex-shrink: 0; }
+  .dot.green { background: var(--green); } .dot.amber { background: var(--amber); } .dot.red { background: var(--red); } .dot.grey { background: var(--muted); }
+
+  .risk-tag { font-size: 10.5px; font-weight: 800; border-radius: 5px; padding: 2px 8px; text-transform: uppercase; letter-spacing: 0.5px; }
+  .risk-low { background: rgba(52,211,153,0.15); color: var(--green); }
+  .risk-med { background: rgba(251,191,36,0.15); color: var(--amber); }
+  .risk-high { background: rgba(248,113,113,0.15); color: var(--red); }
+
+  .check { list-style: none; margin-left: 0; }
+  .check li { position: relative; padding-left: 28px; margin-bottom: 7px; }
+  .check li::before { content: "☐"; position: absolute; left: 4px; color: var(--accent); font-size: 15px; }
+
+  /* diagram */
+  .flow { display: flex; flex-direction: column; gap: 0; align-items: stretch; }
+  .flow-node { background: var(--surface2); border: 1px solid var(--border); border-radius: 8px; padding: 10px 14px; font-size: 12.5px; }
+  .flow-node b { color: var(--text); }
+  .flow-arrow { text-align: center; color: var(--muted); font-size: 16px; padding: 3px 0; }
+  .decision { border-left: 4px solid var(--amber); }
+  .branch-row { display: grid; grid-template-columns: 1fr 1fr; gap: 12px; }
+  @media (max-width: 680px) { .branch-row { grid-template-columns: 1fr; } }
+
+  .legend { display: flex; flex-wrap: wrap; gap: 14px; font-size: 12px; color: var(--muted); margin-top: 8px; }
+  .legend span { display: inline-flex; align-items: center; gap: 6px; }
+
+  .back { display: inline-block; margin-bottom: 20px; font-size: 12.5px; text-decoration: none; }
+  footer { margin-top: 40px; padding-top: 18px; border-top: 1px solid var(--border); color: var(--muted); font-size: 12px; }
+  .note { font-size: 12px; color: var(--muted); font-style: italic; }
+  .strike { text-decoration: line-through; color: var(--muted); }
+</style>
+</head>
+<body>
+<div class="page">
+
+  <a class="back" href="index.html">← Back to Review Docs</a>
+
+  <header class="hero">
+    <div class="kicker">Implementation Plan</div>
+    <h1>Strip Auto-HAC Calculation to Bare Essentials</h1>
+    <p>The <code class="inline">feat/auto-hac-calculation</code> branch grew well beyond a debounced
+    auto-calculation hook: a dedicated status indicator, a failure modal with breadcrumbs and error
+    sanitization, root-cause filtering, retry-all, and cross-component "jump to HAC tab" plumbing.
+    This plan reduces the branch to its essentials — keep the debounced auto-calculation hook and
+    replace the dedicated indicator/modal with a single minimal inline "items missing inputs" dot
+    near the export button. It also restores the zone-level "honesty guard" sync-status logic that
+    was partially (and unsafely) removed in the working tree, and removes now-dead
+    <code class="inline">requestedFormTab</code> plumbing that existed only to support the modal's
+    click-to-navigate.</p>
+    <div class="meta-row">
+      <span class="pill accent">Branch: feat/auto-hac-calculation</span>
+      <span class="pill green">Auto-calc hook retained</span>
+      <span class="pill red">Status indicator + modal removed</span>
+      <span class="pill green">Honesty guard restored</span>
+      <span class="pill">No schema / migration changes</span>
+    </div>
+  </header>
+
+  <nav class="toc">
+    <a href="#summary">Executive Summary</a>
+    <a href="#decisions">Decisions</a>
+    <a href="#files">Affected Files</a>
+    <a href="#arch">Architecture & Flow</a>
+    <a href="#phases">Implementation Phases</a>
+    <a href="#beforeafter">Before / After</a>
+    <a href="#risks">Risks</a>
+    <a href="#edges">Edge Cases</a>
+    <a href="#tests">Test Plan</a>
+    <a href="#commit">Commit & Push</a>
+    <a href="#open">Open Decisions</a>
+  </nav>
+
+  <!-- ============ SUMMARY ============ -->
+  <section id="summary">
+    <h2><span class="num">1</span> Executive Summary</h2>
+    <div class="card l-accent">
+      <p><b>What stays.</b> <code class="inline">useAutoCalculation</code>
+      (<code class="inline">components/dashboard/use-auto-calculation.ts</code>) keeps its core job:
+      watch for HAC-relevant changes via <code class="inline">setHacRelevantChangeCallback</code> /
+      <code class="inline">setInheritanceCascadeCallback</code>, debounce, build a plan with
+      <code class="inline">buildCalculationPlan</code>, POST to
+      <code class="inline">/api/bs-calculation/batch</code>, merge results via
+      <code class="inline">setStudy</code>. The hook's public surface shrinks from
+      <code class="inline">{ isPending, isCalculating, failedItems, retryAll }</code> to
+      <code class="inline">{ isCalculating, failedCount }</code>.</p>
+      <p><b>What goes.</b> <code class="inline">HacStatusIndicator</code> (icon + badge + tooltip +
+      click-to-open) and <code class="inline">CalculationFailureModal</code> (breadcrumbs, error
+      sanitization, retry-all, click-to-navigate) are deleted outright, along with their tests. The
+      <code class="inline">requestedFormTab</code> context plumbing that existed solely to let the
+      modal jump to the HAC form tab is removed from
+      <code class="inline">layout.tsx</code>, <code class="inline">page.tsx</code>, and
+      <code class="inline">study-tree-context-provider.tsx</code>.</p>
+      <p style="margin-bottom:0"><b>What's restored.</b> The working tree currently has an
+      <b>incomplete, unsafe</b> removal of the zone-level "honesty guard" in
+      <code class="inline">lib/calculation-versioning.ts</code> (and 4 dependent test files). This
+      guard prevents a <code class="inline">BS EN 60079-10-1</code> zone with no
+      <code class="inline">dispersionType</code> — which calculates successfully but returns
+      <code class="inline">outputs: {}</code> — from showing as a false "in-sync"/green result.
+      Phase 0 reverts these 5 files to their committed <code class="inline">HEAD</code> state,
+      restoring the guard. This is unrelated to the indicator/modal removal but must happen on this
+      branch regardless.</p>
+    </div>
+    <div class="grid2">
+      <div class="card l-green"><h3>In scope</h3>
+        <ul style="margin-bottom:0">
+          <li>Simplify <code class="inline">use-auto-calculation.ts</code> return shape and internals</li>
+          <li>Delete <code class="inline">HacStatusIndicator</code> + <code class="inline">CalculationFailureModal</code> (+ tests)</li>
+          <li>Add a minimal inline amber-dot indicator to <code class="inline">side-bar.tsx</code></li>
+          <li>Remove dead <code class="inline">requestedFormTab</code> plumbing</li>
+          <li>Revert 5 files to <code class="inline">HEAD</code> (restore honesty guard + its tests/fixtures)</li>
+          <li>Update <code class="inline">use-auto-calculation.test.tsx</code> for the new return shape</li>
+        </ul>
+      </div>
+      <div class="card l-red"><h3>Explicitly NOT in scope</h3>
+        <ul style="margin-bottom:0">
+          <li>Reverting to the manual <code class="inline">RunHACButton</code> (it stays orphaned/unused, as-is)</li>
+          <li>Any change to <code class="inline">run-hac-helpers.ts</code> exports — all reused as-is</li>
+          <li><code class="inline">canExportSafely</code> / report export gating</li>
+          <li>Firestore schema changes or data migrations</li>
+          <li><code class="inline">CHANGELOG.md</code> / <code class="inline">package-lock.json</code> (pre-existing unrelated edits — leave untouched)</li>
+        </ul>
+      </div>
+    </div>
+  </section>
+
+  <!-- ============ DECISIONS ============ -->
+  <section id="decisions">
+    <h2><span class="num">2</span> Resolved Decisions <span class="pill green" style="font-size:11px">all confirmed</span></h2>
+    <div class="wrap"><table>
+      <thead><tr><th style="width:26%">Topic</th><th>Resolution</th></tr></thead>
+      <tbody>
+        <tr><td><b>Auto-calculation hook</b></td><td>Keep the debounced background recalculation core. Drop everything that exists only to feed the dedicated UI (pending flag, failed-item breadcrumbs, retry-all).</td></tr>
+        <tr><td><b>Status indicator</b></td><td>Remove <code class="inline">HacStatusIndicator</code> entirely. Replace with a single, minimal, non-interactive inline indicator: a small amber dot rendered near the export button, visible only when <code class="inline">failedCount &gt; 0</code>.</td></tr>
+        <tr><td><b>Failure modal</b></td><td>Remove <code class="inline">CalculationFailureModal</code> entirely — no breadcrumbs, no error sanitization UI, no retry-all button, no click-to-navigate.</td></tr>
+        <tr><td><b>Retry-all</b></td><td>Removed. Auto-calculation will naturally re-run when the user edits the inputs that caused the failure (existing debounce/trigger behaviour) — no manual retry affordance needed.</td></tr>
+        <tr><td><b><code class="inline">requestedFormTab</code> plumbing</b></td><td><b>Remove it.</b> Confirmed via grep: its only consumer was the deleted modal's "navigate to HAC tab" click handler. <code class="inline">isFormTabAvailable()</code> stays (also used independently for <code class="inline">activeFormTab</code> validation).</td></tr>
+        <tr><td><b><code class="inline">RunHACButton</code> (<code class="inline">run-hac.tsx</code>)</b></td><td>Leave alone — already orphaned (only its own test references it), out of scope for this pass.</td></tr>
+        <tr><td><b>Honesty guard (<code class="inline">zoneHasRealResult</code>)</b></td><td><b>Restore it.</b> The working-tree removal is unsafe — it reintroduces false "in-sync"/green for BS zones with empty <code class="inline">outputs</code>. Revert <code class="inline">lib/calculation-versioning.ts</code> and its 4 dependent test/fixture files to committed <code class="inline">HEAD</code>.</td></tr>
+        <tr><td><b>Failed-item tracking shape</b></td><td><code class="inline">FailedItemInfo[]</code> (with breadcrumbs, error messages) → <code class="inline">failedCount: number</code>. Same underlying filter (<code class="inline">isRootCauseFailure</code> + traversal), just counted instead of materialised with display metadata.</td></tr>
+        <tr><td><b>Error sanitization (<code class="inline">sanitizeError</code>, <code class="inline">FIELD_KEY_LABELS</code>, <code class="inline">humanizeFieldKey</code>)</b></td><td>Dies with the modal — confirmed not used anywhere else.</td></tr>
+        <tr><td><b><code class="inline">formatRelativeTime</code> / <code class="inline">formatHierarchyAsName</code></b></td><td>No cleanup needed — both remain used elsewhere (<code class="inline">study-tree.tsx</code>, summary tables, <code class="inline">study-tree-add-bar.tsx</code>, etc.).</td></tr>
+      </tbody>
+    </table></div>
+  </section>
+
+  <!-- ============ FILES ============ -->
+  <section id="files">
+    <h2><span class="num">3</span> Affected Files</h2>
+
+    <h3>Modify</h3>
+    <div class="wrap"><table>
+      <thead><tr><th>File</th><th>Phase</th><th>Change</th></tr></thead>
+      <tbody>
+        <tr><td><code class="inline">components/dashboard/use-auto-calculation.ts</code></td><td>1</td><td>Simplify <code class="inline">AutoCalculationState</code>, remove <code class="inline">isPending</code>/<code class="inline">isRunningRef</code>/<code class="inline">retryAll</code>/<code class="inline">FailedItemInfo</code>, replace <code class="inline">failedItems</code> useMemo with <code class="inline">failedCount</code> useMemo.</td></tr>
+        <tr><td><code class="inline">app/(main)/(protected)/studies/side-bar.tsx</code></td><td>2</td><td>Remove <code class="inline">HacStatusIndicator</code> usage/import; add minimal inline amber-dot indicator near the export button; update tooltip text and <code class="inline">failedItems.length</code> → <code class="inline">failedCount</code> references.</td></tr>
+        <tr><td><code class="inline">app/(main)/(protected)/studies/layout.tsx</code></td><td>4</td><td>Remove <code class="inline">requestedFormTab</code>/<code class="inline">setRequestedFormTab</code> state + context value.</td></tr>
+        <tr><td><code class="inline">app/(main)/(protected)/studies/page.tsx</code></td><td>4</td><td>Remove <code class="inline">requestedFormTab</code> destructure + consumer <code class="inline">useEffect</code>. Keep <code class="inline">isFormTabAvailable()</code> and its independent use for <code class="inline">activeFormTab</code>.</td></tr>
+        <tr><td><code class="inline">components/dashboard/study-tree/study-tree-context-provider.tsx</code></td><td>4</td><td>Remove <code class="inline">requestedFormTab: FormTab | null</code> and <code class="inline">setRequestedFormTab</code> from the context type + default value.</td></tr>
+        <tr><td><code class="inline">components/dashboard/__tests__/use-auto-calculation.test.tsx</code></td><td>5</td><td>Update/remove tests for the new <code class="inline">{ isCalculating, failedCount }</code> shape (see §9).</td></tr>
+      </tbody>
+    </table></div>
+
+    <h3>Delete</h3>
+    <div class="wrap"><table>
+      <thead><tr><th>File</th><th>Phase</th><th>Notes</th></tr></thead>
+      <tbody>
+        <tr><td><code class="inline">components/dashboard/hac-status-indicator.tsx</code></td><td>3</td><td>150 lines. Confirmed sole importer is <code class="inline">side-bar.tsx</code> (removed in Phase 2).</td></tr>
+        <tr><td><code class="inline">components/dashboard/calculation-failure-modal.tsx</code></td><td>3</td><td>164 lines. Confirmed sole importer is <code class="inline">hac-status-indicator.tsx</code> (deleted alongside it).</td></tr>
+        <tr><td><code class="inline">components/dashboard/__tests__/hac-status-indicator.test.tsx</code></td><td>3</td><td>Tests the deleted component.</td></tr>
+        <tr><td><code class="inline">components/dashboard/__tests__/calculation-failure-modal.test.tsx</code></td><td>3</td><td>Tests the deleted component.</td></tr>
+      </tbody>
+    </table></div>
+
+    <h3>Revert to committed <code class="inline">HEAD</code></h3>
+    <div class="card l-amber">
+    <p>Run <code class="inline">git checkout HEAD -- &lt;path&gt;</code> for each of the following.
+    Each currently has an <b>uncommitted</b> diff that incompletely/unsafely removes the
+    zone-level honesty guard and its supporting tests/fixtures.</p>
+    </div>
+    <div class="wrap"><table>
+      <thead><tr><th>File</th><th>Uncommitted diff (to be discarded)</th></tr></thead>
+      <tbody>
+        <tr><td><code class="inline">lib/calculation-versioning.ts</code></td><td>−62 lines: removes <code class="inline">zoneHasRealResult()</code> and its call-sites in <code class="inline">getDirectSyncStatusLabel()</code> / <code class="inline">getRollupSyncStatusLabel()</code>. <b>Note:</b> the separate Scenario <code class="inline">hacType === "None"/undefined → never-calculated</code> fix is a different, already-committed change and is <b>not</b> part of this diff — it is preserved by reverting only to <code class="inline">HEAD</code> (not further back).</td></tr>
+        <tr><td><code class="inline">lib/__tests__/calculation-versioning.test.ts</code></td><td>−286 lines: removes <code class="inline">createZone</code>-based rollup tests.</td></tr>
+        <tr><td><code class="inline">test-utils/study-item-fixtures.ts</code></td><td>−36 lines: removes the <code class="inline">createZone()</code> fixture factory.</td></tr>
+        <tr><td><code class="inline">components/dashboard/study-tree/__tests__/custom-tree-item.test.tsx</code></td><td>−28 lines: removes the "neutral never-calculated icon for a zone-less Area" test.</td></tr>
+        <tr><td><code class="inline">components/dashboard/reports/__tests__/sync-status-banner.test.tsx</code></td><td>removes the "neutral never-calculated banner for a zone-less Area" test + now-unused imports (<code class="inline">screen</code>, <code class="inline">statusConfig</code>, <code class="inline">createArea</code>).</td></tr>
+      </tbody>
+    </table></div>
+
+    <h3>Explicitly not touched</h3>
+    <ul>
+      <li><code class="inline">components/dashboard/run-hac.tsx</code> and <code class="inline">components/dashboard/run-hac-helpers.ts</code> — all helper exports (<code class="inline">buildCalculationRequestMetadata</code>, <code class="inline">buildRunningItems</code>, <code class="inline">buildFailedItems</code>, <code class="inline">detectInputChanges</code>, <code class="inline">restoreMissingCalculationStates</code>, <code class="inline">countPlanStatuses</code>, <code class="inline">markDescendantsFailedForFailedItems</code>) remain in use by the simplified hook.</li>
+      <li><code class="inline">CHANGELOG.md</code>, <code class="inline">package-lock.json</code> — pre-existing unrelated uncommitted edits.</li>
+      <li><code class="inline">lib/study-tree-traversal.ts</code> — <code class="inline">getAncestorItems</code> import is removed from <code class="inline">use-auto-calculation.ts</code> (no longer needed for breadcrumbs), but the module itself is untouched (used elsewhere).</li>
+    </ul>
+  </section>
+
+  <!-- ============ ARCHITECTURE ============ -->
+  <section id="arch">
+    <h2><span class="num">4</span> Architecture &amp; Data Flow</h2>
+
+    <h3>Before</h3>
+    <div class="card">
+      <div class="flow">
+        <div class="flow-node"><b>StudyTreeDataProvider</b> — HAC-relevant change / inheritance-cascade callbacks</div>
+        <div class="flow-arrow">▼</div>
+        <div class="flow-node l-accent" style="border-left:4px solid var(--accent)"><b>useAutoCalculation</b><br>
+          debounce → <code class="inline">buildCalculationPlan</code> → POST <code class="inline">/api/bs-calculation/batch</code> → <code class="inline">setStudy</code><br>
+          returns <code class="inline">{ isPending, isCalculating, failedItems: FailedItemInfo[], retryAll }</code></div>
+        <div class="flow-arrow">▼</div>
+        <div class="flow-node decision"><b>HacStatusIndicator</b> (sidebar, next to study name)<br>
+          icon + count badge + tooltip; clickable when failures exist</div>
+        <div class="flow-arrow">▼ on click</div>
+        <div class="flow-node"><b>CalculationFailureModal</b><br>
+          breadcrumbs (<code class="inline">getAncestorItems</code>) · <code class="inline">sanitizeError()</code> · Retry all → <code class="inline">retryAll()</code> · click item → <code class="inline">onNavigateToItem</code></div>
+        <div class="flow-arrow">▼ onNavigateToItem</div>
+        <div class="flow-node"><b>dataProvider.onSelectItems</b> + <code class="inline">setRequestedFormTab("hac")</code></div>
+        <div class="flow-arrow">▼</div>
+        <div class="flow-node"><b>page.tsx</b> effect: <code class="inline">isFormTabAvailable(requestedFormTab, selectedItem)</code> → <code class="inline">setActiveFormTab("hac")</code></div>
+      </div>
+    </div>
+
+    <h3>After</h3>
+    <div class="card">
+      <div class="flow">
+        <div class="flow-node"><b>StudyTreeDataProvider</b> — HAC-relevant change / inheritance-cascade callbacks <span class="pill green" style="font-size:10px">unchanged</span></div>
+        <div class="flow-arrow">▼</div>
+        <div class="flow-node l-accent" style="border-left:4px solid var(--accent)"><b>useAutoCalculation</b> <span class="pill amber" style="font-size:10px">simplified</span><br>
+          same debounce/plan/fetch/merge core<br>
+          returns <code class="inline">{ isCalculating: boolean, failedCount: number }</code></div>
+        <div class="flow-arrow">▼</div>
+        <div class="flow-node decision"><b>side-bar.tsx</b> — export button area<br>
+          small amber dot, <code class="inline">aria-hidden="true"</code>, shown when <code class="inline">failedCount &gt; 0</code><br>
+          existing export-button tooltip text updated to reference missing inputs</div>
+      </div>
+      <p class="note" style="margin-top:8px;margin-bottom:0">No modal, no navigation side-effects, no <code class="inline">requestedFormTab</code> round-trip. The dot is purely informational.</p>
+    </div>
+
+    <h3>Honesty guard (restored — Phase 0)</h3>
+    <div class="card">
+      <div class="flow">
+        <div class="flow-node"><b>StudyItems</b> flat map — per-item <code class="inline">calculationState</code> &amp; <code class="inline">outputs</code></div>
+        <div class="flow-arrow">▼</div>
+        <div class="flow-node l-accent" style="border-left:4px solid var(--accent)"><b>lib/calculation-versioning.ts</b> · <code class="inline">getSyncStatusLabel()</code><br>
+          <code class="inline">zoneHasRealResult()</code>: BS/Phast/User-defined → <code class="inline">Number.isFinite(outputs.hazardDistance)</code>; Interior → <code class="inline">outputs.zoneType != null</code>; None/default → <code class="inline">false</code><br>
+          rollup downgrades <code class="inline">in-sync</code> → <code class="inline">never-calculated</code> when no descendant zone satisfies the predicate</div>
+        <div class="flow-arrow">▼</div>
+        <div class="flow-node">Consumers: <code class="inline">side-bar.tsx</code> (via <code class="inline">canExportSafely</code> / <code class="inline">isOutOfSync</code>), <code class="inline">custom-tree-item.tsx</code>, <code class="inline">sync-status-banner.tsx</code>, <code class="inline">geometry-plot.tsx</code></div>
+      </div>
+      <p class="note" style="margin-top:8px;margin-bottom:0">This restoration is independent of the indicator/modal removal — it fixes a pre-existing correctness bug on this branch and must land regardless of the UI simplification.</p>
+    </div>
+  </section>
+
+  <!-- ============ PHASES ============ -->
+  <section id="phases">
+    <h2><span class="num">5</span> Implementation Phases &amp; Tasks</h2>
+
+    <div class="card l-amber">
+      <h3>Phase 0 — Restore honesty guard <span class="pill" style="font-size:10px">independent · run first · own commit</span></h3>
+      <p style="margin-bottom:6px">Discard the incomplete uncommitted removal by checking out 5 files from <code class="inline">HEAD</code>:</p>
+<pre><code><span class="tok-k">git</span> checkout HEAD -- <span class="tok-s">lib/calculation-versioning.ts</span> <span class="tok-s">\</span>
+  <span class="tok-s">lib/__tests__/calculation-versioning.test.ts</span> <span class="tok-s">\</span>
+  <span class="tok-s">test-utils/study-item-fixtures.ts</span> <span class="tok-s">\</span>
+  <span class="tok-s">components/dashboard/study-tree/__tests__/custom-tree-item.test.tsx</span> <span class="tok-s">\</span>
+  <span class="tok-s">components/dashboard/reports/__tests__/sync-status-banner.test.tsx</span></code></pre>
+      <p style="margin-bottom:0">Verify with <code class="inline">git status</code> that exactly these 5 paths return to "unmodified" and that <code class="inline">CHANGELOG.md</code> / <code class="inline">package-lock.json</code> remain untouched (they are pre-existing, unrelated modifications).</p>
+    </div>
+
+    <div class="card l-amber">
+      <h3>Phase 1 — Simplify <code class="inline">use-auto-calculation.ts</code> <span class="pill" style="font-size:10px">depends on: none · gates Phase 2 &amp; 5</span></h3>
+      <p style="margin-bottom:6px">Single file, several coordinated edits:</p>
+      <ul style="margin-bottom:8px">
+        <li>Delete the <code class="inline">FailedItemInfo</code> interface entirely.</li>
+        <li>Change <code class="inline">AutoCalculationState</code> to:
+<pre><code><span class="tok-k">interface</span> AutoCalculationState {
+  isCalculating: <span class="tok-k">boolean</span>;
+  failedCount: <span class="tok-k">number</span>;
+}</code></pre></li>
+        <li>Remove the <code class="inline">isPending</code> state and every <code class="inline">setIsPending(...)</code> call (it was only consumed by <code class="inline">HacStatusIndicator</code>).</li>
+        <li>Remove <code class="inline">isRunningRef</code> — it existed only to support <code class="inline">retryAll</code>'s re-entrancy guard.</li>
+        <li>Remove the <code class="inline">retryAll</code> callback entirely.</li>
+        <li>Keep <code class="inline">runCalculation</code>'s core: debounce timer, <code class="inline">buildCalculationPlan</code>, fetch to <code class="inline">/api/bs-calculation/batch</code>, merge via <code class="inline">setStudy</code>, error handling that marks descendants failed (<code class="inline">markDescendantsFailedForFailedItems</code>) — strip only the <code class="inline">isRunningRef</code>/<code class="inline">isPending</code> bookkeeping around it.</li>
+        <li>Keep the load-trigger effect and the <code class="inline">hacRelevantChangeCallback</code>/<code class="inline">inheritanceCascadeCallback</code> registration effect unchanged, minus the removed <code class="inline">setIsPending(true)</code> call.</li>
+        <li>Keep <code class="inline">isRootCauseFailure(state: CalculationState)</code> — still needed to filter the failed-count.</li>
+        <li>Replace the <code class="inline">failedItems</code> <code class="inline">useMemo</code> (which built breadcrumbs via <code class="inline">getAncestorItems</code>) with a <code class="inline">failedCount</code> <code class="inline">useMemo</code> that walks the same set of study items, applies the same <code class="inline">isRootCauseFailure</code> filter, and returns the count:
+<pre><code><span class="tok-k">const</span> failedCount = useMemo(() => {
+  <span class="tok-k">let</span> count = <span class="tok-f">0</span>;
+  <span class="tok-k">for</span> (<span class="tok-k">const</span> item <span class="tok-k">of</span> Object.values(dataProvider.studyItems)) {
+    <span class="tok-k">const</span> state = item.calculationState;
+    <span class="tok-k">if</span> (state && <span class="tok-f">isRootCauseFailure</span>(state)) count++;
+  }
+  <span class="tok-k">return</span> count;
+}, [dataProvider.studyItems]);</code></pre>
+        Confirm the exact current filter conditions in the existing <code class="inline">failedItems</code> useMemo (lines 245-296) and preserve them verbatim — only drop the breadcrumb/name/index/error-message construction, not the inclusion criteria.</li>
+        <li>Remove the now-unused <code class="inline">getAncestorItems</code> import from <code class="inline">@/lib/study-tree-traversal</code>.</li>
+        <li>Final return statement: <code class="inline">return { isCalculating, failedCount };</code></li>
+      </ul>
+    </div>
+
+    <div class="grid2">
+      <div class="card l-red">
+        <h3>Phase 3 — Delete indicator &amp; modal <span class="pill" style="font-size:10px">independent of Phase 1</span></h3>
+        <ul style="margin-bottom:0">
+          <li>Delete <code class="inline">components/dashboard/hac-status-indicator.tsx</code></li>
+          <li>Delete <code class="inline">components/dashboard/calculation-failure-modal.tsx</code></li>
+          <li>Delete <code class="inline">components/dashboard/__tests__/hac-status-indicator.test.tsx</code></li>
+          <li>Delete <code class="inline">components/dashboard/__tests__/calculation-failure-modal.test.tsx</code></li>
+        </ul>
+        <p class="note" style="margin-top:8px;margin-bottom:0">No edits needed elsewhere for this phase in isolation — Phase 2 removes the only import. Safe to run in parallel with Phase 1 and Phase 4 (different files).</p>
+      </div>
+      <div class="card l-accent">
+        <h3>Phase 4 — Remove <code class="inline">requestedFormTab</code> plumbing <span class="pill" style="font-size:10px">independent of Phase 1/2/3</span></h3>
+        <ul style="margin-bottom:0">
+          <li><code class="inline">study-tree-context-provider.tsx</code>: remove <code class="inline">requestedFormTab: FormTab | null</code> and <code class="inline">setRequestedFormTab</code> from the context type (~line 1637-1638) and default value (~line 1642-1643).</li>
+          <li><code class="inline">layout.tsx</code>: remove <code class="inline">const [requestedFormTab, setRequestedFormTab] = useState&lt;FormTab | null&gt;(null);</code> (~line 77) and its entry in the <code class="inline">StudyTreeContext.Provider</code> value (~line 259).</li>
+          <li><code class="inline">page.tsx</code>: remove <code class="inline">requestedFormTab</code>/<code class="inline">setRequestedFormTab</code> from the <code class="inline">useStudyTree()</code> destructure (~line 445) and remove the consumer <code class="inline">useEffect</code> (~lines 470-475).</li>
+          <li><b>Keep</b> <code class="inline">isFormTabAvailable()</code> (~line 328) and its other call site for <code class="inline">activeFormTab</code> validation (~line 464) — it has an independent purpose.</li>
+        </ul>
+      </div>
+    </div>
+
+    <div class="card l-green">
+      <h3>Phase 2 — Sidebar: remove indicator, add minimal amber dot <span class="pill" style="font-size:10px">depends on: Phase 1 (state shape) and Phase 3 (file deletion)</span></h3>
+      <p style="margin-bottom:6px">In <code class="inline">app/(main)/(protected)/studies/side-bar.tsx</code>:</p>
+      <ul style="margin-bottom:8px">
+        <li>Remove <code class="inline">import { HacStatusIndicator } from "@/components/dashboard/hac-status-indicator";</code> (line 8).</li>
+        <li>Remove the <code class="inline">&lt;HacStatusIndicator dataProvider={dataProvider} autoCalcState={autoCalcState} /&gt;</code> usage (lines 128-131). The study-name header row (lines 123-133) becomes just the <code class="inline">&lt;h1&gt;</code> study name — confirm whether the surrounding flex row still needs <code class="inline">gap-2</code>/padding once the indicator is gone (visually verify in dev).</li>
+        <li>Line 118 (<code class="inline">isExportDisabled</code>) — <code class="inline">autoCalcState.isCalculating</code> reference is unchanged (field name preserved).</li>
+        <li>Line 196 — change <code class="inline">autoCalcState.failedItems.length &gt; 0</code> → <code class="inline">autoCalcState.failedCount &gt; 0</code>.</li>
+        <li>Lines 196-200 tooltip text — change <code class="inline">"Some calculations failed — check the status indicator"</code> → <code class="inline">"Some items are missing required inputs"</code> (no status indicator to reference any more).</li>
+        <li>Add the amber dot: wrap the existing export-button <code class="inline">&lt;span className="flex w-full"&gt;</code> (lines 173-189) so the dot can be absolutely positioned relative to it, e.g.
+<pre><code>&lt;span <span class="tok-k">className</span>=<span class="tok-s">"relative flex w-full"</span>&gt;
+  &lt;Button ...&gt;...&lt;/Button&gt;
+  {autoCalcState.failedCount &gt; <span class="tok-f">0</span> && (
+    &lt;span
+      aria-hidden=<span class="tok-s">"true"</span>
+      <span class="tok-k">className</span>=<span class="tok-s">"absolute -right-1 -top-1 h-2 w-2 rounded-full bg-amber-500"</span>
+    /&gt;
+  )}
+&lt;/span&gt;</code></pre>
+        The dot is purely visual (<code class="inline">aria-hidden</code>); the existing <code class="inline">TooltipContent</code> on the export button already communicates state via text (per the line 196-200 change above) — no separate <code class="inline">aria-label</code> needed for the dot itself.</li>
+      </ul>
+      <p class="note" style="margin-bottom:0">Why this depends on Phase 3: typecheck/lint must not see a reference to the about-to-be-deleted <code class="inline">HacStatusIndicator</code> module after this edit lands — sequencing Phase 2 after Phase 3 (or in the same commit) avoids a transient broken-import state if commits are reviewed individually.</p>
+    </div>
+
+    <div class="card l-green">
+      <h3>Phase 5 — Update <code class="inline">use-auto-calculation.test.tsx</code> <span class="pill" style="font-size:10px">depends on: Phase 1</span></h3>
+      <p style="margin-bottom:6px">20 <code class="inline">describe</code>/<code class="inline">it</code> blocks categorized:</p>
+      <ul style="margin-bottom:0">
+        <li><b>Keep as-is</b> (lines ~119, ~174, ~196, ~214, ~233, ~260, ~281, ~307, ~632): callback register/unregister, load-trigger variants, debounce reset, fetch rejection, <code class="inline">setStudy</code> on success, <code class="inline">setStudy</code> on item-level failures, debounce timing.</li>
+        <li><b>Update</b> (line ~138, "sets isPending when callback fires and isCalculating after debounce"): drop all <code class="inline">isPending</code> assertions; keep/adjust the <code class="inline">isCalculating</code> assertions.</li>
+        <li><b>Update to <code class="inline">failedCount</code></b> (lines ~352, ~422, ~445, ~461, ~485, ~508, ~542): replace assertions on <code class="inline">failedItems</code> array contents/length with assertions on the numeric <code class="inline">failedCount</code> (e.g. <code class="inline">expect(result.current.failedCount).toBe(2)</code> instead of <code class="inline">expect(result.current.failedItems).toHaveLength(2)</code>; drop any assertions on breadcrumb/name/error fields).</li>
+        <li><b>Remove entirely</b>: line ~381 ("failedItems are ordered hierarchically and include correct breadcrumbs" — no breadcrumb structure remains), line ~581 and ~600 (<code class="inline">retryAll</code> tests — function removed).</li>
+      </ul>
+    </div>
+
+    <h3>Dependency graph</h3>
+    <div class="card">
+      <div class="flow">
+        <div class="flow-node" style="border-left:4px solid var(--amber)"><b>Phase 0</b> — restore honesty guard (independent, own commit)</div>
+        <div class="flow-arrow">▼ (no file overlap — can run before/alongside the next group)</div>
+        <div class="branch-row">
+          <div class="flow-node" style="border-left:4px solid var(--amber)"><b>Phase 1</b> — simplify hook</div>
+          <div class="flow-node" style="border-left:4px solid var(--red)"><b>Phase 3</b> — delete indicator/modal</div>
+        </div>
+        <div class="flow-node" style="border-left:4px solid var(--accent); margin-top:8px"><b>Phase 4</b> — remove requestedFormTab (fully independent, any time)</div>
+        <div class="flow-arrow">▼ Phase 1 + Phase 3 both land</div>
+        <div class="branch-row">
+          <div class="flow-node" style="border-left:4px solid var(--green)"><b>Phase 2</b> — sidebar edit (needs new state shape + deleted import)</div>
+          <div class="flow-node" style="border-left:4px solid var(--green)"><b>Phase 5</b> — hook test updates (needs new state shape)</div>
+        </div>
+        <div class="flow-arrow">▼ all phases complete</div>
+        <div class="flow-node" style="border-left:4px solid var(--accent)"><b>Phase 6</b> — full quality gate → push</div>
+      </div>
+      <p class="note" style="margin-top:8px;margin-bottom:0"><b>Max safe parallelism:</b> {Phase 0} and {Phase 1, Phase 3, Phase 4} can all start immediately (no file overlaps between Phase 0's 5 files, Phase 1's <code class="inline">use-auto-calculation.ts</code>, Phase 3's deleted files, and Phase 4's <code class="inline">layout.tsx</code>/<code class="inline">page.tsx</code>/<code class="inline">study-tree-context-provider.tsx</code>). Once Phase 1 and Phase 3 are both merged locally, Phase 2 and Phase 5 can run in parallel (different files: <code class="inline">side-bar.tsx</code> vs the test file).</p>
+    </div>
+  </section>
+
+  <!-- ============ BEFORE/AFTER ============ -->
+  <section id="beforeafter">
+    <h2><span class="num">6</span> Before / After Behaviour</h2>
+    <div class="wrap"><table>
+      <thead><tr><th>Aspect</th><th>Before</th><th>After</th></tr></thead>
+      <tbody>
+        <tr><td>Sidebar header row</td><td>Study name + <code class="inline">HacStatusIndicator</code> (icon, count badge, tooltip)</td><td>Study name only</td></tr>
+        <tr><td>Calculation in progress</td><td>Spinner icon in <code class="inline">HacStatusIndicator</code> + export button tooltip "Calculations in progress"</td><td>Export button tooltip only (<code class="inline">autoCalcState.isCalculating</code> — unchanged plumbing)</td></tr>
+        <tr><td>Items with missing inputs</td><td>Amber triangle + numeric badge, clickable → opens <code class="inline">CalculationFailureModal</code> with breadcrumbs, sanitized error labels, "Retry all" button, click-to-navigate to HAC tab</td><td>Small amber dot on the export button, <code class="inline">aria-hidden</code>, non-interactive; export button tooltip reads "Some items are missing required inputs"</td></tr>
+        <tr><td>Retry mechanism</td><td>Manual "Retry all" button in modal → <code class="inline">retryAll()</code></td><td>None — fixing the underlying inputs triggers auto-recalculation via the existing debounce/trigger path</td></tr>
+        <tr><td>"Jump to HAC tab" on failure click</td><td><code class="inline">onNavigateToItem</code> → <code class="inline">dataProvider.onSelectItems</code> + <code class="inline">setRequestedFormTab("hac")</code> → <code class="inline">page.tsx</code> effect sets <code class="inline">activeFormTab</code></td><td>Removed entirely — no navigation side-effect</td></tr>
+        <tr><td>Zone with empty <code class="inline">outputs</code> (no <code class="inline">dispersionType</code>)</td><td><span class="status"><span class="dot green"></span>in-sync</span> <span class="note">(false positive — current working tree)</span></td><td><span class="status"><span class="dot grey"></span>never-calculated</span> <span class="note">(honesty guard restored)</span></td></tr>
+        <tr><td>Hook return value</td><td><code class="inline">{ isPending, isCalculating, failedItems: FailedItemInfo[], retryAll }</code></td><td><code class="inline">{ isCalculating, failedCount: number }</code></td></tr>
+      </tbody>
+    </table></div>
+  </section>
+
+  <!-- ============ RISKS ============ -->
+  <section id="risks">
+    <h2><span class="num">7</span> Risks</h2>
+    <div class="card l-green"><span class="risk-tag risk-low">Low</span> &nbsp;<b>Deleting <code class="inline">hac-status-indicator.tsx</code> / <code class="inline">calculation-failure-modal.tsx</code>.</b> Confirmed via grep: only importer of each is the other component in the chain being deleted (<code class="inline">side-bar.tsx</code> → indicator → modal). No orphaned imports elsewhere.</div>
+    <div class="card l-green"><span class="risk-tag risk-low">Low</span> &nbsp;<b>Shared utilities used by deleted components.</b> <code class="inline">formatRelativeTime</code> and <code class="inline">formatHierarchyAsName</code> (from <code class="inline">lib/utils.ts</code>) remain used by other files — no dangling exports to clean up. <code class="inline">FIELD_KEY_LABELS</code>/<code class="inline">humanizeFieldKey</code>/<code class="inline">sanitizeError</code> are local to the deleted modal and die with it.</div>
+    <div class="card l-amber"><span class="risk-tag risk-med">Med</span> &nbsp;<b><code class="inline">use-auto-calculation.ts</code> refactor scope.</b> Many coordinated removals in one file (state, ref, callback, memo, import). Mitigation: do this as one focused commit, then run <code class="inline">npm run typecheck</code> immediately — any stale reference to <code class="inline">isPending</code>/<code class="inline">retryAll</code>/<code class="inline">FailedItemInfo</code> elsewhere will surface as a compile error before other phases proceed.</div>
+    <div class="card l-amber"><span class="risk-tag risk-med">Med</span> &nbsp;<b><code class="inline">use-auto-calculation.test.tsx</code> drift.</b> 20 test blocks span several behaviours; missing one <code class="inline">failedItems</code>/<code class="inline">retryAll</code>/<code class="inline">isPending</code> reference will fail typecheck or the test run. Mitigation: grep the test file for <code class="inline">isPending</code>, <code class="inline">retryAll</code>, <code class="inline">failedItems</code>, <code class="inline">FailedItemInfo</code> after editing — all should return zero matches.</div>
+    <div class="card l-green"><span class="risk-tag risk-low">Low</span> &nbsp;<b><code class="inline">requestedFormTab</code> removal.</b> Grep-confirmed limited to 3 files with a clear, linear data flow (provider → layout → page effect). <code class="inline">isFormTabAvailable()</code> has an independent second call site that must be preserved.</div>
+    <div class="card l-amber"><span class="risk-tag risk-med">Med</span> &nbsp;<b>Phase 0 revert correctness.</b> <code class="inline">git checkout HEAD -- &lt;path&gt;</code> discards <i>all</i> uncommitted changes to that file. Confirmed (via diff review) that each of the 5 files' uncommitted diff is <i>purely</i> the unsafe honesty-guard removal — reverting to <code class="inline">HEAD</code> loses nothing else. Re-confirm with <code class="inline">git diff HEAD -- &lt;path&gt;</code> immediately before reverting, in case the working tree has changed since this plan was written.</div>
+    <div class="card l-green"><span class="risk-tag risk-low">Low</span> &nbsp;<b>Sidebar layout shift.</b> Removing the indicator changes the header row's content; the amber dot is additive to an existing button. Low visual risk, but verify spacing/alignment in the dev server (header row gap, icon-only collapse mode via <code class="inline">usePanelWidth</code>/<code class="inline">ICON_ONLY_WIDTH_PX</code>).</div>
+  </section>
+
+  <!-- ============ EDGES ============ -->
+  <section id="edges">
+    <h2><span class="num">8</span> Edge Cases &amp; Invariants to Preserve</h2>
+    <ul>
+      <li><b><code class="inline">failedCount === 0</code> while <code class="inline">isCalculating === true</code>:</b> dot hidden; export button tooltip falls through to the "Calculations in progress — please wait" branch (line 194-195, unchanged).</li>
+      <li><b><code class="inline">failedCount &gt; 0</code> and <code class="inline">isOutOfSync === true</code>:</b> tooltip priority order at lines 192-200 is preserved — only the failed-items branch's text changes (per Phase 2).</li>
+      <li><b>Scenario with <code class="inline">hac.hacType === "None"</code> or unset:</b> <code class="inline">getSyncStatusLabel</code> returns <code class="inline">never-calculated</code> (existing/committed logic, untouched) — this must <b>not</b> be counted by <code class="inline">isRootCauseFailure</code>/<code class="inline">failedCount</code>, matching current <code class="inline">failedItems</code> filter behaviour. Preserve the exact filter conditions from the current <code class="inline">failedItems</code> useMemo when rewriting as <code class="inline">failedCount</code>.</li>
+      <li><b>Cascading vs root-cause failures:</b> <code class="inline">isRootCauseFailure()</code> (filters out <code class="inline">engineVersion === "dependency-failure"</code> and known cascade error patterns) must continue to gate <code class="inline">failedCount</code> — a cascade failure on a descendant must not inflate the count when its root cause is already counted.</li>
+      <li><b>Zone with empty <code class="inline">outputs</code> (no <code class="inline">dispersionType</code>):</b> after Phase 0, <code class="inline">zoneHasRealResult()</code> returns <code class="inline">false</code> → rollup is <code class="inline">never-calculated</code>, not <code class="inline">in-sync</code>. This affects <code class="inline">isOutOfSync</code>/<code class="inline">canExportSafely</code> on the export button — re-verify the export button's disabled/tooltip states still make sense post-revert (they predate this branch's UI changes, so should already be consistent).</li>
+      <li><b>No study loaded (<code class="inline">studyIndex === "root"</code>):</b> <code class="inline">isStudyLoaded</code> is <code class="inline">false</code>; the header row (and thus any indicator) is not rendered at all — unchanged.</li>
+      <li><b>Amber dot accessibility:</b> <code class="inline">aria-hidden="true"</code> on the dot itself; the export button's existing <code class="inline">aria-label="Export report"</code> plus its <code class="inline">TooltipContent</code> text (updated in Phase 2) remain the accessible description of state — do not add a second competing label.</li>
+      <li><b>Icon-only sidebar mode (<code class="inline">isIconOnly</code>, <code class="inline">controlsWidth &lt;= ICON_ONLY_WIDTH_PX</code>):</b> the export button shrinks to icon-only — confirm the absolutely-positioned dot still renders sensibly (doesn't overflow/clip) at the narrow width.</li>
+    </ul>
+  </section>
+
+  <!-- ============ TESTS ============ -->
+  <section id="tests">
+    <h2><span class="num">9</span> Test Plan &amp; Verification</h2>
+
+    <h3>Per-phase checks</h3>
+    <div class="wrap"><table>
+      <thead><tr><th>Phase</th><th>Command</th><th>Expectation</th></tr></thead>
+      <tbody>
+        <tr><td>0</td><td><code class="inline">npx vitest run lib/__tests__/calculation-versioning.test.ts</code></td><td>Passes (restored to last-known-good committed state)</td></tr>
+        <tr><td>0</td><td><code class="inline">npx vitest run components/dashboard/study-tree/__tests__/custom-tree-item.test.tsx components/dashboard/reports/__tests__/sync-status-banner.test.tsx</code></td><td>Passes (restored tests included)</td></tr>
+        <tr><td>1</td><td><code class="inline">npm run typecheck</code></td><td>Surfaces any remaining reference to <code class="inline">isPending</code>/<code class="inline">retryAll</code>/<code class="inline">FailedItemInfo</code>/<code class="inline">isRunningRef</code></td></tr>
+        <tr><td>2/3</td><td><code class="inline">npm run typecheck</code></td><td>No reference to deleted <code class="inline">HacStatusIndicator</code>/<code class="inline">CalculationFailureModal</code> modules remains</td></tr>
+        <tr><td>4</td><td><code class="inline">npm run typecheck</code></td><td>No reference to <code class="inline">requestedFormTab</code>/<code class="inline">setRequestedFormTab</code> remains; <code class="inline">isFormTabAvailable</code> still compiles at its remaining call site</td></tr>
+        <tr><td>5</td><td><code class="inline">npx vitest run components/dashboard/__tests__/use-auto-calculation.test.tsx</code></td><td>All updated/kept tests pass; removed tests no longer present</td></tr>
+      </tbody>
+    </table></div>
+
+    <h3>Final quality gate (Phase 6 — run after all phases land)</h3>
+    <div class="wrap"><table>
+      <thead><tr><th>Command</th><th>Expectation</th></tr></thead>
+      <tbody>
+        <tr><td><code class="inline">npm run typecheck</code></td><td>0 TypeScript errors across app + tests</td></tr>
+        <tr><td><code class="inline">npm run lint</code></td><td>0 warnings (CI gate, max-warnings 0)</td></tr>
+        <tr><td><code class="inline">npm test</code></td><td>Full Vitest suite green</td></tr>
+        <tr><td><code class="inline">npm run build</code> <span class="note">(recommended given file deletions + context plumbing removal)</span></td><td>Production build succeeds — catches any remaining dynamic import or route-level reference to deleted/changed modules</td></tr>
+      </tbody>
+    </table></div>
+    <p class="note">Set command timeouts to 20–30 minutes per <code class="inline">CLAUDE.md</code> to avoid false failures.</p>
+
+    <h3>Manual verification (dev server)</h3>
+    <ol style="margin-bottom:0">
+      <li>Load a study. Confirm the sidebar header shows only the study name (no leftover indicator slot/spacing artifact).</li>
+      <li>Create an item with missing required HAC inputs. Confirm the export button shows the small amber dot and its tooltip reads "Some items are missing required inputs".</li>
+      <li>Fill in the missing inputs. Confirm auto-calculation re-runs (existing debounce) and the dot disappears once <code class="inline">failedCount</code> returns to 0 — without any manual retry action.</li>
+      <li>Trigger a calculation (<code class="inline">isCalculating === true</code>). Confirm the export button tooltip shows "Calculations in progress — please wait" and the dot state doesn't conflict.</li>
+      <li>Load a study with an Area but no Zone, or a BS zone with no <code class="inline">dispersionType</code>. Confirm sync status reads as <code class="inline">never-calculated</code> (neutral), not a false green "in-sync".</li>
+      <li>Resize the sidebar to icon-only width. Confirm the export button + dot render without clipping.</li>
+    </ol>
+  </section>
+
+  <!-- ============ COMMIT ============ -->
+  <section id="commit">
+    <h2><span class="num">10</span> Commit &amp; Push Strategy</h2>
+    <div class="card">
+      <p><b>Branch:</b> continue on <code class="inline">feat/auto-hac-calculation</code> (already checked out). No force-push.</p>
+      <p><b>One commit per phase</b>, each gated by at least <code class="inline">npm run typecheck</code> + the relevant scoped test run (Husky pre-commit already runs lint-staged + typecheck; pre-push runs the full suite — do not bypass either):</p>
+      <ol>
+        <li><code class="inline">revert(hac-status): restore zone-level honesty guard and its tests/fixtures</code> — Phase 0.</li>
+        <li><code class="inline">refactor(auto-calc): simplify hook to isCalculating + failedCount</code> — Phase 1.</li>
+        <li><code class="inline">chore(hac-status): remove HacStatusIndicator and CalculationFailureModal</code> — Phase 3.</li>
+        <li><code class="inline">refactor(studies): remove unused requestedFormTab plumbing</code> — Phase 4.</li>
+        <li><code class="inline">feat(sidebar): add minimal missing-inputs indicator to export button</code> — Phase 2.</li>
+        <li><code class="inline">test(auto-calc): update hook tests for isCalculating/failedCount shape</code> — Phase 5.</li>
+      </ol>
+      <p>Phases 0, 1, 3, 4 have no file overlap and can be committed in any relative order once each is individually green. Phases 2 and 5 must come after both 1 and 3.</p>
+      <p style="margin-bottom:0"><b>Push</b> only after the Phase 6 full gate (typecheck + lint + test + build) is green on the final state: <code class="inline">git push origin feat/auto-hac-calculation</code>. No PR/merge automation in this plan — left to the user.</p>
+    </div>
+  </section>
+
+  <!-- ============ OPEN ============ -->
+  <section id="open">
+    <h2><span class="num">11</span> Open Decisions</h2>
+    <div class="card l-green">
+      <p style="margin-bottom:0"><b>None remain.</b> All decisions (auto-calc hook retention, indicator/modal removal and replacement with a minimal amber dot, retry-all removal, <code class="inline">requestedFormTab</code> plumbing removal, <code class="inline">RunHACButton</code> left alone, honesty-guard restoration, and the <code class="inline">failedCount</code> simplification) were confirmed during the clarification phase of this conversation. This plan is execution-ready as written.</p>
+    </div>
+  </section>
+
+  <footer>
+    Plan generated by Claude Code · target repo <b>nEXus</b> · branch <code class="inline">feat/auto-hac-calculation</code>.
+    Hosted on <a href="https://github.com/JonWise82/html-docs">JonWise82/html-docs</a>.
+  </footer>
+
+</div>
+</body>
+</html>
